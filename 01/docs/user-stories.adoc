@@ -1,0 +1,856 @@
+= Tourist Application - User Stories
+:toc:
+:toclevels: 3
+:numbered:
+
+== Epic 1: Core Attraction Recognition
+
+=== US-1.01.001: Photo Recognition of Attraction
+
+*As a* tourist +
+*I want to* take a photo of an attraction with my phone camera OR upload an existing photo from my gallery +
+*So that* I can quickly get information about what I'm looking at
+
+==== Acceptance Criteria
+* User can access camera from the app
+* User can take a photo within the app
+* User can upload photo from phone's gallery
+* Photo is captured and processed
+* Loading indicator shows while processing
+* System provides feedback if photo quality is insufficient
+* Supports common image formats (JPG, PNG, HEIC)
+
+*Priority:* MUST HAVE (POC)
+
+'''
+
+=== US-1.02.002: View Attraction Description (Text)
+
+*As a* tourist +
+*I want to* read a text description of the photographed attraction +
+*So that* I can learn about its history and significance
+
+==== Acceptance Criteria
+* Text description appears within 5 seconds of photo capture
+* Description includes: name, historical context, significance
+* Text is formatted for easy mobile reading
+* User can scroll through longer descriptions
+* Description supports multiple languages (based on phone settings)
+
+*Priority:* MUST HAVE (POC)
+
+'''
+
+=== US-1.03.003: Hear Attraction Description (Audio)
+
+*As a* tourist +
+*I want to* listen to an audio description of the attraction +
+*So that* I can learn while continuing to look around
+
+==== Acceptance Criteria
+* Audio playback controls (play/pause/stop) are visible
+* Voice-over is clear and at appropriate speed
+* User can adjust volume
+* Audio continues in background if user switches apps
+* User can replay the audio
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+=== US-1.04.004: Handle Unknown Attractions
+
+*As a* tourist +
+*I want to* receive appropriate feedback when the app can't identify my photo, including suggestions for nearby known attractions +
+*So that* I know the system is working and can discover alternatives
+
+==== Acceptance Criteria
+* Clear message displayed when attraction cannot be identified
+* System suggests nearby attractions based on GPS location
+* Suggestions include distance and brief description
+* Option to manually search for attraction
+* Option to submit photo for future recognition
+* "Explore nearby" button to see attractions within 5km radius
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+== Epic 2: Partner Ecosystem Discovery
+
+=== US-2.01.005: View Nearby Partner Venues
+
+*As a* tourist +
+*I want to* see recommended cafes, restaurants, and shops near the attraction +
+*So that* I can get the best places near me and redeem special offers
+
+==== Acceptance Criteria
+* List of partner venues appears after attraction description
+* Each venue shows: name, distance, type, rating (if available), current offer
+* Venues are sorted by distance or relevance
+* Highlights "exclusive offers" or "limited time" deals
+* Maximum 5-10 venues shown initially
+* "See more" option available
+* Shows estimated walking time to each venue
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+=== US-2.02.006: View Partner Venue Details
+
+*As a* tourist +
+*I want to* view detailed information about a partner venue +
+*So that* I can decide if I want to visit
+
+==== Acceptance Criteria
+* Venue detail page includes: photos, description, hours, menu/services
+* Shows distance and walking time from current location
+* Displays available discount/offer prominently
+* "Get Directions" button opens map navigation
+* Option to save venue for later
+* Shows user reviews/ratings if available
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+=== US-2.03.007: Get Directions to Partner Venue
+
+*As a* tourist +
+*I want to* navigate to a partner venue from my current location +
+*So that* I can easily find it
+
+==== Acceptance Criteria
+* Integration with device's native maps application
+* One-tap navigation launch
+* Shows estimated walking/driving time
+* Works with Google Maps, Apple Maps, or other installed map apps
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+== Epic 3: Discount & Loyalty System
+
+=== US-3.01.008: Generate QR Code for Discount
+
+*As a* tourist +
+*I want to* generate a QR code to redeem a discount at a partner venue +
+*So that* I can save money on my purchase
+
+==== Acceptance Criteria
+* QR code generates instantly when venue is opened
+* QR code is large and scannable
+* Shows discount details above QR code
+* QR code has expiration time displayed
+* Works offline once generated
+* Displays terms and conditions of the offer
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+=== US-3.02.009: Redeem Discount (Partner Scan)
+
+*As a* partner venue staff member +
+*I want to* scan a customer's QR code +
+*So that* I can verify and apply their discount
+
+==== Acceptance Criteria
+* Partner app/scanner validates QR code
+* Shows discount amount/percentage
+* Confirms redemption to both staff and customer
+* Prevents duplicate redemptions
+* Tracks redemption for analytics
+* Works with standard QR code scanners
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+=== US-3.03.010: View Discount History
+
+*As a* tourist +
+*I want to* see my past discounts and visits +
+*So that* I can track my savings and favorite places
+
+==== Acceptance Criteria
+* List of redeemed discounts with dates
+* Shows venue names and amounts saved
+* Total savings displayed
+* Can view venue details from history
+* History persists across app sessions
+* Option to share savings achievements on social media
+
+*Priority:* COULD HAVE (Full Release)
+
+'''
+
+== Epic 4: User Experience & Personalization
+
+=== US-4.01.011: Select Preferred Language
+
+*As a* tourist +
+*I want to* choose my preferred language for descriptions +
+*So that* I can understand the information in my native language
+
+==== Acceptance Criteria
+* Language selection available in settings
+* Supports major tourist languages (English, Spanish, French, German, Chinese, Japanese, etc.)
+* Changes apply to all descriptions
+* Audio voice-over matches selected language
+* Defaults to device language
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+=== US-4.02.012: Adjust Content Detail Level
+
+*As a* tourist +
+*I want to* choose between brief or detailed descriptions +
+*So that* I can get the right amount of information for my needs
+
+==== Acceptance Criteria
+* Toggle between "Quick Overview" and "Detailed Information"
+* Quick overview: 2-3 sentences
+* Detailed: full historical context
+* Setting persists across sessions
+* Can change per attraction
+
+*Priority:* COULD HAVE (Full Release)
+
+'''
+
+=== US-4.03.013: Save Favorite Attractions
+
+*As a* tourist +
+*I want to* save attractions to a favorites list +
+*So that* I can revisit the information later
+
+==== Acceptance Criteria
+* "Save" button visible on attraction pages
+* Favorites accessible from main menu
+* Can remove from favorites
+* Syncs across devices (if logged in)
+* Includes photo and brief description
+* Can organize favorites into custom lists/trips
+
+*Priority:* COULD HAVE (Full Release)
+
+'''
+
+=== US-4.04.014: Share Attraction Information
+
+*As a* tourist +
+*I want to* share attraction details with friends and family +
+*So that* I can recommend places or plan group visits
+
+==== Acceptance Criteria
+* Share button available on attraction page
+* Options: message, email, social media
+* Shared content includes: photo, name, brief description, app link
+* Does not require recipient to have app installed
+* Can share entire trip itinerary
+
+*Priority:* COULD HAVE (Full Release)
+
+'''
+
+== Epic 5: Offline & Performance
+
+=== US-5.01.015: Cache Recent Searches
+
+*As a* tourist +
+*I want* previously viewed attractions to load instantly +
+*So that* I can review information without waiting
+
+==== Acceptance Criteria
+* Last 10 attractions cached locally
+* Cached content available offline
+* Cache cleared when storage limit reached
+* Option to manually clear cache in settings
+* Shows cache status in app info
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+=== US-5.02.016: Work with Limited Connectivity
+
+*As a* tourist +
+*I want* basic app functionality when internet is slow or unavailable +
+*So that* I can use the app in remote locations
+
+==== Acceptance Criteria
+* Clear indication of offline mode
+* Cached attractions remain accessible
+* Generated QR codes work offline
+* Queue photo uploads for when online
+* Graceful error messages for unavailable features
+* Background sync when connection restored
+
+*Priority:* SHOULD HAVE (Full Release)
+
+'''
+
+== Epic 6: Account & Security
+
+=== US-6.01.017: Create User Account
+
+*As a* tourist +
+*I want to* create an account +
+*So that* I can sync my data across devices
+
+==== Acceptance Criteria
+* Sign up with email or social login (Google, Apple)
+* Email verification required
+* Basic profile information (name, country)
+* Terms of service acceptance
+* GDPR compliant
+* Option to use app without account (limited features)
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+=== US-6.02.018: Rate Limiting Protection
+
+*As a* system +
+*I want to* limit excessive requests from single users +
+*So that* the service remains available and costs are controlled
+
+==== Acceptance Criteria
+* Maximum 20 photo recognitions per hour per user
+* Soft limit warnings at 15 requests
+* Clear message when limit reached
+* Limit resets after cooldown period
+* Different limits for free vs. premium users (if applicable)
+* Fair usage policy displayed
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+== Epic 7: Partner Management (Admin)
+
+=== US-7.01.019: Register as Partner Venue
+
+*As a* business owner +
+*I want to* register my venue as a partner +
+*So that* I can attract tourists through the app
+
+==== Acceptance Criteria
+* Partner registration form (business details, location, contact)
+* Upload venue photos and description
+* Set discount offers
+* Await approval from admin
+* Receive partner QR scanner access
+* Accept partnership terms and conditions
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+=== US-7.02.020: Manage Partner Offers
+
+*As a* partner venue +
+*I want to* create and modify discount offers +
+*So that* I can run promotions for app users
+
+==== Acceptance Criteria
+* Create new offers with percentage/amount
+* Set validity periods
+* Enable/disable offers
+* View redemption statistics
+* Receive notifications when offers are redeemed
+* Schedule seasonal/event-based promotions
+
+*Priority:* SHOULD HAVE (MVP)
+
+'''
+
+=== US-7.03.021: View Partner Analytics
+
+*As a* partner venue +
+*I want to* see how many tourists visited through the app +
+*So that* I can measure ROI of the partnership
+
+==== Acceptance Criteria
+* Dashboard with redemption counts
+* Time-based analytics (daily, weekly, monthly)
+* Peak usage times
+* Average discount value
+* Export reports as CSV
+* Compare performance with previous periods
+
+*Priority:* COULD HAVE (Full Release)
+
+'''
+
+== Epic 8: Content Management (Admin)
+
+=== US-8.01.022: Add/Edit Attraction Information
+
+*As an* admin +
+*I want to* add or update attraction information in the database +
+*So that* users receive accurate descriptions
+
+==== Acceptance Criteria
+* Admin portal for content management
+* Form to add new attractions with details
+* Edit existing attraction information
+* Upload reference photos for training
+* Publish/unpublish attractions
+* Version control for content changes
+
+*Priority:* MUST HAVE (POC)
+
+'''
+
+=== US-8.02.023: Moderate Partner Content
+
+*As an* admin +
+*I want to* review and approve partner venue submissions +
+*So that* only legitimate businesses appear in the app
+
+==== Acceptance Criteria
+* Queue of pending partner applications
+* View business details and documentation
+* Approve or reject with reasons
+* Notify partners of decision
+* Suspend partners for policy violations
+* Audit trail for all moderation actions
+
+*Priority:* MUST HAVE (MVP)
+
+'''
+
+== Epic 9: Future Enhancements & Nice-to-Have Features
+
+=== US-9.01.024: Trip Planning & Itinerary
+
+*As a* tourist +
+*I want to* plan my trip with multiple attractions and create an itinerary +
+*So that* I can organize my visit efficiently
+
+==== Acceptance Criteria
+* Add multiple attractions to a trip plan
+* Reorder attractions in itinerary
+* Calculate total walking/travel time
+* Suggest optimal route between attractions
+* Save multiple trip plans
+* Share itinerary with travel companions
+* Export to calendar
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.02.025: Augmented Reality (AR) Navigation
+
+*As a* tourist +
+*I want to* use AR to see directional arrows to nearby attractions +
+*So that* I can navigate more intuitively in unfamiliar areas
+
+==== Acceptance Criteria
+* AR camera view with overlay directions
+* Points to nearby attractions within 500m
+* Shows distance and name in AR view
+* Works with device compass
+* Smooth AR experience (60fps minimum)
+* Battery optimization mode
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.03.026: Social Features & Travel Community
+
+*As a* tourist +
+*I want to* connect with other travelers and see their recommendations +
+*So that* I can discover hidden gems and share experiences
+
+==== Acceptance Criteria
+* User profiles with travel statistics
+* Follow other users
+* See friends' recent visits and reviews
+* Like and comment on shared attractions
+* Create and join travel groups
+* In-app messaging
+* Privacy controls for sharing
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.04.027: Gamification & Achievements
+
+*As a* tourist +
+*I want to* earn badges and achievements for visiting attractions +
+*So that* I can make my travels more engaging and memorable
+
+==== Acceptance Criteria
+* Unlock badges for milestones (first attraction, 10 attractions, etc.)
+* City-specific achievements
+* Leaderboards by country/city
+* Special rewards for visiting partner venues
+* Share achievements on social media
+* Seasonal challenges and events
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.05.028: Multi-Language Real-Time Translation
+
+*As a* tourist +
+*I want to* use my camera to translate signs and menus in real-time +
+*So that* I can navigate foreign environments more easily
+
+==== Acceptance Criteria
+* Point camera at text for instant translation
+* Supports 50+ languages
+* Overlay translation on original text (AR style)
+* Save translations for offline reference
+* Pronunciation guide with audio
+* Works with handwritten text
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.06.029: Local Events & Festivals Calendar
+
+*As a* tourist +
+*I want to* see upcoming events and festivals near attractions +
+*So that* I can plan my visit around special occasions
+
+==== Acceptance Criteria
+* Calendar view of local events
+* Filter by event type (festival, concert, exhibition, etc.)
+* Get notifications for events near saved attractions
+* Add events to personal calendar
+* Purchase tickets through app (if available)
+* Event recommendations based on interests
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.07.030: Weather-Based Recommendations
+
+*As a* tourist +
+*I want to* receive attraction recommendations based on current weather +
+*So that* I can adjust my plans for optimal experience
+
+==== Acceptance Criteria
+* Display current weather for user location
+* Suggest indoor attractions on rainy days
+* Recommend outdoor activities on sunny days
+* Weather forecast for next 7 days
+* Weather-based partner offers (e.g., "rainy day discount")
+* Crowdedness predictions based on weather
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.08.031: Accessibility Features
+
+*As a* tourist with disabilities +
+*I want to* know accessibility information about attractions and venues +
+*So that* I can plan visits that accommodate my needs
+
+==== Acceptance Criteria
+* Wheelchair accessibility indicators
+* Audio descriptions for visually impaired
+* Visual alerts for hearing impaired
+* Accessibility filters in search
+* Partner venues show accessibility features
+* User-contributed accessibility reviews
+* Screen reader optimization
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.09.032: Offline Map Downloads
+
+*As a* tourist +
+*I want to* download maps of specific cities or regions +
+*So that* I can navigate without internet connection
+
+==== Acceptance Criteria
+* Select city/region for download
+* Shows download size before proceeding
+* Offline map includes all cached attractions
+* Basic navigation available offline
+* Regular map updates available
+* Auto-update on WiFi
+* Manage downloaded maps in settings
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.10.033: Virtual Tours & 360° Views
+
+*As a* potential tourist +
+*I want to* take virtual tours of attractions before visiting +
+*So that* I can decide which places to prioritize
+
+==== Acceptance Criteria
+* 360° panoramic views of major attractions
+* Virtual walkthrough capability
+* VR headset compatibility
+* Narrated virtual tours
+* Bookmark specific viewpoints
+* Share virtual tour experiences
+* Works on low-bandwidth connections
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.11.034: Family & Group Management
+
+*As a* family/group coordinator +
+*I want to* manage multiple user accounts under one plan +
+*So that* we can share itineraries and track each other
+
+==== Acceptance Criteria
+* Create family/group account
+* Add up to 10 members
+* Share trip plans across group
+* Real-time location sharing (with permission)
+* Group chat functionality
+* Shared favorites and saved places
+* Family discount tier pricing
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.12.035: Voice Commands & Assistant Integration
+
+*As a* tourist +
+*I want to* use voice commands to interact with the app +
+*So that* I can access information hands-free
+
+==== Acceptance Criteria
+* "Hey [AppName]" wake word
+* Voice search for attractions
+* Read descriptions aloud
+* Navigate with voice commands
+* Integration with Siri/Google Assistant/Alexa
+* Multiple language voice support
+* Background listening mode
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.13.036: Transportation Integration
+
+*As a* tourist +
+*I want to* see public transportation options to attractions +
+*So that* I can plan my journey using local transit
+
+==== Acceptance Criteria
+* Show nearby bus/metro/tram stops
+* Display real-time transit schedules
+* Purchase transit tickets in-app (where supported)
+* Calculate journey time via public transport
+* Show multiple route options
+* Integration with local transit apps
+* Walking directions to transit stops
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.14.037: Smart Notifications & Reminders
+
+*As a* tourist +
+*I want to* receive contextual notifications about nearby attractions +
+*So that* I don't miss interesting places while traveling
+
+==== Acceptance Criteria
+* Location-based push notifications
+* "You're near [Attraction]" alerts
+* Reminder about saved attractions nearby
+* Partner offers when approaching venues
+* Customizable notification preferences
+* Quiet hours setting
+* Battery-conscious geofencing
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.15.038: Currency Converter & Budget Tracker
+
+*As a* tourist +
+*I want to* track my spending and convert currencies +
+*So that* I can manage my travel budget effectively
+
+==== Acceptance Criteria
+* Real-time currency conversion
+* Set daily/trip budget limits
+* Track spending by category
+* Receipt scanner (OCR)
+* Budget alerts when approaching limits
+* Multi-currency support
+* Export spending reports
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.16.039: Partner Loyalty Program Integration
+
+*As a* frequent app user +
+*I want to* accumulate points across all partner venues +
+*So that* I can earn rewards for my loyalty
+
+==== Acceptance Criteria
+* Points earned per QR redemption
+* Tiered loyalty levels (Bronze, Silver, Gold)
+* Exclusive offers for loyalty members
+* Points redemption for discounts
+* Birthday/anniversary special offers
+* Refer-a-friend bonus points
+* Points never expire
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+=== US-9.17.040: Emergency Information & SOS
+
+*As a* tourist +
+*I want to* access emergency services and embassy information +
+*So that* I can get help if needed in a foreign country
+
+==== Acceptance Criteria
+* Quick access SOS button
+* Local emergency numbers by country
+* Nearest hospital/police station
+* Embassy contact information
+* Share location with emergency contacts
+* Offline access to emergency info
+* Medical information profile
+* Travel insurance integration
+
+*Priority:* FUTURE ENHANCEMENT
+
+'''
+
+== Priority Summary
+
+=== POC (Proof of Concept)
+* US-1.01.001: Photo Recognition (with upload)
+* US-1.02.002: Text Description
+* US-8.01.022: Admin Content Management
+
+=== MVP (Minimum Viable Product)
+* US-1.03.003: Audio Description
+* US-1.04.004: Unknown Attractions (with GPS suggestions)
+* US-2.01.005: Nearby Partners (with offers)
+* US-2.02.006: Partner Details
+* US-2.03.007: Directions
+* US-3.01.008: Generate QR
+* US-3.02.009: Redeem Discount
+* US-4.01.011: Language Selection
+* US-5.01.015: Cache Searches
+* US-6.01.017: User Account
+* US-6.02.018: Rate Limiting
+* US-7.01.019: Partner Registration
+* US-7.02.020: Manage Offers
+* US-8.02.023: Moderate Partners
+
+=== Full Release
+* US-3.03.010: Discount History
+* US-4.02.012: Content Detail Level
+* US-4.03.013: Favorites
+* US-4.04.014: Share
+* US-5.02.016: Offline Mode
+* US-7.03.021: Partner Analytics
+
+=== Future Enhancements (17 Stories)
+* US-9.01.024: Trip Planning
+* US-9.02.025: AR Navigation
+* US-9.03.026: Social Features
+* US-9.04.027: Gamification
+* US-9.05.028: Real-Time Translation
+* US-9.06.029: Events Calendar
+* US-9.07.030: Weather Recommendations
+* US-9.08.031: Accessibility Features
+* US-9.09.032: Offline Maps
+* US-9.10.033: Virtual Tours
+* US-9.11.034: Family Management
+* US-9.12.035: Voice Commands
+* US-9.13.036: Transportation
+* US-9.14.037: Smart Notifications
+* US-9.15.038: Budget Tracker
+* US-9.16.039: Loyalty Program
+* US-9.17.040: Emergency SOS
+
+== Story Points Summary
+
+[cols="1,3,1,1"]
+|===
+|Epic |Description |Story Count |Priority Distribution
+
+|Epic 1
+|Core Attraction Recognition
+|4
+|2 POC, 2 MVP
+
+|Epic 2
+|Partner Ecosystem Discovery
+|3
+|3 MVP
+
+|Epic 3
+|Discount & Loyalty System
+|3
+|2 MVP, 1 Full
+
+|Epic 4
+|User Experience & Personalization
+|4
+|1 MVP, 3 Full
+
+|Epic 5
+|Offline & Performance
+|2
+|1 MVP, 1 Full
+
+|Epic 6
+|Account & Security
+|2
+|2 MVP
+
+|Epic 7
+|Partner Management
+|3
+|2 MVP, 1 Full
+
+|Epic 8
+|Content Management
+|2
+|1 POC, 1 MVP
+
+|Epic 9
+|Future Enhancements
+|17
+|17 Future
+
+|*Total*
+|*All Features*
+|*40*
+|*3 POC, 14 MVP, 6 Full, 17 Future*
+|===

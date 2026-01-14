@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Diagrams - uncomment if you don't want to commit generated diagrams
+# *.png
+# *.jpg
+# *.svg
+
+# Generated diagrams in case study directories
+# Ignore all generated diagrams in diagrams subdirectories
+*/diagrams/*.png
+*/diagrams/*.jpg
+*/diagrams/*.svg
+# But keep the directory structure
+!*/diagrams/
+!*/diagrams/.gitkeep

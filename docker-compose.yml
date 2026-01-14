@@ -1,0 +1,11 @@
+services:
+  diagrams:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the current directory so we can access Python scripts and diagrams
+      - .:/app
+    working_dir: /app
+    # Command will be overridden by the generate-diagrams.sh script
+    command: echo "Please use ./generate-diagrams.sh to generate diagrams"
