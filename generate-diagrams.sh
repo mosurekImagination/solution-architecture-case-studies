@@ -28,8 +28,8 @@ generate_case_study() {
         return 1
     fi
     
-    # Find all Python files in the case study directory
-    local python_files=$(find "$case_study_dir" -maxdepth 1 -name "*.py" | sort)
+    # Find all Python files in the case study directory and subdirectories
+    local python_files=$(find "$case_study_dir" -type f -name "*.py" ! -name "__*" | sort)
     
     if [ -z "$python_files" ]; then
         echo "⚠️  No Python files found in $case_study_dir"
@@ -49,19 +49,31 @@ generate_case_study() {
             echo ""
             echo "   🎨 Generating diagram from: $(basename $python_file)"
             
-            # Create diagrams directory inside case study folder
-            mkdir -p "${case_study_dir}/diagrams"
+            # Determine output directory based on Python file location
+            python_file_dir=$(dirname "$python_file")
+            if [ "$python_file_dir" != "$case_study_dir" ]; then
+                # Python file is in subdirectory, use that subdirectory for output
+                output_dir="$python_file_dir"
+            else
+                # Python file is at root of case study, use diagrams/ subdirectory
+                output_dir="${case_study_dir}/diagrams"
+            fi
+            
+            # Create output directory
+            mkdir -p "$output_dir"
             
             # Convert relative path to path inside container
             # Remove leading ./ if present
             python_file_clean="${python_file#./}"
             python_file_in_container="/app/${python_file_clean}"
+            output_dir_clean="${output_dir#./}"
+            output_dir_in_container="/app/${output_dir_clean}"
             
             # Run the diagram generation
             docker-compose run --rm \
                 -e CASE_STUDY_DIR="$case_study" \
                 -e PYTHON_FILE="$python_file_in_container" \
-                -e OUTPUT_DIR="/app/${case_study}/diagrams" \
+                -e OUTPUT_DIR="$output_dir_in_container" \
                 diagrams python "$python_file_in_container"
         fi
     done <<< "$python_files"
@@ -69,7 +81,7 @@ generate_case_study() {
     if [ $file_count -gt 0 ]; then
         echo ""
         echo "   ✅ Generated $file_count diagram(s) for case study $case_study"
-        echo "   📁 Diagrams directory: ${case_study}/diagrams/"
+        echo "   📁 Output locations: root/diagrams/ or subdirectories where .py files are located"
     fi
 }
 

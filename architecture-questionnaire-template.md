@@ -5,38 +5,39 @@ Please fill out this questionnaire to help prepare the solution architecture doc
 ## 1. Business Context
 
 ### 1.1 Project Overview
-- **Project Name:** 
-- **Business Domain:** 
-- **Primary Business Objective:** 
-- **Key Stakeholders:** 
-- **Project Timeline:** 
+- **Project Name:** Tourist Mobile Application
+- **Business Domain:** Tourist Application
+- **Primary Business Objective:**  Show users information about nearby attraction using AI
 
 ### 1.2 Business Drivers
-- **What business problem does this solution solve?**
+- **What business problem does this solution solve?** It helps users to see interesting attractions and gets knowledge about it
   
 - **What are the key business goals?**
-  
-- **What are the success criteria?**
-  
-- **What is the expected ROI or business value?**
   
 
 ## 2. Functional Requirements
 
 ### 2.1 Core Features
 - **List the main features/functionalities:**
-  1. 
-  2. 
-  3. 
+  1. Show AI based descriptions of nearby attractions.
+  2. AI recognition of object
+  3. Suggestions from partner object owners about their businesses (ads). Working ours, descriptions, menu etc
 
 - **What are the primary user personas and their use cases?**
-  - Persona 1: 
-  - Persona 2: 
+  - Persona 1: Tourist
+  - Persona 2: Partner object owner
+
+Other features:
+- recommendation systems
+- credit cards support
+- loyality programs
+- personal invormations in applicaiton
+- translation for main languages
 
 ### 2.2 User Interactions
-- **How will users interact with the system?** (Web, Mobile, API, CLI, etc.)
+- **How will users interact with the system?** Only Mobile
   
-- **What are the main user workflows?**
+- **What are the main user workflows?** Open application inside touristic idea. Point phone to touristic attraction. See attraction description. Below should be recommended nearby attractions and points (partner objects)
   
 - **Are there any batch processing requirements?**
   
@@ -44,31 +45,37 @@ Please fill out this questionnaire to help prepare the solution architecture doc
 ## 3. Non-Functional Requirements
 
 ### 3.1 Performance
-- **Expected number of concurrent users:**
+- **Expected number of concurrent users:** We start small, but we want to be prepared for large scale
   
-- **Expected requests per second (RPS):**
-  
+ 
 - **Response time requirements:**
-  - API response time: 
-  - Page load time: 
-  - Database query time: 
+  - API response time: 3 seconds
+  - App load time: 3 seconds 
+  - AI generation desctiption: 3 seconds 
 
-- **Peak load expectations:**
-  
+- **Peak load expectations:** We want to be prepared for large scale
+  - Application should always have some benefits for clients
+- it should provide offline, cache mode
+- it should contain some small LLM in phones that support it to provide some capabilities even offine
+- use cloud infrastructure
+- you don't need to have second infrastructure hot, it just need to be prepared to spin up
+- low latency in US and in China etc.
+- we don't expect much traffic from the start but we want to be ready to scale when they come
+- AI should be able to has around 95% correctness of informations
 
 ### 3.2 Scalability
 - **Expected growth over time:**
-  - Year 1: 
-  - Year 2: 
-  - Year 3: 
+  - Year 1: 1000
+  - Year 2: 10000
+  - Year 3: 100000
 
-- **Scaling strategy preference:** (Horizontal, Vertical, Auto-scaling)
+- **Scaling strategy preference:** Auto scaling, Horizontal
   
-- **Geographic distribution requirements:**
+- **Geographic distribution requirements:** US, China first but we want to have option then to scale for other regions
   
 
 ### 3.3 Availability & Reliability
-- **Required uptime (SLA):** (e.g., 99.9%, 99.99%)
+- **Required uptime (SLA):** 99.9%
   
 - **Maximum acceptable downtime:**
   
@@ -103,15 +110,15 @@ Please fill out this questionnaire to help prepare the solution architecture doc
 ## 4. Technical Requirements
 
 ### 4.1 Technology Stack Preferences
-- **Programming languages:** (Python, Java, Node.js, etc.)
+- **Programming languages:** No preferences
   
-- **Frameworks:** 
+- **Frameworks:** No preferences
   
-- **Database preferences:** (Relational, NoSQL, etc.)
+- **Database preferences:** No preferences
   
-- **Cloud provider preference:** (AWS, Azure, GCP, On-premises, Hybrid)
+- **Cloud provider preference:** AWS
   
-- **Containerization:** (Docker, Kubernetes, etc.)
+- **Containerization:** Docker
   
 
 ### 4.2 Integration Requirements
@@ -155,7 +162,7 @@ Please fill out this questionnaire to help prepare the solution architecture doc
 ## 6. Infrastructure & Deployment
 
 ### 6.1 Deployment Model
-- **Deployment environment:** (Cloud, On-premises, Hybrid, Multi-cloud)
+- **Deployment environment:** Cloud
   
 - **Deployment strategy:** (Blue-Green, Canary, Rolling, etc.)
   
