@@ -737,3 +737,420 @@ We present 4 options for client consideration:
 **Questionnaire completed by:** Solution Architect  
 **Date:** January 22, 2026  
 **Version:** 1.0
+
+
+---
+
+### Detailed Cost Breakdown by Option
+
+#### **OPTION 1: Start Small - MVP Focus ($224k CAPEX, $835/mo OPEX)**
+
+**Development Costs (CAPEX):**
+- Backend Development (Modular Monolith): $80,000
+  - User Management Module: $20,000
+  - Partner Management Module: $25,000
+  - Recommendations Module: $15,000
+  - API Gateway & Infrastructure: $20,000
+- AR Microservice Development: $45,000
+  - Photo processing & AI integration: $30,000
+  - Queue management & Lambda: $15,000
+- Mobile App Development (iOS + Android): $60,000
+  - UI/UX implementation: $25,000
+  - Camera integration: $15,000
+  - Offline caching: $10,000
+  - API integration: $10,000
+- DevOps & Infrastructure Setup: $15,000
+  - AWS setup (US region only): $8,000
+  - CI/CD pipeline: $7,000
+- Testing & QA: $12,000
+- Documentation & Training: $6,000
+- Contingency (10%): $6,000
+
+**Infrastructure Costs (OPEX - Monthly):**
+- AWS Compute:
+  - ECS Fargate (2-3 tasks): $120
+  - Lambda (AR processing): $80
+- AWS Database:
+  - RDS PostgreSQL (db.t4g.large, 100GB): $180
+- AWS Cache:
+  - ElastiCache Redis (5GB): $50
+- AWS Storage:
+  - S3 (photos + static): $40
+  - Data transfer: $30
+- AWS Networking:
+  - ALB: $25
+  - CloudFront CDN: $50
+  - Route 53: $10
+- AWS Monitoring:
+  - CloudWatch: $30
+- Third-Party Services:
+  - AWS Cognito: $15
+  - SendGrid (email): $20
+  - Google Vision API: $50
+  - OpenAI API (estimated): $100
+  - Google Maps API: $35
+- **Total Infrastructure:** $835/mo
+
+**Team Costs (Monthly):**
+- 3 Full-stack Developers @ $8,000/mo: $24,000
+- 1 UI/UX Designer (part-time): $4,000
+- 1 Project Manager (part-time): $4,000
+- **Total Team:** $32,000/mo (not included in OPEX above)
+
+---
+
+#### **OPTION 2: Progressive Build - RECOMMENDED ($719k CAPEX, $2,260/mo OPEX)**
+
+**Development Costs (CAPEX):**
+
+**Phase 1 (Months 1-4 - MVP): $478,000**
+- Backend Development:
+  - Modular Monolith (US + China): $120,000
+  - User Management: $30,000
+  - Partner Management: $35,000
+  - Recommendations: $25,000
+  - API Gateway & routing: $30,000
+- AR Microservice (US + China): $70,000
+  - Dual-region deployment: $40,000
+  - AI integration & fallback: $30,000
+- Mobile App (iOS + Android): $90,000
+  - Enhanced UI/UX: $35,000
+  - Camera & photo processing: $20,000
+  - Offline caching (enhanced): $15,000
+  - Multi-region support: $20,000
+- Multi-Region Infrastructure Setup: $45,000
+  - AWS US setup: $20,000
+  - AWS China setup (complex): $25,000
+- CI/CD & DevOps: $30,000
+  - Multi-region pipeline: $20,000
+  - Monitoring setup: $10,000
+- Testing & QA: $25,000
+  - Cross-region testing: $15,000
+  - Load testing: $10,000
+- Documentation: $10,000
+- Project Management: $35,000
+- Contingency (10%): $53,000
+
+**Phase 2 (Months 5-7 - Full Features): $241,000**
+- Payment Integration: $45,000
+  - Stripe integration: $25,000
+  - PCI-DSS compliance: $20,000
+- Loyalty Program: $30,000
+  - Points engine: $20,000
+  - QR code system: $10,000
+- Partner Self-Service Portal: $50,000
+  - Web portal: $35,000
+  - Analytics dashboard: $15,000
+- User Ratings & Feedback System: $20,000
+- Trip Story Feature: $25,000
+  - Photo timeline: $15,000
+  - Geolocation integration: $10,000
+- Multi-Language Support: $15,000
+- Enhanced Testing & QA: $20,000
+- Additional DevOps: $15,000
+- Project Management: $15,000
+- Contingency (10%): $6,000
+
+**Infrastructure Costs (OPEX):**
+
+**Phase 1 (Months 1-4): $1,810/mo**
+- AWS US Region:
+  - ECS Fargate (3-4 tasks): $200
+  - Lambda (AR): $120
+  - RDS PostgreSQL (db.t4g.xlarge, 500GB): $380
+  - ElastiCache Redis (10GB): $90
+  - S3 storage & transfer: $80
+  - ALB + CloudFront: $90
+- AWS China Region:
+  - ECS Fargate (3-4 tasks): $220 (higher CN pricing)
+  - Lambda (AR): $130
+  - RDS PostgreSQL (db.t4g.xlarge, 500GB): $420
+  - ElastiCache Redis (10GB): $100
+  - S3 storage: $90
+  - ALB: $40
+  - Alibaba CDN: $80
+- Global Services:
+  - Route 53: $15
+  - CloudWatch (both regions): $60
+  - AWS Cognito: $25
+- Third-Party Services:
+  - SendGrid: $30
+  - Google Vision API: $80
+  - OpenAI API: $150
+  - Google Gemini (backup): $50
+  - Google Maps API: $50
+  - DataDog (monitoring): $100
+  - Sentry (error tracking): $30
+
+**Phase 2 (Months 5-7): $2,260/mo**
+- All Phase 1 costs: $1,810
+- Additional costs:
+  - Stripe (processing fees): $100
+  - EventBridge & SNS: $50
+  - Increased API usage (Maps, AI): $100
+  - Read replicas (both regions): $200
+
+**Team Costs (Monthly):**
+- 5 Full-stack Developers @ $8,000/mo: $40,000
+- 1 Senior Backend Developer: $10,000
+- 1 Mobile Developer: $9,000
+- 1 UI/UX Designer: $7,000
+- 1 DevOps Engineer: $9,000
+- 1 Project Manager: $8,000
+- **Total Team:** $83,000/mo (not included in OPEX above)
+
+---
+
+#### **OPTION 3: Start Big - All Features Day 1 ($2.17M CAPEX, $4,665/mo OPEX)**
+
+**Development Costs (CAPEX): $2,168,400**
+
+**Backend Development (Microservices): $580,000**
+- User Service: $80,000
+- Partner Service: $90,000
+- Payment Service: $100,000
+- Loyalty Service: $70,000
+- Recommendation Service (ML-based): $120,000
+- AR Service (multi-region): $120,000
+
+**Mobile App Development: $180,000**
+- iOS app (fully featured): $80,000
+- Android app (fully featured): $80,000
+- Shared components & testing: $20,000
+
+**Partner Portal & Admin Dashboard: $150,000**
+- Partner self-service portal: $80,000
+- Admin dashboard: $50,000
+- Analytics & reporting: $20,000
+
+**Infrastructure & DevOps: $280,000**
+- Multi-region setup (US, China, EU prep): $120,000
+- Kubernetes/EKS setup: $60,000
+- CI/CD pipelines (advanced): $50,000
+- Monitoring & observability (DataDog, X-Ray): $30,000
+- Security hardening (WAF, secrets mgmt): $20,000
+
+**Machine Learning & AI: $120,000**
+- Recommendation engine (ML): $70,000
+- AI model optimization: $30,000
+- On-device ML models: $20,000
+
+**Data & Analytics: $100,000**
+- OpenSearch cluster setup: $40,000
+- Analytics pipeline (Kinesis, Redshift): $40,000
+- Data warehousing setup: $20,000
+
+**Testing & QA: $180,000**
+- Comprehensive testing: $80,000
+- Load & performance testing: $50,000
+- Security testing & pen-testing: $30,000
+- UAT & regression testing: $20,000
+
+**Compliance & Legal: $80,000**
+- PCI-DSS certification: $40,000
+- GDPR prep & documentation: $20,000
+- Legal review & contracts: $20,000
+
+**Documentation & Training: $50,000**
+- Technical documentation: $20,000
+- User documentation: $15,000
+- Training materials: $15,000
+
+**Project Management: $250,000**
+- 10 months @ $25,000/mo
+
+**Contingency (15%): $198,400**
+
+**Infrastructure Costs (OPEX - Monthly): $4,665**
+
+**AWS US-EAST-1 (Primary):**
+- ECS/EKS Compute (10+ microservices): $600
+- RDS Aurora (db.r6g.2xlarge, 1TB): $800
+- Read Replicas (2x): $400
+- ElastiCache Redis Cluster (20GB): $200
+- S3 storage (multi-tier): $150
+- ALB + CloudFront CDN: $120
+- Lambda functions: $100
+
+**AWS CN-NORTH-1 (China):**
+- ECS/EKS Compute: $650
+- RDS Aurora (1TB): $900
+- ElastiCache Redis (20GB): $220
+- S3 storage: $180
+- ALB: $60
+- Alibaba CDN: $150
+
+**AWS EU-WEST-1 (Prepared - minimal):**
+- Standby infrastructure: $100
+
+**Data & Analytics:**
+- OpenSearch cluster: $300
+- DynamoDB: $80
+- Kinesis streams: $100
+
+**Networking & Security:**
+- Route 53: $20
+- WAF: $50
+- Data transfer (global): $200
+
+**Monitoring & Observability:**
+- CloudWatch (all regions): $100
+- DataDog APM: $250
+- Sentry: $50
+- X-Ray: $30
+
+**Third-Party Services:**
+- AWS Cognito: $40
+- Stripe (base fees): $150
+- SendGrid (high volume): $80
+- Google Vision API: $150
+- OpenAI API: $200
+- Google Gemini: $80
+- Google Maps API (advanced): $100
+- Google Translate API: $65
+
+**Team Costs (Monthly):**
+- 10 Backend Developers @ $8,000-$10,000: $85,000
+- 2 Mobile Developers: $18,000
+- 2 DevOps Engineers: $20,000
+- 1 ML Engineer: $12,000
+- 2 UI/UX Designers: $14,000
+- 1 QA Engineer: $8,000
+- 1 Security Engineer: $10,000
+- 1 Data Engineer: $10,000
+- 1 Project Manager: $10,000
+- 1 Product Manager: $10,000
+- **Total Team:** $197,000/mo (not included in OPEX above)
+
+---
+
+#### **OPTION 4: Target Scale - Klook/Viator Level ($1.22M Migration + $130k/mo OPEX)**
+
+**Migration Costs from Option 3 (CAPEX): $1,218,000**
+
+**Infrastructure Migration: $580,000**
+- EKS full setup (multi-region): $150,000
+- Database sharding (10+ shards): $180,000
+- Service mesh (Istio) implementation: $80,000
+- Global CDN optimization: $60,000
+- Multi-region data replication: $110,000
+
+**Microservices Extraction & Refactoring: $320,000**
+- Decompose remaining monoliths: $120,000
+- Service-to-service communication: $80,000
+- API gateway upgrade: $40,000
+- Message queue optimization (Kafka): $80,000
+
+**ML & Personalization: $150,000**
+- Advanced recommendation engine: $80,000
+- Real-time personalization: $50,000
+- A/B testing framework: $20,000
+
+**Observability & SRE: $80,000**
+- Advanced monitoring (Prometheus/Grafana): $30,000
+- Distributed tracing at scale: $25,000
+- SRE tooling & automation: $25,000
+
+**Security & Compliance: $50,000**
+- Enhanced security hardening: $20,000
+- Multi-region compliance audit: $30,000
+
+**Project Management & Coordination: $38,000**
+
+**Infrastructure Costs (OPEX - Monthly): $130,100**
+
+**Compute (Global):**
+- EKS clusters (US-East, US-West, China, EU, APAC): $8,500
+- Lambda functions (high scale): $800
+- GPU workers (AR processing): $2,000
+
+**Database (Sharded, Global):**
+- Aurora Global Database (50+ instances): $18,000
+- Read replicas (100+): $12,000
+- ElastiCache Redis clusters (500GB+): $4,500
+
+**Storage:**
+- S3 (petabyte-scale): $8,000
+- S3 Glacier (archival): $1,200
+- EBS volumes: $1,500
+
+**Networking:**
+- Network Load Balancers (5 regions): $800
+- CloudFront (500+ edge locations): $3,500
+- Route 53 (global routing): $100
+- Data transfer (global): $12,000
+- Cross-region replication: $4,000
+
+**Data & Analytics:**
+- OpenSearch (large clusters): $3,500
+- Kinesis (multi-stream): $1,200
+- Kafka clusters: $2,800
+- Redshift (petascale): $5,000
+- DynamoDB (global tables): $2,500
+
+**Security:**
+- AWS Shield Advanced: $3,000
+- WAF (multi-region): $500
+- Secrets Manager: $200
+- KMS (encryption): $300
+
+**Monitoring & Observability:**
+- CloudWatch (all regions): $1,500
+- DataDog APM (enterprise): $4,000
+- Sentry (high volume): $500
+- X-Ray (distributed tracing): $400
+- Prometheus/Grafana: $800
+
+**Third-Party Services:**
+- AWS Cognito (millions of users): $500
+- Stripe (high volume): $2,000
+- SendGrid (millions of emails): $1,000
+- Google Vision API (high volume): $3,000
+- OpenAI API (token pooling): $5,000
+- Google Gemini: $2,000
+- Google Maps API (advanced): $2,500
+- Google Translate API: $1,000
+- Twilio (SMS/voice): $1,500
+- SageMaker (ML serving): $3,000
+
+**Backup & DR:**
+- Multi-region backups: $2,000
+- DR infrastructure (warm standby): $5,000
+
+**Team Costs (Monthly at This Scale):**
+- 25-30 Backend Engineers: $250,000
+- 5 Mobile Engineers: $50,000
+- 8 DevOps/SRE Engineers: $80,000
+- 3 ML Engineers: $40,000
+- 5 QA Engineers: $40,000
+- 3 Security Engineers: $35,000
+- 3 Data Engineers: $35,000
+- 5 UI/UX Designers: $40,000
+- 2 Product Managers: $25,000
+- 2 Engineering Managers: $30,000
+- 1 CTO/VP Engineering: $25,000
+- Program Management Office: $20,000
+- **Total Team:** $670,000/mo (not included in OPEX above)
+
+---
+
+### Cost Comparison Summary
+
+| Metric | Option 1 | Option 2 | Option 3 | Option 4 |
+|--------|----------|----------|----------|----------|
+| **Initial CAPEX** | $224k | $719k | $2.17M | +$1.22M migration |
+| **Monthly Infrastructure** | $835 | $1,810-$2,260 | $4,665 | $130,100 |
+| **Monthly Team Cost** | $32k | $83k | $197k | $670k |
+| **Total Monthly** | $32.8k | $84.8k | $201.7k | $800.1k |
+| **First Year Total** | $618k | $1.74M | $4.59M | $10.8M+ |
+| **Time to Market** | 4 months | 4-7 months | 10 months | 4-5 years |
+| **Target Users** | 1k-10k | 10k-100k | 100k-1M | 50M+ |
+| **Regions** | US only | US + China | US + China + EU | Global (5+ regions) |
+
+**Key Insights:**
+- Option 1: Lowest risk, fastest to market, but limited to US market
+- Option 2: Best balance of cost, features, and market reach (US + China from day 1)
+- Option 3: Highest initial investment but complete feature set from launch
+- Option 4: Ultimate scale but requires significant ongoing investment (~$10M/year operating costs)
+
+---
