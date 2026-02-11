@@ -1,0 +1,20 @@
+Cost not by module
+But developer price x price 
+Provide timeline - with cost
+What can be in parallel
+in the end we sell manhours
+
+gant chart - to visualise dependencies, and timeline
+
+Why does it take that long :D 
+
+you need to account risk (e.g. bus factor for developer - thats why at least 2).
+eg. 2 middles instead od 1 senior
+eg. external vendor risks (api not working, docs )
+
+we need to balance all risks
+usually 20-50%
+
+3-4 devs up to 1 stream - communication overhead
+
+break down why the risk is low and 
