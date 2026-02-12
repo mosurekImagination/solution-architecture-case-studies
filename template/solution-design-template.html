@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.20">
+<meta name="author" content="[Author Name]">
+<title>[Project Name] — Solution Design</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment the following line when using as a custom stylesheet */
+/* @import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700"; */
+html{font-family:sans-serif;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+b,strong{font-weight:bold}
+abbr{font-size:.9em}
+abbr[title]{cursor:help;border-bottom:1px dotted #dddddf;text-decoration:none}
+dfn{font-style:italic}
+hr{height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type=button],input[type=reset],input[type=submit]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type=checkbox],input[type=radio]{padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,::before,::after{box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;line-height:1;position:relative;cursor:auto;-moz-tab-size:4;-o-tab-size:4;tab-size:4;word-wrap:anywhere;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ul.square{list-style-type:square}
+ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:1px solid #dedede;word-wrap:normal}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre).nobreak{word-wrap:normal}
+:not(pre).nowrap{white-space:nowrap}
+:not(pre).pre-wrap{white-space:pre-wrap}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;border-radius:3px;box-shadow:0 1px 0 rgba(0,0,0,.2),inset 0 0 0 .1em #fff;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin:0 auto;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border:1px solid #e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:none;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:hsla(0,0%,100%,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details{margin-left:1.25rem}
+details>summary{cursor:pointer;display:block;position:relative;line-height:1.6;margin-bottom:.625rem;outline:none;-webkit-tap-highlight-color:transparent}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";border:solid transparent;border-left:solid;border-width:.3em 0 .3em .5em;position:absolute;top:.5em;left:-1.25rem;transform:translateX(15%)}
+details[open]>summary::before{border:solid transparent;border-top:solid;border-width:.5em .3em 0;transform:translateY(15%)}
+details>summary::after{content:"";width:1.25rem;height:1em;position:absolute;top:.3em;left:-1.25rem}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class=paragraph]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border:1px solid #e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;border-radius:4px}
+.sidebarblock{border:1px solid #dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;border-radius:4px}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:first-child,.sidebarblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child,.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class=highlight],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos,pre.pygments .linenos{border-right:1px solid;opacity:.35;padding-right:.5em;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+pre.pygments span.linenos{display:inline-block;margin-right:.75em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans-serif;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;font-size:.85rem;text-align:left;margin-right:0}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content{margin-bottom:1.25em;word-wrap:anywhere}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>*>tr>*{border-width:1px}
+table.grid-cols>*>tr>*{border-width:0 1px}
+table.grid-rows>*>tr>*{border-width:1px 0}
+table.frame-all{border-width:1px}
+table.frame-ends{border-width:1px 0}
+table.frame-sides{border-width:0 1px}
+table.frame-none>colgroup+*>:first-child>*,table.frame-sides>colgroup+*>:first-child>*{border-top-width:0}
+table.frame-none>:last-child>:last-child>*,table.frame-sides>:last-child>:last-child>*{border-bottom-width:0}
+table.frame-none>*>tr>:first-child,table.frame-ends>*>tr>:first-child{border-left-width:0}
+table.frame-none>*>tr>:last-child,table.frame-ends>*>tr>:last-child{border-right-width:0}
+table.stripes-all>*>tr,table.stripes-odd>*>tr:nth-of-type(odd),table.stripes-even>*>tr:nth-of-type(even),table.stripes-hover>*>tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+li>p:empty:only-child::before{content:"";display:inline-block}
+ul.checklist>li>p:first-child{margin-left:-1em}
+ul.checklist>li>p:first-child>.fa-square-o:first-child,ul.checklist>li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist>li>p:first-child>input[type=checkbox]:first-child{margin-right:.25em}
+ul.inline{display:flex;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+td.hdlist2{word-wrap:anywhere}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:4px solid #fff;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);border-radius:50%;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt,summary{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,td.hdlist1,span.alt,summary{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]{border-bottom:1px dotted}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#header,#content,#footnotes,#footer{max-width:none}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media amzn-kf8,print{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>[Project Name] — Solution Design</h1>
+<div class="details">
+<span id="author" class="author">[Author Name]</span><br>
+<span id="revnumber">version 0.1,</span>
+<span id="revdate">2026-02-13</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_version_history">1. Version History</a></li>
+<li><a href="#_stakeholders">2. Stakeholders</a>
+<ul class="sectlevel2">
+<li><a href="#_stakeholder_register">2.1. Stakeholder Register</a></li>
+<li><a href="#_raci_matrix">2.2. RACI Matrix</a></li>
+</ul>
+</li>
+<li><a href="#_executive_summary">3. Executive Summary</a>
+<ul class="sectlevel2">
+<li><a href="#_recommendation_at_a_glance">3.1. Recommendation at a Glance</a></li>
+<li><a href="#_key_decisions">3.2. Key Decisions</a></li>
+</ul>
+</li>
+<li><a href="#_architecture_principles">4. Architecture Principles</a></li>
+<li><a href="#_problem_statement">5. Problem Statement</a>
+<ul class="sectlevel2">
+<li><a href="#_current_pain_points">5.1. Current Pain Points</a></li>
+<li><a href="#_current_state_architecture">5.2. Current State Architecture</a></li>
+<li><a href="#_proposed_solution">5.3. Proposed Solution</a></li>
+</ul>
+</li>
+<li><a href="#_system_context_c4_model">6. System Context (C4 Model)</a>
+<ul class="sectlevel2">
+<li><a href="#_context_diagram_level_1">6.1. Context Diagram (Level 1)</a></li>
+<li><a href="#_container_diagram_level_2">6.2. Container Diagram (Level 2)</a></li>
+<li><a href="#_deployment_diagram">6.3. Deployment Diagram</a></li>
+</ul>
+</li>
+<li><a href="#_architecture">7. Architecture</a>
+<ul class="sectlevel2">
+<li><a href="#_component_overview">7.1. Component Overview</a></li>
+</ul>
+</li>
+<li><a href="#_data_architecture">8. Data Architecture</a>
+<ul class="sectlevel2">
+<li><a href="#_data_model">8.1. Data Model</a></li>
+<li><a href="#_data_classification">8.2. Data Classification</a></li>
+<li><a href="#_data_flow">8.3. Data Flow</a></li>
+</ul>
+</li>
+<li><a href="#_key_flows">9. Key Flows</a>
+<ul class="sectlevel2">
+<li><a href="#_happy_path_primary_use_case">9.1. Happy Path — [Primary Use Case]</a></li>
+<li><a href="#_error_edge_case_secondary_flow">9.2. Error / Edge Case — [Secondary Flow]</a></li>
+</ul>
+</li>
+<li><a href="#_options_comparison">10. Options Comparison</a>
+<ul class="sectlevel2">
+<li><a href="#_summary_matrix">10.1. Summary Matrix</a></li>
+<li><a href="#_weighted_scoring_matrix">10.2. Weighted Scoring Matrix</a></li>
+<li><a href="#_cost_comparison">10.3. Cost Comparison</a></li>
+</ul>
+</li>
+<li><a href="#_option_n_option_name">11. Option [N]: [Option Name]</a>
+<ul class="sectlevel2">
+<li><a href="#_overview">11.1. Overview</a></li>
+<li><a href="#_pros_cons">11.2. Pros &amp; Cons</a></li>
+<li><a href="#_architecture_2">11.3. Architecture</a></li>
+<li><a href="#_cost_breakdown">11.4. Cost Breakdown</a>
+<ul class="sectlevel3">
+<li><a href="#_capex_one_time">11.4.1. CAPEX (One-Time)</a></li>
+<li><a href="#_opex_monthly">11.4.2. OPEX (Monthly)</a></li>
+</ul>
+</li>
+<li><a href="#_timeline">11.5. Timeline</a></li>
+<li><a href="#_risk_assessment">11.6. Risk Assessment</a></li>
+</ul>
+</li>
+<li><a href="#_assumptions_constraints_quality">12. Assumptions, Constraints &amp; Quality</a>
+<ul class="sectlevel2">
+<li><a href="#_assumptions">12.1. Assumptions</a></li>
+<li><a href="#_constraints">12.2. Constraints</a></li>
+<li><a href="#_dependencies">12.3. Dependencies</a></li>
+<li><a href="#_quality_scenarios_arc42">12.4. Quality Scenarios (arc42)</a></li>
+<li><a href="#_out_of_scope">12.5. Out of Scope</a></li>
+</ul>
+</li>
+<li><a href="#_recommended_next_steps">13. Recommended Next Steps</a></li>
+<li><a href="#_security_architecture">14. Security Architecture</a>
+<ul class="sectlevel2">
+<li><a href="#_authentication_authorization_flow">14.1. Authentication &amp; Authorization Flow</a></li>
+<li><a href="#_threat_model_stride">14.2. Threat Model (STRIDE)</a></li>
+<li><a href="#_data_protection">14.3. Data Protection</a></li>
+<li><a href="#_compliance_mapping">14.4. Compliance Mapping</a></li>
+</ul>
+</li>
+<li><a href="#_api_design">15. API Design</a>
+<ul class="sectlevel2">
+<li><a href="#_api_style_decision">15.1. API Style Decision</a></li>
+<li><a href="#_key_endpoints">15.2. Key Endpoints</a></li>
+<li><a href="#_integration_patterns">15.3. Integration Patterns</a></li>
+</ul>
+</li>
+<li><a href="#_deployment_infrastructure">16. Deployment &amp; Infrastructure</a>
+<ul class="sectlevel2">
+<li><a href="#_deployment_strategy">16.1. Deployment Strategy</a></li>
+<li><a href="#_environment_strategy">16.2. Environment Strategy</a></li>
+<li><a href="#_infrastructure_topology">16.3. Infrastructure Topology</a></li>
+</ul>
+</li>
+<li><a href="#_observability_monitoring">17. Observability &amp; Monitoring</a>
+<ul class="sectlevel2">
+<li><a href="#_slos_slis">17.1. SLOs / SLIs</a></li>
+<li><a href="#_observability_stack">17.2. Observability Stack</a></li>
+<li><a href="#_logging_strategy">17.3. Logging Strategy</a></li>
+</ul>
+</li>
+<li><a href="#_business_process_flows">18. Business Process Flows</a></li>
+<li><a href="#_entity_lifecycle">19. Entity Lifecycle</a></li>
+<li><a href="#_feature_breakdown">20. Feature Breakdown</a>
+<ul class="sectlevel2">
+<li><a href="#_mind_map">20.1. Mind Map</a></li>
+<li><a href="#_work_breakdown_structure">20.2. Work Breakdown Structure</a></li>
+</ul>
+</li>
+<li><a href="#_migration_transition">21. Migration &amp; Transition</a>
+<ul class="sectlevel2">
+<li><a href="#_migration_strategy">21.1. Migration Strategy</a></li>
+<li><a href="#_transition_phases">21.2. Transition Phases</a></li>
+<li><a href="#_rollback_plan">21.3. Rollback Plan</a></li>
+</ul>
+</li>
+<li><a href="#_architecture_decision_records">22. Architecture Decision Records</a></li>
+<li><a href="#_technical_deep_dives">23. Technical Deep Dives</a>
+<ul class="sectlevel2">
+<li><a href="#_performance_caching_strategy">23.1. [Performance &amp; Caching Strategy]</a></li>
+<li><a href="#_data_migration_etl_strategy">23.2. [Data Migration / ETL Strategy]</a></li>
+<li><a href="#_aiml_pipeline">23.3. [AI/ML Pipeline]</a></li>
+</ul>
+</li>
+<li><a href="#_glossary">24. Glossary</a></li>
+<li><a href="#_references">25. References</a></li>
+<li><a href="#_appendix">26. Appendix</a>
+<ul class="sectlevel2">
+<li><a href="#_diagram_engines_reference">26.1. Diagram Engines Reference</a>
+<ul class="sectlevel3">
+<li><a href="#_structurizr_c4_model_diagrams">26.1.1. Structurizr — C4 Model Diagrams</a></li>
+<li><a href="#_d2_component_infrastructure_diagrams">26.1.2. D2 — Component &amp; Infrastructure Diagrams</a></li>
+<li><a href="#_plantuml_behavioral_diagrams">26.1.3. PlantUML — Behavioral Diagrams</a></li>
+<li><a href="#_erd_data_model_diagrams">26.1.4. Erd — Data Model Diagrams</a></li>
+<li><a href="#_vega_lite_data_visualization">26.1.5. Vega-Lite — Data Visualization</a></li>
+</ul>
+</li>
+<li><a href="#_project_complexity_guide">26.2. Project Complexity Guide</a></li>
+<li><a href="#_rendering_instructions">26.3. Rendering Instructions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_version_history"><a class="anchor" href="#_version_history"></a>1. Version History</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Version</th>
+<th class="tableblock halign-left valign-top">Date</th>
+<th class="tableblock halign-left valign-top">Author</th>
+<th class="tableblock halign-left valign-top">Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[YYYY-MM-DD]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Author]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Initial draft</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[YYYY-MM-DD]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Author]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Description of changes]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_stakeholders"><a class="anchor" href="#_stakeholders"></a>2. Stakeholders</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Identifies who has a stake in the architecture decisions and what they care about.</p>
+</div>
+<div class="sect2">
+<h3 id="_stakeholder_register"><a class="anchor" href="#_stakeholder_register"></a>2.1. Stakeholder Register</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name / Role</th>
+<th class="tableblock halign-left valign-top">Organization</th>
+<th class="tableblock halign-left valign-top">Key Concerns</th>
+<th class="tableblock halign-left valign-top">Communication Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Sponsor Name]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Company / Dept]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Budget, timeline, business value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Executive summary, cost tables</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Tech Lead]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Company / Dept]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Technical feasibility, team capacity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture diagrams, API design</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Product Owner]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Company / Dept]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Feature scope, user experience</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Feature breakdown, user flows</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Security Officer]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Company / Dept]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Compliance, data protection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security architecture, threat model</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Ops / SRE Lead]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Company / Dept]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reliability, monitoring, deployment</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deployment view, SLOs, observability</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_raci_matrix"><a class="anchor" href="#_raci_matrix"></a>2.2. RACI Matrix</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 37.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Decision</th>
+<th class="tableblock halign-left valign-top">Sponsor</th>
+<th class="tableblock halign-left valign-top">Tech Lead</th>
+<th class="tableblock halign-left valign-top">Product Owner</th>
+<th class="tableblock halign-left valign-top">Security</th>
+<th class="tableblock halign-left valign-top">Ops</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture pattern selection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Technology stack decisions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security &amp; compliance approach</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deployment strategy</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">R</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Budget approval</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">I</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em>R = Responsible, A = Accountable, C = Consulted, I = Informed</em></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_executive_summary"><a class="anchor" href="#_executive_summary"></a>3. Executive Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>One paragraph: what is the system, why is it needed, what does this document recommend.</em></p>
+</div>
+<div class="sect2">
+<h3 id="_recommendation_at_a_glance"><a class="anchor" href="#_recommendation_at_a_glance"></a>3.1. Recommendation at a Glance</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Recommended Option</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Option N — Name]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated CAPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]/month</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] months</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team Size</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] developers</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key Risk</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Primary risk and mitigation]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_key_decisions"><a class="anchor" href="#_key_decisions"></a>3.2. Key Decisions</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Decision</th>
+<th class="tableblock halign-left valign-top">Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Decision 1]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this matters and what was decided]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Decision 2]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this matters and what was decided]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture_principles"><a class="anchor" href="#_architecture_principles"></a>4. Architecture Principles</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Guiding principles that shape all design decisions. Derived from TOGAF Preliminary Phase.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 18.1818%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2728%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Principle</th>
+<th class="tableblock halign-left valign-top">Statement</th>
+<th class="tableblock halign-left valign-top">Rationale</th>
+<th class="tableblock halign-left valign-top">Implications</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>API-First</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All capabilities are exposed via well-defined APIs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables multi-channel delivery and third-party integration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requires API design review before implementation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Cloud-Native</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Design for cloud deployment using managed services where practical</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reduces operational burden, enables elastic scaling</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vendor lock-in risk must be managed via abstraction layers</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Security by Design</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security controls are built-in, not bolted on</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reduces cost of security fixes, meets compliance requirements</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security review required at every design stage</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Observability by Default</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Every service emits logs, metrics, and traces from day one</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables rapid incident response and continuous performance optimization</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Standard telemetry libraries must be adopted across all services</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data as an Asset</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data quality, lineage, and governance are first-class concerns</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables analytics, ML, and regulatory compliance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requires data classification and retention policies per entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Principle N]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Statement]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why it matters]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[What it means for the project]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_problem_statement"><a class="anchor" href="#_problem_statement"></a>5. Problem Statement</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_current_pain_points"><a class="anchor" href="#_current_pain_points"></a>5.1. Current Pain Points</h3>
+<div class="paragraph">
+<p><em>Describe the problem users/business face today. What is broken, slow, manual, or missing?</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_current_state_architecture"><a class="anchor" href="#_current_state_architecture"></a>5.2. Current State Architecture</h3>
+<div class="paragraph">
+<p>Shows the existing system landscape (if applicable). Skip if greenfield.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-90c100f0417cc9d2a84c9ef21766c93ab99a7b2d.svg" alt="AS-IS Architecture">
+</div>
+<div class="title">Figure 1. AS-IS Architecture</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_proposed_solution"><a class="anchor" href="#_proposed_solution"></a>5.3. Proposed Solution</h3>
+<div class="paragraph">
+<p><em>2-3 sentences on the high-level approach: what type of system, key technology choices, core value proposition.</em></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_system_context_c4_model"><a class="anchor" href="#_system_context_c4_model"></a>6. System Context (C4 Model)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Defines the system boundary, actors, and external dependencies using the C4 Model.
+All three views below share one Structurizr model — define the model once, render three views.</p>
+</div>
+<div class="sect2">
+<h3 id="_context_diagram_level_1"><a class="anchor" href="#_context_diagram_level_1"></a>6.1. Context Diagram (Level 1)</h3>
+<div class="paragraph">
+<p>Shows the system as a black box — who uses it and what it depends on.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-da9bf47b1a9de01c67c6fb85bc681be3195bab2f.svg" alt="System Context — [Project Name]">
+</div>
+<div class="title">Figure 2. System Context — [Project Name]</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_container_diagram_level_2"><a class="anchor" href="#_container_diagram_level_2"></a>6.2. Container Diagram (Level 2)</h3>
+<div class="paragraph">
+<p>Shows the applications, data stores, and message brokers inside the system boundary.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-5b9a3b61718b9aa266bc608723e955656e0a7d05.svg" alt="Container View — [Project Name]">
+</div>
+<div class="title">Figure 3. Container View — [Project Name]</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deployment_diagram"><a class="anchor" href="#_deployment_diagram"></a>6.3. Deployment Diagram</h3>
+<div class="paragraph">
+<p>Shows infrastructure nodes and how containers map to them.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-3296d79ff8c4033152b441110accd3a78b1cbd82.svg" alt="Deployment View — [Project Name] Production">
+</div>
+<div class="title">Figure 4. Deployment View — [Project Name] Production</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture"><a class="anchor" href="#_architecture"></a>7. Architecture</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_component_overview"><a class="anchor" href="#_component_overview"></a>7.1. Component Overview</h3>
+<div class="paragraph">
+<p>Shows internal services, data stores, and how they connect.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-be834e1670d039ae9b6b7ae1b822f43dfd1ff0ed.svg" alt="Component Architecture — [Project Name]">
+</div>
+<div class="title">Figure 5. Component Architecture — [Project Name]</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_data_architecture"><a class="anchor" href="#_data_architecture"></a>8. Data Architecture</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_data_model"><a class="anchor" href="#_data_model"></a>8.1. Data Model</h3>
+<div class="paragraph">
+<p>Entity-relationship diagram showing the core domain model.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-d25205a645c1c9f01ff9419bcee82d607b6b6d91.svg" alt="Data Model — [Project Name]">
+</div>
+<div class="title">Figure 6. Data Model — [Project Name]</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_data_classification"><a class="anchor" href="#_data_classification"></a>8.2. Data Classification</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5715%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Data Entity</th>
+<th class="tableblock halign-left valign-top">Classification</th>
+<th class="tableblock halign-left valign-top">Retention</th>
+<th class="tableblock halign-left valign-top">Encryption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User credentials</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Restricted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Account lifetime + 30 days</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 at rest, TLS 1.3 in transit</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PII (name, email)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Confidential</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Account lifetime + GDPR deletion</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 at rest, TLS 1.3 in transit</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Project data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Internal</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Active + 1 year archived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.3 in transit</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Audit logs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Internal</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 years (compliance)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.3 in transit</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Analytics / telemetry</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Public</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">90 days raw, 2 years aggregated</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.3 in transit</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_data_flow"><a class="anchor" href="#_data_flow"></a>8.3. Data Flow</h3>
+<div class="paragraph">
+<p><em>Describe how data moves through the system: ingestion → processing → storage → delivery. Reference the sequence diagrams in the Key Flows section for runtime behavior.</em></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_key_flows"><a class="anchor" href="#_key_flows"></a>9. Key Flows</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_happy_path_primary_use_case"><a class="anchor" href="#_happy_path_primary_use_case"></a>9.1. Happy Path — [Primary Use Case]</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-8f776cada6d6b5e250f2c497edc8dc6b53984af8.svg" alt="Core Flow — [Use Case Name]">
+</div>
+<div class="title">Figure 7. Core Flow — [Use Case Name]</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_error_edge_case_secondary_flow"><a class="anchor" href="#_error_edge_case_secondary_flow"></a>9.2. Error / Edge Case — [Secondary Flow]</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-97ddefa26743f214953846c89153d5f98479c221.svg" alt="Error Flow — [Scenario Name]">
+</div>
+<div class="title">Figure 8. Error Flow — [Scenario Name]</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options_comparison"><a class="anchor" href="#_options_comparison"></a>10. Options Comparison</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_summary_matrix"><a class="anchor" href="#_summary_matrix"></a>10.1. Summary Matrix</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Option 1: MVP</th>
+<th class="tableblock halign-left valign-top">Option 2: Full</th>
+<th class="tableblock halign-left valign-top">Option 3: Scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Core features only</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All features</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All + multi-region</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team size</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_weighted_scoring_matrix"><a class="anchor" href="#_weighted_scoring_matrix"></a>10.2. Weighted Scoring Matrix</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 42.8571%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Criteria (weight)</th>
+<th class="tableblock halign-left valign-top">Weight</th>
+<th class="tableblock halign-left valign-top">Option 1</th>
+<th class="tableblock halign-left valign-top">Option 2</th>
+<th class="tableblock halign-left valign-top">Option 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Time to Market</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total Cost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Feature Completeness</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operational Risk</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Weighted Total</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>44</strong></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em>Score: 1 (worst) to 5 (best). Total = Σ(weight × score).</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>10.3. Cost Comparison</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-eb61a85a6cc400a73a75438439d57c77855041a2.svg" alt="OPEX Comparison by Option">
+</div>
+<div class="title">Figure 9. OPEX Comparison by Option</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_option_n_option_name"><a class="anchor" href="#_option_n_option_name"></a>11. Option [N]: [Option Name]</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_overview"><a class="anchor" href="#_overview"></a>11.1. Overview</h3>
+<div class="paragraph">
+<p><em>2-3 sentences: what this option delivers, team size, timeline.</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pros_cons"><a class="anchor" href="#_pros_cons"></a>11.2. Pros &amp; Cons</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Pros</th>
+<th class="tableblock halign-left valign-top">Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 2]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 3]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 3]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_architecture_2"><a class="anchor" href="#_architecture_2"></a>11.3. Architecture</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-33ad79f7b8b4c5ebbb6860af685e37cc1d40b777.svg" alt="Option [N] Architecture">
+</div>
+<div class="title">Figure 10. Option [N] Architecture</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cost_breakdown"><a class="anchor" href="#_cost_breakdown"></a>11.4. Cost Breakdown</h3>
+<div class="sect3">
+<h4 id="_capex_one_time"><a class="anchor" href="#_capex_one_time"></a>11.4.1. CAPEX (One-Time)</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Item</th>
+<th class="tableblock halign-left valign-top">Count</th>
+<th class="tableblock halign-left valign-top">Rate</th>
+<th class="tableblock halign-left valign-top">Duration</th>
+<th class="tableblock halign-left valign-top">Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Backend Developer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile Developer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cloud Setup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL CAPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_opex_monthly"><a class="anchor" href="#_opex_monthly"></a>11.4.2. OPEX (Monthly)</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Service</th>
+<th class="tableblock halign-left valign-top">Spec</th>
+<th class="tableblock halign-left valign-top">Monthly Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Compute (ECS/EKS)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Database (RDS)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cache (ElastiCache)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Storage (S3)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Monitoring (CloudWatch)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]/mo</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_timeline"><a class="anchor" href="#_timeline"></a>11.5. Timeline</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-1430ee39b50360e36006e2614ea8ded98991456c.svg" alt="Option [N] Development Timeline">
+</div>
+<div class="title">Figure 11. Option [N] Development Timeline</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_risk_assessment"><a class="anchor" href="#_risk_assessment"></a>11.6. Risk Assessment</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 33.3335%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Risk</th>
+<th class="tableblock halign-left valign-top">Probability</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Risk 1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How to mitigate]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Risk 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How to mitigate]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_assumptions_constraints_quality"><a class="anchor" href="#_assumptions_constraints_quality"></a>12. Assumptions, Constraints &amp; Quality</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_assumptions"><a class="anchor" href="#_assumptions"></a>12.1. Assumptions</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Assumption 1 — e.g., Cloud provider account is provisioned]</p>
+</li>
+<li>
+<p>[Assumption 2 — e.g., Team has React and Node.js experience]</p>
+</li>
+<li>
+<p>[Assumption 3 — e.g., Third-party API SLA is 99.9%]</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_constraints"><a class="anchor" href="#_constraints"></a>12.2. Constraints</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Constraint 1 — e.g., Must use existing corporate SSO]</p>
+</li>
+<li>
+<p>[Constraint 2 — e.g., Budget capped at $X]</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dependencies"><a class="anchor" href="#_dependencies"></a>12.3. Dependencies</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Dependency</th>
+<th class="tableblock halign-left valign-top">Owner</th>
+<th class="tableblock halign-left valign-top">Expected Date</th>
+<th class="tableblock halign-left valign-top">Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Auth provider API access]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Security team]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[2026-03-15]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Payment gateway sandbox]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Finance team]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[2026-03-01]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_quality_scenarios_arc42"><a class="anchor" href="#_quality_scenarios_arc42"></a>12.4. Quality Scenarios (arc42)</h3>
+<div class="paragraph">
+<p>Measurable quality requirements with concrete scenarios.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 22.2222%;">
+<col style="width: 22.2222%;">
+<col style="width: 33.3333%;">
+<col style="width: 22.2223%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Quality Attribute</th>
+<th class="tableblock halign-left valign-top">Stimulus</th>
+<th class="tableblock halign-left valign-top">Expected Response</th>
+<th class="tableblock halign-left valign-top">Measure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000 concurrent users submit requests</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">System responds within SLA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P95 latency &lt; 200ms</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Primary database fails</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">System fails over to read replica</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Recovery &lt; 30 seconds</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Attacker submits SQL injection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Input is sanitized, attack is logged</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Zero data exposure</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Traffic increases 10× during event</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Auto-scaling provisions resources</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No degradation above P95 target</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_out_of_scope"><a class="anchor" href="#_out_of_scope"></a>12.5. Out of Scope</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Item 1 — e.g., Native desktop application]</p>
+</li>
+<li>
+<p>[Item 2 — e.g., Multi-language support in Phase 1]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_recommended_next_steps"><a class="anchor" href="#_recommended_next_steps"></a>13. Recommended Next Steps</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>[Step 1 — e.g., Approve Option N at steering committee]</p>
+</li>
+<li>
+<p>[Step 2 — e.g., Finalize team allocation and onboarding]</p>
+</li>
+<li>
+<p>[Step 3 — e.g., Begin POC sprint (2 weeks)]</p>
+</li>
+<li>
+<p>[Step 4 — e.g., Schedule architecture review with security team]</p>
+</li>
+<li>
+<p>[Step 5 — e.g., Set up CI/CD pipeline and environments]</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_security_architecture"><a class="anchor" href="#_security_architecture"></a>14. Security Architecture</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_authentication_authorization_flow"><a class="anchor" href="#_authentication_authorization_flow"></a>14.1. Authentication &amp; Authorization Flow</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-b2712b2d84aa12778bf3727dee906fcf135791c8.svg" alt="OAuth2 / OIDC Authentication Flow">
+</div>
+<div class="title">Figure 12. OAuth2 / OIDC Authentication Flow</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_threat_model_stride"><a class="anchor" href="#_threat_model_stride"></a>14.2. Threat Model (STRIDE)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Threat</th>
+<th class="tableblock halign-left valign-top">Category</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Mitigation</th>
+<th class="tableblock halign-left valign-top">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stolen JWT tokens</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Spoofing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Short TTL (15min), refresh rotation, token blacklist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Planned / Implemented]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL injection via API</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tampering</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Critical</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parameterized queries, input validation, WAF rules</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Planned / Implemented]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unauthorized data access</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Elevation of Privilege</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RBAC enforcement at API gateway + service level</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Planned / Implemented]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sensitive data in logs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Information Disclosure</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PII redaction in logging pipeline, log access controls</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Planned / Implemented]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API abuse / DDoS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Denial of Service</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rate limiting, WAF, auto-scaling, CDN absorption</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Planned / Implemented]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_data_protection"><a class="anchor" href="#_data_protection"></a>14.3. Data Protection</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Control</th>
+<th class="tableblock halign-left valign-top">Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Encryption at rest</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 via [KMS / managed keys]. Database: TDE. Storage: SSE-S3/SSE-KMS</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Encryption in transit</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.3 for all external connections. mTLS for service-to-service</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key management</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[AWS KMS / Azure Key Vault / HashiCorp Vault]. Key rotation every 90 days</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Secrets management</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[AWS Secrets Manager / Vault]. No secrets in code or environment variables</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Network segmentation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Public subnet (LB only) → Private subnet (apps) → Private subnet (data). No direct internet access from data tier</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_compliance_mapping"><a class="anchor" href="#_compliance_mapping"></a>14.4. Compliance Mapping</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Requirement</th>
+<th class="tableblock halign-left valign-top">Regulation</th>
+<th class="tableblock halign-left valign-top">Architectural Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Right to deletion</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GDPR Art. 17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Soft-delete with 30-day purge job, cascade to all related data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data portability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GDPR Art. 20</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Export API endpoint returning user data in JSON/CSV</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access logging</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SOC 2 CC6.1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Audit log for all data access, 7-year retention</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Encryption at rest</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PCI-DSS Req. 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 encryption for all stored data via KMS</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_api_design"><a class="anchor" href="#_api_design"></a>15. API Design</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_api_style_decision"><a class="anchor" href="#_api_style_decision"></a>15.1. API Style Decision</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Style</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[REST / GraphQL / gRPC / Event-driven]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Rationale</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this style fits the use case]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Versioning</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[URL path (/v1/) / Header / Query parameter]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Authentication</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer JWT tokens via Authorization header</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_key_endpoints"><a class="anchor" href="#_key_endpoints"></a>15.2. Key Endpoints</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 11.1111%;">
+<col style="width: 22.2222%;">
+<col style="width: 33.3333%;">
+<col style="width: 11.1111%;">
+<col style="width: 22.2223%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Method</th>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Auth</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GET</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/api/v1/[resources]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List all [resources] with pagination</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supports ?page=&amp;limit=&amp;sort=</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POST</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/api/v1/[resources]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Create a new [resource]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Validates against JSON Schema</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GET</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/api/v1/[resources]/{id}</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get [resource] by ID</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns 404 if not found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PUT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/api/v1/[resources]/{id}</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update [resource]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full replacement, requires all fields</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DELETE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/api/v1/[resources]/{id}</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Soft-delete [resource]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer + Admin</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets status=archived, audit logged</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_integration_patterns"><a class="anchor" href="#_integration_patterns"></a>15.3. Integration Patterns</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Integration</th>
+<th class="tableblock halign-left valign-top">Pattern</th>
+<th class="tableblock halign-left valign-top">Protocol</th>
+<th class="tableblock halign-left valign-top">Error Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Auth Provider]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request-Response (sync)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OAuth2 / HTTPS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Circuit breaker, 3 retries with exponential backoff</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Payment Gateway]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request-Response (sync)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">REST / HTTPS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Idempotency keys, webhook confirmation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Notification Service]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Event-Driven (async)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message queue (AMQP)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dead letter queue, 5 retries</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Analytics]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fire-and-Forget (async)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message queue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Best effort, no retry</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deployment_infrastructure"><a class="anchor" href="#_deployment_infrastructure"></a>16. Deployment &amp; Infrastructure</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_deployment_strategy"><a class="anchor" href="#_deployment_strategy"></a>16.1. Deployment Strategy</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Strategy</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Blue-Green / Canary / Rolling]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Rationale</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this strategy fits]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Rollback</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How to roll back: revert deployment, feature flag, database migration rollback]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_environment_strategy"><a class="anchor" href="#_environment_strategy"></a>16.2. Environment Strategy</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Environment</th>
+<th class="tableblock halign-left valign-top">Purpose</th>
+<th class="tableblock halign-left valign-top">Infrastructure</th>
+<th class="tableblock halign-left valign-top">Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Development</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Daily development and testing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Shared, minimal resources</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Synthetic test data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Staging</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pre-production validation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Production-like, scaled down</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Anonymized production snapshot</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Production</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Live user traffic</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full scale, multi-AZ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Real data, encrypted</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_infrastructure_topology"><a class="anchor" href="#_infrastructure_topology"></a>16.3. Infrastructure Topology</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-db46f467ffb91c018f1211377fe6dd7af227a9c3.svg" alt="Infrastructure Overview — [Project Name]">
+</div>
+<div class="title">Figure 13. Infrastructure Overview — [Project Name]</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_observability_monitoring"><a class="anchor" href="#_observability_monitoring"></a>17. Observability &amp; Monitoring</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_slos_slis"><a class="anchor" href="#_slos_slis"></a>17.1. SLOs / SLIs</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Service Level Objective</th>
+<th class="tableblock halign-left valign-top">Indicator (SLI)</th>
+<th class="tableblock halign-left valign-top">Target</th>
+<th class="tableblock halign-left valign-top">Alert Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successful requests / total requests</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">99.9% (monthly)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 99.5% over 5 min</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Latency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P95 response time</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 200ms</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 500ms over 5 min</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Error rate</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5xx responses / total responses</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 0.1%</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 1% over 5 min</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Throughput</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requests per second</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 1000 RPS sustained</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 500 RPS over 5 min</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_observability_stack"><a class="anchor" href="#_observability_stack"></a>17.2. Observability Stack</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-31a7dadb480f29609c7cd1f058ec7cef3a57650a.svg" alt="Observability Architecture">
+</div>
+<div class="title">Figure 14. Observability Architecture</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_logging_strategy"><a class="anchor" href="#_logging_strategy"></a>17.3. Logging Strategy</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Format</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Structured JSON (timestamp, level, service, traceId, message, context)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Levels</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ERROR: failures requiring attention. WARN: degraded but functional. INFO: business events. DEBUG: diagnostic (staging only)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>PII handling</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Automatic redaction of email, phone, IP via logging pipeline filter</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Retention</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">30 days hot (searchable), 90 days warm (archived), 7 years cold (compliance)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_business_process_flows"><a class="anchor" href="#_business_process_flows"></a>18. Business Process Flows</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Shows decision flows and business process logic.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-5cd3974ca27a62cb155873be5d78b247b814987c.svg" alt="Business Process — [Process Name]">
+</div>
+<div class="title">Figure 15. Business Process — [Process Name]</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_entity_lifecycle"><a class="anchor" href="#_entity_lifecycle"></a>19. Entity Lifecycle</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Shows entity lifecycle — useful for orders, tickets, deployments, etc.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-884f0399b8ce5a7fa84a7a9360a8e464931a4845.svg" alt="Entity Lifecycle — [Entity Name]">
+</div>
+<div class="title">Figure 16. Entity Lifecycle — [Entity Name]</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_feature_breakdown"><a class="anchor" href="#_feature_breakdown"></a>20. Feature Breakdown</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_mind_map"><a class="anchor" href="#_mind_map"></a>20.1. Mind Map</h3>
+<div class="paragraph">
+<p>Quick visual of feature areas and sub-features.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-1413af4145a49c342bcb748ceecd84b0f40126b3.svg" alt="Feature Breakdown — [Project Name]">
+</div>
+<div class="title">Figure 17. Feature Breakdown — [Project Name]</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_work_breakdown_structure"><a class="anchor" href="#_work_breakdown_structure"></a>20.2. Work Breakdown Structure</h3>
+<div class="paragraph">
+<p>Hierarchical decomposition of deliverables — useful for estimation and planning.</p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diag-15fa4b6bd4488285474e46bbb87cb78138764de9.svg" alt="Work Breakdown — [Project Name]">
+</div>
+<div class="title">Figure 18. Work Breakdown — [Project Name]</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_migration_transition"><a class="anchor" href="#_migration_transition"></a>21. Migration &amp; Transition</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_migration_strategy"><a class="anchor" href="#_migration_strategy"></a>21.1. Migration Strategy</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pattern</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Big-bang / Strangler Fig / Parallel Run / Phased cutover]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Rationale</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this pattern fits the project risk profile and timeline]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data migration</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ETL pipeline / database replication / manual export-import]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Feature parity check</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How to validate the new system matches old system behavior]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_transition_phases"><a class="anchor" href="#_transition_phases"></a>21.2. Transition Phases</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5715%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Phase</th>
+<th class="tableblock halign-left valign-top">What Happens</th>
+<th class="tableblock halign-left valign-top">Duration</th>
+<th class="tableblock halign-left valign-top">Success Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1. Shadow Mode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">New system runs alongside old, receives mirrored traffic</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 weeks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 1% response difference</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2. Canary</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10% of real traffic routed to new system</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 week</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Error rate ≤ old system</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3. Incremental</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gradually shift 25% → 50% → 75% → 100%</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 weeks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SLO targets met at each step</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4. Decommission</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Old system shut down, DNS/routes updated</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 week</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Zero traffic to old system</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_rollback_plan"><a class="anchor" href="#_rollback_plan"></a>21.3. Rollback Plan</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Trigger</strong>: [Define what conditions trigger a rollback — e.g., error rate &gt; 5%, P95 &gt; 1s]</p>
+</li>
+<li>
+<p><strong>Process</strong>: [DNS failback / feature flag toggle / container image revert]</p>
+</li>
+<li>
+<p><strong>Data</strong>: [How to handle data written to new system during cutover — replay, reconcile, or discard]</p>
+</li>
+<li>
+<p><strong>Communication</strong>: [Who is notified, status page update, stakeholder email]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture_decision_records"><a class="anchor" href="#_architecture_decision_records"></a>22. Architecture Decision Records</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Summary of key architecture decisions. Full ADR details in separate files (see <code>template/adr-template.adoc</code>).</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 11.1111%;">
+<col style="width: 33.3333%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">Title</th>
+<th class="tableblock halign-left valign-top">Status</th>
+<th class="tableblock halign-left valign-top">Date</th>
+<th class="tableblock halign-left valign-top">Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADR-001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Use PostgreSQL over MongoDB]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Accepted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[YYYY-MM-DD]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[One sentence: why this was decided]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADR-002</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Event-driven async processing]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Accepted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[YYYY-MM-DD]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[One sentence: why this was decided]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADR-003</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., API Gateway pattern with rate limiting]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Proposed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[YYYY-MM-DD]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[One sentence: what is being proposed]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technical_deep_dives"><a class="anchor" href="#_technical_deep_dives"></a>23. Technical Deep Dives</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_performance_caching_strategy"><a class="anchor" href="#_performance_caching_strategy"></a>23.1. [Performance &amp; Caching Strategy]</h3>
+<div class="paragraph">
+<p><em>Technical details: caching layers, cache invalidation strategy, CDN configuration, database query optimization, connection pooling.</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_data_migration_etl_strategy"><a class="anchor" href="#_data_migration_etl_strategy"></a>23.2. [Data Migration / ETL Strategy]</h3>
+<div class="paragraph">
+<p><em>Technical details: data transformation rules, validation logic, idempotency, error handling, progress tracking.</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_aiml_pipeline"><a class="anchor" href="#_aiml_pipeline"></a>23.3. [AI/ML Pipeline]</h3>
+<div class="paragraph">
+<p><em>Technical details: model serving infrastructure, training pipeline, feature store, model versioning, A/B testing framework.</em></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_glossary"><a class="anchor" href="#_glossary"></a>24. Glossary</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Term</th>
+<th class="tableblock halign-left valign-top">Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Term 1]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Clear definition in the context of this project]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Term 2]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Clear definition in the context of this project]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>SLO</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Service Level Objective — a target level of reliability measured by SLIs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>SLI</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Service Level Indicator — a quantitative measure of service reliability</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>ADR</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture Decision Record — a document capturing a significant design decision</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Capital Expenditure — one-time upfront costs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operational Expenditure — recurring monthly/annual costs</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>25. References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>[Link to external spec or RFC]</p>
+</li>
+<li>
+<p>[Link to vendor documentation]</p>
+</li>
+<li>
+<p>[Link to related ADR files]</p>
+</li>
+<li>
+<p>[Link to API documentation / Swagger]</p>
+</li>
+<li>
+<p>[Link to compliance framework documentation]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_appendix"><a class="anchor" href="#_appendix"></a>26. Appendix</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_diagram_engines_reference"><a class="anchor" href="#_diagram_engines_reference"></a>26.1. Diagram Engines Reference</h3>
+<div class="paragraph">
+<p>This template uses five diagram engines via Kroki. All are built into the <code>yuzutech/kroki</code> container (no additional setup).</p>
+</div>
+<div class="sect3">
+<h4 id="_structurizr_c4_model_diagrams"><a class="anchor" href="#_structurizr_c4_model_diagrams"></a>26.1.1. Structurizr — C4 Model Diagrams</h4>
+<div class="paragraph">
+<p>System context, container, deployment views from a shared model.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>`[structurizr,format=svg,view-key=myView]` with Structurizr DSL</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_d2_component_infrastructure_diagrams"><a class="anchor" href="#_d2_component_infrastructure_diagrams"></a>26.1.2. D2 — Component &amp; Infrastructure Diagrams</h4>
+<div class="paragraph">
+<p>Modern layout (ELK), nested containers, professional themes.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>`[d2,format=svg,layout=elk]` with D2 language</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_plantuml_behavioral_diagrams"><a class="anchor" href="#_plantuml_behavioral_diagrams"></a>26.1.3. PlantUML — Behavioral Diagrams</h4>
+<div class="paragraph">
+<p>Sequence, activity, state, Gantt, mind map, WBS.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>`[plantuml,format=svg]` with `@startuml/@enduml` or `@startgantt/@endgantt` etc.</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_erd_data_model_diagrams"><a class="anchor" href="#_erd_data_model_diagrams"></a>26.1.4. Erd — Data Model Diagrams</h4>
+<div class="paragraph">
+<p>Entity-relationship diagrams with Chen notation.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>`[erd,format=svg]` with Erd language</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_vega_lite_data_visualization"><a class="anchor" href="#_vega_lite_data_visualization"></a>26.1.5. Vega-Lite — Data Visualization</h4>
+<div class="paragraph">
+<p>Statistical charts for cost comparison, capacity planning.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>`[vegalite,format=svg]` with JSON specification</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_project_complexity_guide"><a class="anchor" href="#_project_complexity_guide"></a>26.2. Project Complexity Guide</h3>
+<div class="paragraph">
+<p>Which sections to include based on project size:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Section</th>
+<th class="tableblock halign-left valign-top">Small</th>
+<th class="tableblock halign-left valign-top">Medium</th>
+<th class="tableblock halign-left valign-top">Large</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Version History</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stakeholders</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Executive Summary</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture Principles</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Problem Statement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C4 Context (Level 1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C4 Container (Level 2)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">C4 Deployment</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Component Architecture</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data Architecture</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Key Flows</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Options Comparison</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Option Detail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Assumptions &amp; Quality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security Architecture</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API Design</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deployment &amp; Infrastructure</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Observability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Business Process Flows</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Entity Lifecycle</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Feature Breakdown</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Migration &amp; Transition</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADRs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Technical Deep Dives</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Glossary</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_rendering_instructions"><a class="anchor" href="#_rendering_instructions"></a>26.3. Rendering Instructions</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash"># Start Kroki server (from repository root)
+docker-compose up -d
+
+# Render to HTML
+npx asciidoctor -r asciidoctor-kroki template/solution-design-template.adoc
+
+# Open in browser (Windows)
+start template/solution-design-template.html
+
+# Open in browser (macOS)
+open template/solution-design-template.html
+
+# Open in browser (Linux)
+xdg-open template/solution-design-template.html</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.1<br>
+Last updated 2026-02-13 00:40:38 +0100
+</div>
+</div>
+</body>
+</html>
