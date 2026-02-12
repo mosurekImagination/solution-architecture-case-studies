@@ -69,12 +69,13 @@ generate_case_study() {
             output_dir_clean="${output_dir#./}"
             output_dir_in_container="/app/${output_dir_clean}"
             
-            # Run the diagram generation
-            docker-compose run --rm \
+            # Run the diagram generation (MSYS_NO_PATHCONV prevents Git Bash path mangling)
+            # < /dev/null prevents docker from consuming stdin (the while-read file list)
+            MSYS_NO_PATHCONV=1 docker-compose run --rm -T \
                 -e CASE_STUDY_DIR="$case_study" \
                 -e PYTHON_FILE="$python_file_in_container" \
                 -e OUTPUT_DIR="$output_dir_in_container" \
-                diagrams python "$python_file_in_container"
+                diagrams python "$python_file_in_container" < /dev/null
         fi
     done <<< "$python_files"
     

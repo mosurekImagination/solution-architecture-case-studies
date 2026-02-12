@@ -91,14 +91,14 @@
 
 | | **Option 1** | **Option 2** (⭐ RECOMMENDED) | **Option 3** | **Option 4** |
 |---|---|---|---|---|
-| **CAPEX** | $224k | $719k | $2.17M | +$1.22M (migration) |
-| **Monthly** | $835 | $1,810-$2,260 | $4,665 | $130k |
-| **Total Year 1** | $618k | $1.74M | $4.59M | $10.8M+ |
-| **Timeline** | 4 mo | 4-7 mo | 10 mo | 4-5 years |
+| **CAPEX** | $240k | $532k | $1.65M | $3.53M |
+| **Monthly OPEX** | $835 | $2,630 | $6,550 | $74,800 |
+| **Total Year 1** | $250k + OPEX | $564k + OPEX | $1.73M + OPEX | $3.53M + OPEX |
+| **Timeline** | 4 mo | 7 mo (MVP at 4) | 10 mo | 12 mo migration |
 | **Features** | MVP only | MVP + Full | Complete | 50M+ scale |
-| **Regions** | US only | **US + China** | US+China+EU | Global |
-| **Risk** | High | Medium | Low | Long-term investment |
-| **Team Size** | 5 people | 8 people | 16 people | 60+ people |
+| **Regions** | US only | **US + China** | US+China+EU | Global (5 regions) |
+| **Risk Buffer** | 25% | 25-35% | 30-40% | 35-45% |
+| **Dev Team** | 4 devs | 4→6 devs | 8→10 devs | 15 devs |
 
 **Option 2 Recommendation Rationale:**
 - Balanced cost/features ratio
