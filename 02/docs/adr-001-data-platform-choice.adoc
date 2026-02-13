@@ -1,0 +1,172 @@
+= ADR-001: Choose Data Platform for Recommendation Engine
+:author: Solution Architect
+:revdate: 2026-02-13
+:status: Proposed
+:deciders: Solution Architect, Client Technical Lead, Client Sponsor
+:reversibility: Hard
+:validated-by: Not yet validated
+:toc:
+:icons: font
+
+// ============================================================================
+// ARCHITECTURE DECISION RECORD — Case Study 02
+// ============================================================================
+//
+// Decision on the core data platform technology for building the customer
+// engagement pipeline and recommendation engine.
+//
+// Client Representative explicitly mentioned Snowflake and Databricks as
+// options during the initial meeting. This ADR formalizes the comparison.
+//
+// ============================================================================
+
+== Context
+
+The client — an international European webshop chain with 15 years of operational history and ~1M daily customers — needs a centralized analytical data platform to:
+
+1. **Consolidate data** from isolated sources (WordPress DB, mobile app via external vendor, multiple wholesaler feeds)
+2. **Process and transform** raw transactional data into analytical structures suitable for customer profiling
+3. **Power a recommendation engine** that generates personalized product suggestions
+4. **Enable self-service analytics** for the marketing team
+
+The client's internal team is not deeply technical and has limited data engineering experience. The chosen platform must balance analytical capability with operational simplicity, as the client will eventually need to own and operate it.
+
+The Client Representative explicitly mentioned **Snowflake** and **Databricks** as technology options to investigate, noting:
+
+- Snowflake is "more like a Data Lake" — good for having everything in one place and running queries
+- Databricks is "more complex and robust" — allows building various pipeline types and potentially training AI models
+- Snowflake is more popular on AWS; Databricks is gaining momentum
+- "Your AI is only as good as your data" — data quality is the critical foundation
+
+**Relevant constraints:**
+
+* Client team is not deeply technical — steep learning curves are risky
+* No confirmed data engineering expertise on client side
+* Must operate within EU for GDPR data residency compliance
+* WordPress must remain as-is — the platform is additive, not replacing existing systems
+* Mobile app data access is restricted (external vendor, email-gated) — ingestion complexity varies
+* Budget not yet confirmed — cost predictability matters for enterprise approval
+* The platform should be extensible to AI/ML workloads in the future
+
+**Related sections in Solution Design:**
+
+* § System Context — shows where the data platform fits in the overall architecture
+* § Data Architecture — data flow from sources through ETL to analytical store
+* § Options Comparison — this ADR details the platform choice that underpins all three options
+
+== Decision
+
+**We will use Snowflake as the analytical data platform because it provides the best balance of analytical capability, operational simplicity, and cost predictability for a team with limited data engineering experience.**
+
+Snowflake will serve as:
+
+- The **centralized analytical data store** (OLAP) receiving data from all sources via ETL
+- The **query engine** for customer segmentation and recommendation generation
+- The **data warehouse** powering analytics dashboards for the marketing team
+
+ETL orchestration will be handled by **dbt** (transformation) + **Apache Airflow** or a managed equivalent (orchestration), deployed on AWS alongside Snowflake.
+
+If the client's needs evolve to require custom ML model training (beyond SQL-based analytics and basic ML via Snowpark), migration to Databricks or addition of SageMaker can be evaluated in a future ADR.
+
+== Alternatives Considered
+
+[cols="2,3,3,3"]
+|===
+|Alternative |Pros |Cons |Why Not Chosen
+
+|**Snowflake (Data Cloud)** ✓ CHOSEN
+|Mature managed service with minimal ops burden. Strong SQL-first approach — accessible to non-ML engineers. Auto-scaling compute with pay-per-query pricing. Popular on AWS with large community. Snowpark enables Python/ML workloads. Strong GDPR compliance (EU regions available). Simpler learning curve for client team.
+|Proprietary — vendor lock-in risk. Limited native ML capabilities compared to Databricks (improving with Snowpark). Cost can spike with unoptimized queries at scale. Not ideal for real-time streaming (batch-oriented).
+|**CHOSEN** — best fit for current team skills, operational simplicity, and phase 1 requirements.
+
+|**Databricks (Data Lakehouse)**
+|Unified analytics and ML platform. Native MLflow for model training, tracking, and deployment. Supports streaming (Spark Structured Streaming) + batch. Open-source foundations (Apache Spark, Delta Lake). More advanced AI/ML capabilities out of the box. Flexible compute (notebooks, jobs, SQL warehouses).
+|Higher operational complexity — requires Spark expertise. Steeper learning curve for non-data-engineering teams. More complex pricing model (DBUs). Overengineered for Phase 1 scope (email suggestions). Requires more DevOps maturity to operate.
+|Client team lacks data engineering depth. Phase 1 requirements (ETL + SQL analytics + email) don't justify the complexity. Databricks becomes relevant only if custom ML model training is needed (Phase 4+). Can be reconsidered in future ADR.
+
+|**Custom ETL + PostgreSQL/BigQuery (Open Source)**
+|Lowest license cost (open-source ETL tools). No vendor lock-in. Full control over pipeline. Team can use familiar technologies (Python, SQL, PostgreSQL).
+|High operational burden — must manage infrastructure, scaling, monitoring. No managed auto-scaling. Slower to build — must build what Snowflake/Databricks provide out of the box. Limited analytical query performance at TB-scale. Requires dedicated DevOps/platform engineer.
+|Client explicitly mentioned Snowflake/Databricks — open-source is outside their expressed interest. Operational burden contradicts the "not deeply technical" team profile. Time-to-value is significantly longer. False economy — ops cost offsets license savings.
+|===
+
+== Consequences
+
+=== Positive
+
+* **Reduced operational burden** — Snowflake is fully managed; no infrastructure to maintain, auto-scaling, auto-suspend
+* **SQL-first approach** — accessible to the broadest range of team members, including marketing analysts
+* **Predictable costs** — pay-per-query model with auto-suspend means idle clusters don't cost money
+* **Fast time to value** — dbt + Snowflake is a well-established pattern; many pre-built connectors and templates available
+* **EU compliance ready** — Snowflake offers EU-hosted regions (Frankfurt, Dublin, etc.)
+* **Extensibility** — Snowpark allows Python/ML workloads when the team is ready for advanced analytics
+
+=== Negative
+
+* **Vendor lock-in** — Snowflake SQL extensions and Snowpark are proprietary; migration to another platform requires rework
+* **Limited real-time capability** — Snowflake is batch-oriented; if real-time suggestions are needed later, additional infrastructure (Kafka, Flink) would be required
+* **ML ceiling** — for advanced custom model training (deep learning, complex recommendation algorithms), Snowpark may not suffice; Databricks or SageMaker would be needed
+* **Query cost discipline required** — unoptimized queries or dashboard refreshes can spike costs unexpectedly
+
+=== Dependency & Hiring Impact
+
+* **Dependency accumulation risk:** Adds Snowflake as a critical runtime dependency. If Snowflake changes pricing dramatically or has regional outages, the entire analytics pipeline is affected. Mitigation: data is replicated from source systems, so Snowflake is reconstructable.
+* **Hiring impact:** Snowflake skills are widely available in the market (more so than Databricks/Spark). SQL proficiency is sufficient for most operations. This **widens** the hiring pool compared to Databricks.
+* **Operational burden:** Minimal — Snowflake handles infrastructure. Team needs to learn: Snowflake SQL, dbt models, Airflow DAGs. Estimated ramp-up: 2-4 weeks for experienced SQL developers.
+
+=== Neutral
+
+* Requires AWS account setup and networking configuration (VPC, private endpoints if needed)
+* CI/CD pipeline needed for dbt model deployments (standard practice)
+* Monitoring via Snowflake's built-in query history + external alerting (CloudWatch / Datadog)
+
+== Quality Attribute Impact
+
+[cols="2,1,3"]
+|===
+|Quality Attribute |Impact |Explanation
+
+|Performance
+|+
+|Snowflake auto-scaling compute ensures query performance scales with data volume; dedicated warehouses prevent query contention
+
+|Security
+|+
+|End-to-end encryption (at rest and in transit), role-based access control, SOC 2 Type II certified, GDPR-compliant EU regions
+
+|Maintainability
+|+
+|Managed service eliminates infrastructure maintenance; dbt provides version-controlled, testable transformations; SQL-first approach lowers maintenance barrier
+
+|Scalability
+|=
+|Scales well for batch analytics (auto-scaling warehouses); neutral for real-time streaming (not natively supported — would need additional infrastructure)
+
+|Testability
+|+
+|dbt provides built-in testing framework for data quality assertions; Snowflake clone feature allows zero-copy test environments
+|===
+
+_Impact: + improves, − degrades, = neutral_
+
+== Follow-Up Actions
+
+* [ ] Confirm AWS as cloud provider with client (Snowflake deployment depends on this)
+* [ ] Provision Snowflake account in EU region (Frankfurt or Dublin)
+* [ ] Set up Snowflake cost monitoring and usage alerts from day one
+* [ ] Evaluate dbt Cloud vs. dbt Core (managed vs. self-hosted) — separate mini-decision
+* [ ] Select Airflow hosting (MWAA on AWS vs. self-managed vs. Dagster alternative)
+* [ ] Run proof-of-concept: WordPress DB replication → Snowflake ingestion → basic segmentation query
+* [ ] Define Snowflake warehouse sizing and auto-suspend policies
+* [ ] Create data quality testing framework in dbt for customer email validation
+* [ ] Schedule Snowflake + dbt training for client internal team (2-day workshop)
+* [ ] Plan future ADR checkpoint: reassess Databricks need after Phase 2 (if ML requirements emerge)
+
+== References
+
+* https://www.snowflake.com/en/data-cloud/platform/[Snowflake Platform Overview]
+* https://www.databricks.com/product/data-lakehouse[Databricks Lakehouse Overview]
+* https://docs.getdbt.com/docs/introduction[dbt Documentation]
+* https://airflow.apache.org/docs/[Apache Airflow Documentation]
+* https://docs.snowflake.com/en/developer-guide/snowpark/index[Snowpark Developer Guide]
+* https://www.snowflake.com/en/data-cloud/overview/compliance/[Snowflake Compliance & Security]

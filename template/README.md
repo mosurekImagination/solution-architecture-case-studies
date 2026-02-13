@@ -12,6 +12,7 @@ A professional, modular template suite for creating solution architecture docume
 | [`solution-design-compact-template.adoc`](solution-design-compact-template.adoc) | Compact version — 8 sections, 4 diagrams (~15 min client meeting) |
 | [`architecture-questionnaire-template.md`](architecture-questionnaire-template.md) | Requirements intake questionnaire (fill out first) |
 | [`adr-template.adoc`](adr-template.adoc) | Architecture Decision Record template (one per decision) |
+| [`discovery-questions-template.md`](discovery-questions-template.md) | Async discovery questions for stakeholders (fill between meetings) |
 
 ## Quick Start
 
