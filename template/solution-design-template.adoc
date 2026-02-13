@@ -10,6 +10,7 @@
 :sectanchors:
 :kroki-server-url: http://localhost:8000
 :kroki-fetch-diagram: true
+:imagesdir: diagrams
 
 // ============================================================================
 // HOW TO USE THIS TEMPLATE
@@ -233,7 +234,7 @@ _Describe the problem users/business face today. What is broken, slow, manual, o
 Shows the existing system landscape (if applicable). Skip if greenfield.
 
 .AS-IS Architecture
-[d2,format=svg]
+[d2,as-is-architecture,format=svg]
 ....
 direction: right
 
@@ -283,7 +284,7 @@ All three views below share one Structurizr model — define the model once, ren
 Shows the system as a black box — who uses it and what it depends on.
 
 .System Context — [Project Name]
-[structurizr,format=svg,view-key=ctx]
+[structurizr,c4-context,format=svg,view-key=ctx]
 ....
 workspace {
 
@@ -385,7 +386,7 @@ workspace {
 Shows the applications, data stores, and message brokers inside the system boundary.
 
 .Container View — [Project Name]
-[structurizr,format=svg,view-key=cont]
+[structurizr,c4-container,format=svg,view-key=cont]
 ....
 workspace {
 
@@ -487,7 +488,7 @@ workspace {
 Shows infrastructure nodes and how containers map to them.
 
 .Deployment View — [Project Name] Production
-[structurizr,format=svg,view-key=deploy]
+[structurizr,c4-deployment,format=svg,view-key=deploy]
 ....
 workspace {
 
@@ -591,7 +592,7 @@ workspace {
 Shows internal services, data stores, and how they connect.
 
 .Component Architecture — [Project Name]
-[d2,format=svg,layout=elk]
+[d2,component-architecture,format=svg,layout=elk]
 ....
 direction: right
 
@@ -659,7 +660,7 @@ services.svcA -> external.monitoring: Telemetry
 Entity-relationship diagram showing the core domain model.
 
 .Data Model — [Project Name]
-[erd,format=svg]
+[erd,data-model,format=svg]
 ....
 title {label: "[Project Name] — Data Model", size: "20"}
 
@@ -753,7 +754,7 @@ _Describe how data moves through the system: ingestion → processing → storag
 === Happy Path — [Primary Use Case]
 
 .Core Flow — [Use Case Name]
-[plantuml,format=svg]
+[plantuml,flow-happy-path,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -795,7 +796,7 @@ end note
 === Error / Edge Case — [Secondary Flow]
 
 .Error Flow — [Scenario Name]
-[plantuml,format=svg]
+[plantuml,flow-error-handling,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -925,7 +926,7 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score)._
 === Cost Comparison
 
 .OPEX Comparison by Option
-[vegalite,format=svg]
+[vegalite,cost-comparison,format=svg]
 ....
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
@@ -984,7 +985,7 @@ _2-3 sentences: what this option delivers, team size, timeline._
 === Architecture
 
 .Option [N] Architecture
-[plantuml,format=svg]
+[plantuml,option-architecture,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -1071,7 +1072,7 @@ svc --> db
 === Timeline
 
 .Option [N] Development Timeline
-[plantuml,format=svg]
+[plantuml,option-timeline,format=svg]
 ....
 @startgantt
 title Option [N]: [Name] — [duration], [team] devs
@@ -1227,7 +1228,7 @@ Measurable quality requirements with concrete scenarios.
 === Authentication & Authorization Flow
 
 .OAuth2 / OIDC Authentication Flow
-[plantuml,format=svg]
+[plantuml,security-auth-flow,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -1484,7 +1485,7 @@ end note
 === Infrastructure Topology
 
 .Infrastructure Overview — [Project Name]
-[d2,format=svg,layout=elk]
+[d2,infrastructure-topology,format=svg,layout=elk]
 ....
 direction: right
 
@@ -1586,7 +1587,7 @@ vpc.private_app.ecs.api -> monitoring.xray: Traces
 === Observability Stack
 
 .Observability Architecture
-[d2,format=svg,layout=elk]
+[d2,observability-stack,format=svg,layout=elk]
 ....
 direction: down
 
@@ -1669,7 +1670,7 @@ visualization.alerts -> visualization.oncall: Page on-call
 Shows decision flows and business process logic.
 
 .Business Process — [Process Name]
-[plantuml,format=svg]
+[plantuml,business-process-flow,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -1711,7 +1712,7 @@ stop
 Shows entity lifecycle — useful for orders, tickets, deployments, etc.
 
 .Entity Lifecycle — [Entity Name]
-[plantuml,format=svg]
+[plantuml,entity-lifecycle,format=svg]
 ....
 @startuml
 skinparam backgroundColor white
@@ -1751,7 +1752,7 @@ Cancelled --> [*]
 Quick visual of feature areas and sub-features.
 
 .Feature Breakdown — [Project Name]
-[plantuml,format=svg]
+[plantuml,feature-mindmap,format=svg]
 ....
 @startmindmap
 title [Project Name] — Feature Areas
@@ -1788,7 +1789,7 @@ title [Project Name] — Feature Areas
 Hierarchical decomposition of deliverables — useful for estimation and planning.
 
 .Work Breakdown — [Project Name]
-[plantuml,format=svg]
+[plantuml,work-breakdown,format=svg]
 ....
 @startwbs
 title [Project Name] — WBS

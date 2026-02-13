@@ -8,7 +8,8 @@ A professional, modular template suite for creating solution architecture docume
 
 | File | Purpose |
 |------|---------|
-| [`solution-design-template.adoc`](solution-design-template.adoc) | Main solution design document — the primary deliverable |
+| [`solution-design-template.adoc`](solution-design-template.adoc) | Full solution design — 25 sections, 16 diagrams (architect/developer audience) |
+| [`solution-design-compact-template.adoc`](solution-design-compact-template.adoc) | Compact version — 8 sections, 4 diagrams (~15 min client meeting) |
 | [`architecture-questionnaire-template.md`](architecture-questionnaire-template.md) | Requirements intake questionnaire (fill out first) |
 | [`adr-template.adoc`](adr-template.adoc) | Architecture Decision Record template (one per decision) |
 
@@ -20,10 +21,12 @@ Copy `architecture-questionnaire-template.md` into your project and fill it out 
 
 ### 2. Start the Solution Design
 
-Copy `solution-design-template.adoc` into your project. The template is modular:
+Choose the right template for your audience:
 
-- **Core sections (§1–§13):** Always include — minimum viable solution design.
-- **Optional sections (§14–§25):** Include based on project complexity. Each marked with `// OPTIONAL`.
+- **`solution-design-compact-template.adoc`** — For client-facing meetings (~15 min). 8 sections covering problem, options, costs, timeline, and next steps. 4 diagrams.
+- **`solution-design-template.adoc`** — Full technical document. 25 sections, 16 diagrams. Modular:
+  - **Core sections (§1–§13):** Always include — minimum viable solution design.
+  - **Optional sections (§14–§25):** Include based on project complexity. Each marked with `// OPTIONAL`.
 
 ### 3. Record Decisions
 
