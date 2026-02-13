@@ -434,6 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
@@ -455,8 +456,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_executive_summary">3. Executive Summary</a>
 <ul class="sectlevel2">
-<li><a href="#_recommendation_at_a_glance">3.1. Recommendation at a Glance</a></li>
-<li><a href="#_key_decisions">3.2. Key Decisions</a></li>
+<li><a href="#_elevator_pitch">3.1. Elevator Pitch</a></li>
+<li><a href="#_recommendation_at_a_glance">3.2. Recommendation at a Glance</a></li>
+<li><a href="#_key_decisions">3.3. Key Decisions</a></li>
 </ul>
 </li>
 <li><a href="#_architecture_principles">4. Architecture Principles</a></li>
@@ -476,7 +478,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_architecture">7. Architecture</a>
 <ul class="sectlevel2">
-<li><a href="#_component_overview">7.1. Component Overview</a></li>
+<li><a href="#_key_trade_offs">7.1. Key Trade-Offs</a></li>
+<li><a href="#_organizational_alignment_conways_law">7.2. Organizational Alignment (Conway&#8217;s Law)</a></li>
+<li><a href="#_component_overview">7.3. Component Overview</a></li>
 </ul>
 </li>
 <li><a href="#_data_architecture">8. Data Architecture</a>
@@ -504,14 +508,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_overview">11.1. Overview</a></li>
 <li><a href="#_pros_cons">11.2. Pros &amp; Cons</a></li>
 <li><a href="#_architecture_2">11.3. Architecture</a></li>
-<li><a href="#_cost_breakdown">11.4. Cost Breakdown</a>
+<li><a href="#_team_composition">11.4. Team Composition</a></li>
+<li><a href="#_cost_breakdown">11.5. Cost Breakdown</a>
 <ul class="sectlevel3">
-<li><a href="#_capex_one_time">11.4.1. CAPEX (One-Time)</a></li>
-<li><a href="#_opex_monthly">11.4.2. OPEX (Monthly)</a></li>
+<li><a href="#_capex_one_time">11.5.1. CAPEX (One-Time)</a></li>
+<li><a href="#_opex_monthly">11.5.2. OPEX (Monthly)</a></li>
 </ul>
 </li>
-<li><a href="#_timeline">11.5. Timeline</a></li>
-<li><a href="#_risk_assessment">11.6. Risk Assessment</a></li>
+<li><a href="#_timeline">11.6. Timeline</a></li>
+<li><a href="#_phase_cost_summary">11.7. Phase Cost Summary</a></li>
+<li><a href="#_risk_assessment">11.8. Risk Assessment</a></li>
+<li><a href="#_issues_log">11.9. Issues Log</a></li>
 </ul>
 </li>
 <li><a href="#_assumptions_constraints_quality">12. Assumptions, Constraints &amp; Quality</a>
@@ -520,77 +527,80 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_constraints">12.2. Constraints</a></li>
 <li><a href="#_dependencies">12.3. Dependencies</a></li>
 <li><a href="#_quality_scenarios_arc42">12.4. Quality Scenarios (arc42)</a></li>
-<li><a href="#_out_of_scope">12.5. Out of Scope</a></li>
+<li><a href="#_scope_governance">12.5. Scope Governance</a></li>
+<li><a href="#_out_of_scope">12.6. Out of Scope</a></li>
 </ul>
 </li>
-<li><a href="#_recommended_next_steps">13. Recommended Next Steps</a></li>
-<li><a href="#_security_architecture">14. Security Architecture</a>
+<li><a href="#_business_value_roi">13. Business Value &amp; ROI</a></li>
+<li><a href="#_knowledge_transfer_plan">14. Knowledge Transfer Plan</a></li>
+<li><a href="#_recommended_next_steps">15. Recommended Next Steps</a></li>
+<li><a href="#_security_architecture">16. Security Architecture</a>
 <ul class="sectlevel2">
-<li><a href="#_authentication_authorization_flow">14.1. Authentication &amp; Authorization Flow</a></li>
-<li><a href="#_threat_model_stride">14.2. Threat Model (STRIDE)</a></li>
-<li><a href="#_data_protection">14.3. Data Protection</a></li>
-<li><a href="#_compliance_mapping">14.4. Compliance Mapping</a></li>
+<li><a href="#_authentication_authorization_flow">16.1. Authentication &amp; Authorization Flow</a></li>
+<li><a href="#_threat_model_stride">16.2. Threat Model (STRIDE)</a></li>
+<li><a href="#_data_protection">16.3. Data Protection</a></li>
+<li><a href="#_compliance_mapping">16.4. Compliance Mapping</a></li>
 </ul>
 </li>
-<li><a href="#_api_design">15. API Design</a>
+<li><a href="#_api_design">17. API Design</a>
 <ul class="sectlevel2">
-<li><a href="#_api_style_decision">15.1. API Style Decision</a></li>
-<li><a href="#_key_endpoints">15.2. Key Endpoints</a></li>
-<li><a href="#_integration_patterns">15.3. Integration Patterns</a></li>
+<li><a href="#_api_style_decision">17.1. API Style Decision</a></li>
+<li><a href="#_key_endpoints">17.2. Key Endpoints</a></li>
+<li><a href="#_integration_patterns">17.3. Integration Patterns</a></li>
 </ul>
 </li>
-<li><a href="#_deployment_infrastructure">16. Deployment &amp; Infrastructure</a>
+<li><a href="#_deployment_infrastructure">18. Deployment &amp; Infrastructure</a>
 <ul class="sectlevel2">
-<li><a href="#_deployment_strategy">16.1. Deployment Strategy</a></li>
-<li><a href="#_environment_strategy">16.2. Environment Strategy</a></li>
-<li><a href="#_infrastructure_topology">16.3. Infrastructure Topology</a></li>
+<li><a href="#_deployment_strategy">18.1. Deployment Strategy</a></li>
+<li><a href="#_environment_strategy">18.2. Environment Strategy</a></li>
+<li><a href="#_infrastructure_topology">18.3. Infrastructure Topology</a></li>
 </ul>
 </li>
-<li><a href="#_observability_monitoring">17. Observability &amp; Monitoring</a>
+<li><a href="#_observability_monitoring">19. Observability &amp; Monitoring</a>
 <ul class="sectlevel2">
-<li><a href="#_slos_slis">17.1. SLOs / SLIs</a></li>
-<li><a href="#_observability_stack">17.2. Observability Stack</a></li>
-<li><a href="#_logging_strategy">17.3. Logging Strategy</a></li>
+<li><a href="#_slos_slis">19.1. SLOs / SLIs</a></li>
+<li><a href="#_observability_stack">19.2. Observability Stack</a></li>
+<li><a href="#_logging_strategy">19.3. Logging Strategy</a></li>
 </ul>
 </li>
-<li><a href="#_business_process_flows">18. Business Process Flows</a></li>
-<li><a href="#_entity_lifecycle">19. Entity Lifecycle</a></li>
-<li><a href="#_feature_breakdown">20. Feature Breakdown</a>
+<li><a href="#_business_process_flows">20. Business Process Flows</a></li>
+<li><a href="#_entity_lifecycle">21. Entity Lifecycle</a></li>
+<li><a href="#_feature_breakdown">22. Feature Breakdown</a>
 <ul class="sectlevel2">
-<li><a href="#_mind_map">20.1. Mind Map</a></li>
-<li><a href="#_work_breakdown_structure">20.2. Work Breakdown Structure</a></li>
+<li><a href="#_mind_map">22.1. Mind Map</a></li>
+<li><a href="#_work_breakdown_structure">22.2. Work Breakdown Structure</a></li>
 </ul>
 </li>
-<li><a href="#_migration_transition">21. Migration &amp; Transition</a>
+<li><a href="#_migration_transition">23. Migration &amp; Transition</a>
 <ul class="sectlevel2">
-<li><a href="#_migration_strategy">21.1. Migration Strategy</a></li>
-<li><a href="#_transition_phases">21.2. Transition Phases</a></li>
-<li><a href="#_rollback_plan">21.3. Rollback Plan</a></li>
+<li><a href="#_migration_strategy">23.1. Migration Strategy</a></li>
+<li><a href="#_transition_phases">23.2. Transition Phases</a></li>
+<li><a href="#_rollback_plan">23.3. Rollback Plan</a></li>
 </ul>
 </li>
-<li><a href="#_architecture_decision_records">22. Architecture Decision Records</a></li>
-<li><a href="#_technical_deep_dives">23. Technical Deep Dives</a>
+<li><a href="#_architecture_decision_records">24. Architecture Decision Records</a></li>
+<li><a href="#_technical_deep_dives">25. Technical Deep Dives</a>
 <ul class="sectlevel2">
-<li><a href="#_performance_caching_strategy">23.1. [Performance &amp; Caching Strategy]</a></li>
-<li><a href="#_data_migration_etl_strategy">23.2. [Data Migration / ETL Strategy]</a></li>
-<li><a href="#_aiml_pipeline">23.3. [AI/ML Pipeline]</a></li>
+<li><a href="#_performance_caching_strategy">25.1. [Performance &amp; Caching Strategy]</a></li>
+<li><a href="#_data_migration_etl_strategy">25.2. [Data Migration / ETL Strategy]</a></li>
+<li><a href="#_aiml_pipeline">25.3. [AI/ML Pipeline]</a></li>
 </ul>
 </li>
-<li><a href="#_glossary">24. Glossary</a></li>
-<li><a href="#_references">25. References</a></li>
-<li><a href="#_appendix">26. Appendix</a>
+<li><a href="#_glossary">26. Glossary</a></li>
+<li><a href="#_references">27. References</a></li>
+<li><a href="#_appendix">28. Appendix</a>
 <ul class="sectlevel2">
-<li><a href="#_diagram_engines_reference">26.1. Diagram Engines Reference</a>
+<li><a href="#_diagram_engines_reference">28.1. Diagram Engines Reference</a>
 <ul class="sectlevel3">
-<li><a href="#_structurizr_c4_model_diagrams">26.1.1. Structurizr — C4 Model Diagrams</a></li>
-<li><a href="#_d2_component_infrastructure_diagrams">26.1.2. D2 — Component &amp; Infrastructure Diagrams</a></li>
-<li><a href="#_plantuml_behavioral_diagrams">26.1.3. PlantUML — Behavioral Diagrams</a></li>
-<li><a href="#_erd_data_model_diagrams">26.1.4. Erd — Data Model Diagrams</a></li>
-<li><a href="#_vega_lite_data_visualization">26.1.5. Vega-Lite — Data Visualization</a></li>
+<li><a href="#_structurizr_c4_model_diagrams">28.1.1. Structurizr — C4 Model Diagrams</a></li>
+<li><a href="#_d2_component_infrastructure_diagrams">28.1.2. D2 — Component &amp; Infrastructure Diagrams</a></li>
+<li><a href="#_plantuml_behavioral_diagrams">28.1.3. PlantUML — Behavioral Diagrams</a></li>
+<li><a href="#_erd_data_model_diagrams">28.1.4. Erd — Data Model Diagrams</a></li>
+<li><a href="#_vega_lite_data_visualization">28.1.5. Vega-Lite — Data Visualization</a></li>
 </ul>
 </li>
-<li><a href="#_project_complexity_guide">26.2. Project Complexity Guide</a></li>
-<li><a href="#_rendering_instructions">26.3. Rendering Instructions</a></li>
+<li><a href="#_project_complexity_guide">28.2. Project Complexity Guide</a></li>
+<li><a href="#_rendering_instructions">28.3. Rendering Instructions</a></li>
 </ul>
 </li>
 </ul>
@@ -766,7 +776,18 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><em>One paragraph: what is the system, why is it needed, what does this document recommend.</em></p>
 </div>
 <div class="sect2">
-<h3 id="_recommendation_at_a_glance"><a class="anchor" href="#_recommendation_at_a_glance"></a>3.1. Recommendation at a Glance</h3>
+<h3 id="_elevator_pitch"><a class="anchor" href="#_elevator_pitch"></a>3.1. Elevator Pitch</h3>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>For</strong> [target users] <strong>who need</strong> [core need], <strong>the</strong> [system name] <strong>is a</strong> [category]
+<strong>that</strong> [key benefit]. <strong>Unlike</strong> [current alternative], <strong>our solution</strong> [key differentiator].</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_recommendation_at_a_glance"><a class="anchor" href="#_recommendation_at_a_glance"></a>3.2. Recommendation at a Glance</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -785,19 +806,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high] (incl. [N]% contingency)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]/month</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]/month</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N]–[N] months</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team Size</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] developers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key Risk</strong></p></td>
@@ -807,26 +828,30 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </table>
 </div>
 <div class="sect2">
-<h3 id="_key_decisions"><a class="anchor" href="#_key_decisions"></a>3.2. Key Decisions</h3>
+<h3 id="_key_decisions"><a class="anchor" href="#_key_decisions"></a>3.3. Key Decisions</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
+<col style="width: 20%;">
+<col style="width: 60%;">
+<col style="width: 20%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Decision</th>
 <th class="tableblock halign-left valign-top">Rationale</th>
+<th class="tableblock halign-left valign-top">Reversibility</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Decision 1]</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Why this matters and what was decided]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Easy / Hard / One-way]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Decision 2]</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Why this matters and what was decided]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Easy / Hard / One-way]</p></td>
 </tr>
 </tbody>
 </table>
@@ -884,6 +909,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data quality, lineage, and governance are first-class concerns</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enables analytics, ML, and regulatory compliance</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Requires data classification and retention policies per entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pragmatism over Purity</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Choose the simplest solution that meets requirements today; refactor when proven necessary</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Avoids over-engineering and premature abstraction; reduces time-to-value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Every "build for the future" decision must cite a concrete, funded requirement</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Design for Changeability</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Assume requirements and technology will change — architect for easy replacement of components</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reduces cost of future change; aligns with agile/iterative delivery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prefer interfaces over implementations; isolate third-party dependencies behind adapters</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>YAGNI (You Aren&#8217;t Gonna Need It)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do not build capabilities until there is a validated need</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reduces wasted effort, keeps codebase lean, shortens delivery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Every "nice to have" feature must be justified by a user story with a real sponsor</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Principle N]</strong></p></td>
@@ -973,7 +1016,80 @@ All three views below share one Structurizr model — define the model once, ren
 <h2 id="_architecture"><a class="anchor" href="#_architecture"></a>7. Architecture</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_component_overview"><a class="anchor" href="#_component_overview"></a>7.1. Component Overview</h3>
+<h3 id="_key_trade_offs"><a class="anchor" href="#_key_trade_offs"></a>7.1. Key Trade-Offs</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Trade-Off</th>
+<th class="tableblock halign-left valign-top">We Chose</th>
+<th class="tableblock halign-left valign-top">Over</th>
+<th class="tableblock halign-left valign-top">Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Consistency vs. Availability]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Strong consistency]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., High availability during partitions]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Financial data requires ACID guarantees]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Build vs. Buy]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Buy (managed service)]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Build (custom solution)]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Team lacks ops capacity, faster time to market]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Flexibility vs. Simplicity]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Simpler monolith]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Flexible microservices]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Team of 4 cannot operate distributed system]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_organizational_alignment_conways_law"><a class="anchor" href="#_organizational_alignment_conways_law"></a>7.2. Organizational Alignment (Conway&#8217;s Law)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Component / Service</th>
+<th class="tableblock halign-left valign-top">Owning Team</th>
+<th class="tableblock halign-left valign-top">Communication Interface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Auth &amp; User Management]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Platform Team]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., OAuth2 tokens, user API]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Order Processing]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Commerce Team]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Event bus, REST API]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Mobile App]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Frontend Team]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Consumes API Gateway]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_component_overview"><a class="anchor" href="#_component_overview"></a>7.3. Component Overview</h3>
 <div class="paragraph">
 <p>Shows internal services, data stores, and how they connect.</p>
 </div>
@@ -1111,10 +1227,10 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">All + multi-region</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team size</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs (2 BE + 1 FE + 1 QA)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8 devs (3 BE + 2 FE + 1 QA + 1 DevOps + 1 SA)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs (multi-team)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
@@ -1123,16 +1239,16 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX (incl. contingency)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk</strong></p></td>
@@ -1270,23 +1386,64 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_cost_breakdown"><a class="anchor" href="#_cost_breakdown"></a>11.4. Cost Breakdown</h3>
-<div class="sect3">
-<h4 id="_capex_one_time"><a class="anchor" href="#_capex_one_time"></a>11.4.1. CAPEX (One-Time)</h4>
+<h3 id="_team_composition"><a class="anchor" href="#_team_composition"></a>11.4. Team Composition</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6669%;">
+<col style="width: 40%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Item</th>
+<th class="tableblock halign-left valign-top">Workstream</th>
+<th class="tableblock halign-left valign-top">Engineers</th>
+<th class="tableblock halign-left valign-top">Roles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Backend]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 1 Senior + 1 Mid-level]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Frontend / Mobile]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 1 Senior + 1 Mid-level]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., DevOps / QA]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 1 DevOps engineer (shared)]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[N]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[N] parallel workstreams</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_cost_breakdown"><a class="anchor" href="#_cost_breakdown"></a>11.5. Cost Breakdown</h3>
+<div class="sect3">
+<h4 id="_capex_one_time"><a class="anchor" href="#_capex_one_time"></a>11.5.1. CAPEX (One-Time)</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Role / Item</th>
 <th class="tableblock halign-left valign-top">Count</th>
 <th class="tableblock halign-left valign-top">Rate</th>
 <th class="tableblock halign-left valign-top">Duration</th>
+<th class="tableblock halign-left valign-top">Deliverable</th>
 <th class="tableblock halign-left valign-top">Cost</th>
 </tr>
 </thead>
@@ -1296,34 +1453,54 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Core API, integrations, data model]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Mobile Developer</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Mobile app, offline support]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cloud Setup</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[total]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., VPC, CI/CD, environments]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Subtotal</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[subtotal]</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Contingency ([N]%)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Covers: integration unknowns, scope clarification, vendor delays</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[contingency]</strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL CAPEX</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[low]–$[high]</strong></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_opex_monthly"><a class="anchor" href="#_opex_monthly"></a>11.4.2. OPEX (Monthly)</h4>
+<h4 id="_opex_monthly"><a class="anchor" href="#_opex_monthly"></a>11.5.2. OPEX (Monthly)</h4>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 50%;">
@@ -1364,16 +1541,21 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency / headroom (10%)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Spike traffic, additional environments</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL OPEX</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]/mo</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[low]–$[high]/mo</strong></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_timeline"><a class="anchor" href="#_timeline"></a>11.5. Timeline</h3>
+<h3 id="_timeline"><a class="anchor" href="#_timeline"></a>11.6. Timeline</h3>
 <div class="imageblock kroki">
 <div class="content">
 <img src="diagrams/option-timeline-1430ee39b50360e36006e2614ea8ded98991456c.svg" alt="Option [N] Development Timeline">
@@ -1382,34 +1564,152 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_risk_assessment"><a class="anchor" href="#_risk_assessment"></a>11.6. Risk Assessment</h3>
+<h3 id="_phase_cost_summary"><a class="anchor" href="#_phase_cost_summary"></a>11.7. Phase Cost Summary</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
 <col style="width: 16.6666%;">
-<col style="width: 33.3335%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Phase</th>
+<th class="tableblock halign-left valign-top">Duration</th>
+<th class="tableblock halign-left valign-top">Team</th>
+<th class="tableblock halign-left valign-top">Phase Cost</th>
+<th class="tableblock halign-left valign-top">Cumulative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POC / Foundation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cumulative]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Core Build (MVP)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cumulative]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Polish / Launch</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cumulative]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency ([N]%)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$[cumulative]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[N] months</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_risk_assessment"><a class="anchor" href="#_risk_assessment"></a>11.8. Risk Assessment</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 22.2222%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 22.2222%;">
+<col style="width: 22.2223%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Risk</th>
+<th class="tableblock halign-left valign-top">Category</th>
 <th class="tableblock halign-left valign-top">Probability</th>
 <th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Justification</th>
 <th class="tableblock halign-left valign-top">Mitigation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Risk 1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Technical</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Why this probability/impact — e.g., "No sandbox available for payment API"]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[How to mitigate]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Risk 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Organizational</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., "Key stakeholder on leave during UAT window"]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[How to mitigate]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Risk 3]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., "Third-party API has no SLA guarantee"]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How to mitigate]</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em>Categories: Technical, Organizational, Integration, Commercial, Regulatory, Resource</em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_issues_log"><a class="anchor" href="#_issues_log"></a>11.9. Issues Log</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 11.1111%;">
+<col style="width: 22.2222%;">
+<col style="width: 11.1111%;">
+<col style="width: 22.2222%;">
+<col style="width: 22.2222%;">
+<col style="width: 11.1112%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Issue</th>
+<th class="tableblock halign-left valign-top">Severity</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Resolution / Action</th>
+<th class="tableblock halign-left valign-top">Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Payment gateway sandbox not accessible]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Blocks integration testing]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Escalated to client IT, fallback: mock service]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Name]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Requirements for reporting module still undefined]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Cannot estimate Phase 2 accurately]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Workshop scheduled for [date]]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Name]</p></td>
 </tr>
 </tbody>
 </table>
@@ -1452,10 +1752,11 @@ All three views below share one Structurizr model — define the model once, ren
 <h3 id="_dependencies"><a class="anchor" href="#_dependencies"></a>12.3. Dependencies</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 28.5714%;">
-<col style="width: 28.5714%;">
-<col style="width: 28.5714%;">
-<col style="width: 14.2858%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
 </colgroup>
 <thead>
 <tr>
@@ -1463,6 +1764,7 @@ All three views below share one Structurizr model — define the model once, ren
 <th class="tableblock halign-left valign-top">Owner</th>
 <th class="tableblock halign-left valign-top">Expected Date</th>
 <th class="tableblock halign-left valign-top">Risk</th>
+<th class="tableblock halign-left valign-top">Verified?</th>
 </tr>
 </thead>
 <tbody>
@@ -1471,12 +1773,14 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Security team]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[2026-03-15]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ ] Yes / [ ] No</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Payment gateway sandbox]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Finance team]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[2026-03-01]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ ] Yes / [ ] No</p></td>
 </tr>
 </tbody>
 </table>
@@ -1526,11 +1830,56 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">Auto-scaling provisions resources</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">No degradation above P95 target</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team member leaves mid-sprint</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Remaining team can continue without blocking</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 1 day onboarding for replacement on any component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Evolvability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">New payment provider must be added</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Swap provider behind adapter interface</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt; 2 sprint integration effort</p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_out_of_scope"><a class="anchor" href="#_out_of_scope"></a>12.5. Out of Scope</h3>
+<h3 id="_scope_governance"><a class="anchor" href="#_scope_governance"></a>12.5. Scope Governance</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Aspect</th>
+<th class="tableblock halign-left valign-top">Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Change Request Process</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All scope changes go through [change request board / product owner]. No verbal agreements.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Impact Assessment</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Every change request gets a written impact note: timeline, cost, risk, trade-off.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 2 Parking Lot</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Features that don&#8217;t make the cut go into a visible "Phase 2" backlog, not silent deletion.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Definition of Done</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A feature is "done" when: code reviewed, unit tested (&gt;80% coverage), integration tested, deployed to staging, documentation updated, PO accepted.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_out_of_scope"><a class="anchor" href="#_out_of_scope"></a>12.6. Out of Scope</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -1545,7 +1894,96 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_recommended_next_steps"><a class="anchor" href="#_recommended_next_steps"></a>13. Recommended Next Steps</h2>
+<h2 id="_business_value_roi"><a class="anchor" href="#_business_value_roi"></a>13. Business Value &amp; ROI</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Value Driver</th>
+<th class="tableblock halign-left valign-top">Current Cost / Pain</th>
+<th class="tableblock halign-left valign-top">Expected Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Manual data entry]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 40 hrs/week × $50/hr = $104K/year]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 90% reduction → $94K/year savings]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Customer churn from slow system]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 5% monthly churn, ~$200K/year lost revenue]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Target &lt; 2% churn with improved UX]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Compliance risk]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Potential $500K fine for non-compliance]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Automated controls eliminate manual audit gaps]</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Payback period:</strong> [e.g., Investment recovers in ~8 months based on operational savings]</p>
+</div>
+<div class="paragraph">
+<p><strong>Strategic value (hard to quantify):</strong> [e.g., Enables expansion to 3 new markets, positions for acquisition]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_knowledge_transfer_plan"><a class="anchor" href="#_knowledge_transfer_plan"></a>14. Knowledge Transfer Plan</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Topic</th>
+<th class="tableblock halign-left valign-top">Format</th>
+<th class="tableblock halign-left valign-top">Audience</th>
+<th class="tableblock halign-left valign-top">Timing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture overview &amp; decisions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workshop (2h) + recorded</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dev team + tech leads</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">End of Phase 1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operational runbook</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Written guide + walkthrough</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Ops / SRE team</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before go-live</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Codebase orientation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pair programming sessions (3 days)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Client developers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last sprint</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admin &amp; configuration guide</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Documentation + video</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Business admins</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before go-live</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_recommended_next_steps"><a class="anchor" href="#_recommended_next_steps"></a>15. Recommended Next Steps</h2>
 <div class="sectionbody">
 <div class="olist arabic">
 <ol class="arabic">
@@ -1569,10 +2007,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_security_architecture"><a class="anchor" href="#_security_architecture"></a>14. Security Architecture</h2>
+<h2 id="_security_architecture"><a class="anchor" href="#_security_architecture"></a>16. Security Architecture</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_authentication_authorization_flow"><a class="anchor" href="#_authentication_authorization_flow"></a>14.1. Authentication &amp; Authorization Flow</h3>
+<h3 id="_authentication_authorization_flow"><a class="anchor" href="#_authentication_authorization_flow"></a>16.1. Authentication &amp; Authorization Flow</h3>
 <div class="imageblock kroki">
 <div class="content">
 <img src="diagrams/security-auth-flow-b2712b2d84aa12778bf3727dee906fcf135791c8.svg" alt="OAuth2 / OIDC Authentication Flow">
@@ -1581,7 +2019,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_threat_model_stride"><a class="anchor" href="#_threat_model_stride"></a>14.2. Threat Model (STRIDE)</h3>
+<h3 id="_threat_model_stride"><a class="anchor" href="#_threat_model_stride"></a>16.2. Threat Model (STRIDE)</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1639,7 +2077,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_data_protection"><a class="anchor" href="#_data_protection"></a>14.3. Data Protection</h3>
+<h3 id="_data_protection"><a class="anchor" href="#_data_protection"></a>16.3. Data Protection</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
@@ -1676,7 +2114,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_compliance_mapping"><a class="anchor" href="#_compliance_mapping"></a>14.4. Compliance Mapping</h3>
+<h3 id="_compliance_mapping"><a class="anchor" href="#_compliance_mapping"></a>16.4. Compliance Mapping</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 28.5714%;">
@@ -1717,10 +2155,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_api_design"><a class="anchor" href="#_api_design"></a>15. API Design</h2>
+<h2 id="_api_design"><a class="anchor" href="#_api_design"></a>17. API Design</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_api_style_decision"><a class="anchor" href="#_api_style_decision"></a>15.1. API Style Decision</h3>
+<h3 id="_api_style_decision"><a class="anchor" href="#_api_style_decision"></a>17.1. API Style Decision</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1753,7 +2191,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_key_endpoints"><a class="anchor" href="#_key_endpoints"></a>15.2. Key Endpoints</h3>
+<h3 id="_key_endpoints"><a class="anchor" href="#_key_endpoints"></a>17.2. Key Endpoints</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 11.1111%;">
@@ -1811,13 +2249,14 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_integration_patterns"><a class="anchor" href="#_integration_patterns"></a>15.3. Integration Patterns</h3>
+<h3 id="_integration_patterns"><a class="anchor" href="#_integration_patterns"></a>17.3. Integration Patterns</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
 </colgroup>
 <thead>
 <tr>
@@ -1825,6 +2264,7 @@ All three views below share one Structurizr model — define the model once, ren
 <th class="tableblock halign-left valign-top">Pattern</th>
 <th class="tableblock halign-left valign-top">Protocol</th>
 <th class="tableblock halign-left valign-top">Error Handling</th>
+<th class="tableblock halign-left valign-top">Failure Mode</th>
 </tr>
 </thead>
 <tbody>
@@ -1833,24 +2273,28 @@ All three views below share one Structurizr model — define the model once, ren
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request-Response (sync)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OAuth2 / HTTPS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Circuit breaker, 3 retries with exponential backoff</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Degrade to cached tokens for 5 min]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Payment Gateway]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request-Response (sync)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">REST / HTTPS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Idempotency keys, webhook confirmation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Queue payment, retry async, alert ops]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Notification Service]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Event-Driven (async)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Message queue (AMQP)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Dead letter queue, 5 retries</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Notifications delayed, not lost]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[Analytics]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fire-and-Forget (async)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Message queue</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Best effort, no retry</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Data gap in analytics, acceptable]</p></td>
 </tr>
 </tbody>
 </table>
@@ -1858,10 +2302,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_deployment_infrastructure"><a class="anchor" href="#_deployment_infrastructure"></a>16. Deployment &amp; Infrastructure</h2>
+<h2 id="_deployment_infrastructure"><a class="anchor" href="#_deployment_infrastructure"></a>18. Deployment &amp; Infrastructure</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_deployment_strategy"><a class="anchor" href="#_deployment_strategy"></a>16.1. Deployment Strategy</h3>
+<h3 id="_deployment_strategy"><a class="anchor" href="#_deployment_strategy"></a>18.1. Deployment Strategy</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1890,7 +2334,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_environment_strategy"><a class="anchor" href="#_environment_strategy"></a>16.2. Environment Strategy</h3>
+<h3 id="_environment_strategy"><a class="anchor" href="#_environment_strategy"></a>18.2. Environment Strategy</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1929,7 +2373,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_infrastructure_topology"><a class="anchor" href="#_infrastructure_topology"></a>16.3. Infrastructure Topology</h3>
+<h3 id="_infrastructure_topology"><a class="anchor" href="#_infrastructure_topology"></a>18.3. Infrastructure Topology</h3>
 <div class="imageblock kroki">
 <div class="content">
 <img src="diagrams/infrastructure-topology-db46f467ffb91c018f1211377fe6dd7af227a9c3.svg" alt="Infrastructure Overview — [Project Name]">
@@ -1940,10 +2384,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_observability_monitoring"><a class="anchor" href="#_observability_monitoring"></a>17. Observability &amp; Monitoring</h2>
+<h2 id="_observability_monitoring"><a class="anchor" href="#_observability_monitoring"></a>19. Observability &amp; Monitoring</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_slos_slis"><a class="anchor" href="#_slos_slis"></a>17.1. SLOs / SLIs</h3>
+<h3 id="_slos_slis"><a class="anchor" href="#_slos_slis"></a>19.1. SLOs / SLIs</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 28.5714%;">
@@ -1988,7 +2432,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_observability_stack"><a class="anchor" href="#_observability_stack"></a>17.2. Observability Stack</h3>
+<h3 id="_observability_stack"><a class="anchor" href="#_observability_stack"></a>19.2. Observability Stack</h3>
 <div class="imageblock kroki">
 <div class="content">
 <img src="diagrams/observability-stack-31a7dadb480f29609c7cd1f058ec7cef3a57650a.svg" alt="Observability Architecture">
@@ -1997,7 +2441,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_logging_strategy"><a class="anchor" href="#_logging_strategy"></a>17.3. Logging Strategy</h3>
+<h3 id="_logging_strategy"><a class="anchor" href="#_logging_strategy"></a>19.3. Logging Strategy</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -2032,7 +2476,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_business_process_flows"><a class="anchor" href="#_business_process_flows"></a>18. Business Process Flows</h2>
+<h2 id="_business_process_flows"><a class="anchor" href="#_business_process_flows"></a>20. Business Process Flows</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Shows decision flows and business process logic.</p>
@@ -2046,7 +2490,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_entity_lifecycle"><a class="anchor" href="#_entity_lifecycle"></a>19. Entity Lifecycle</h2>
+<h2 id="_entity_lifecycle"><a class="anchor" href="#_entity_lifecycle"></a>21. Entity Lifecycle</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Shows entity lifecycle — useful for orders, tickets, deployments, etc.</p>
@@ -2060,10 +2504,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_feature_breakdown"><a class="anchor" href="#_feature_breakdown"></a>20. Feature Breakdown</h2>
+<h2 id="_feature_breakdown"><a class="anchor" href="#_feature_breakdown"></a>22. Feature Breakdown</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_mind_map"><a class="anchor" href="#_mind_map"></a>20.1. Mind Map</h3>
+<h3 id="_mind_map"><a class="anchor" href="#_mind_map"></a>22.1. Mind Map</h3>
 <div class="paragraph">
 <p>Quick visual of feature areas and sub-features.</p>
 </div>
@@ -2075,13 +2519,13 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_work_breakdown_structure"><a class="anchor" href="#_work_breakdown_structure"></a>20.2. Work Breakdown Structure</h3>
+<h3 id="_work_breakdown_structure"><a class="anchor" href="#_work_breakdown_structure"></a>22.2. Work Breakdown Structure</h3>
 <div class="paragraph">
 <p>Hierarchical decomposition of deliverables — useful for estimation and planning.</p>
 </div>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/work-breakdown-15fa4b6bd4488285474e46bbb87cb78138764de9.svg" alt="Work Breakdown — [Project Name]">
+<img src="diagrams/work-breakdown-47d32e67c65f4a57f5ef70abcce33e1123cbc642.svg" alt="Work Breakdown — [Project Name]">
 </div>
 <div class="title">Figure 18. Work Breakdown — [Project Name]</div>
 </div>
@@ -2089,10 +2533,10 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_migration_transition"><a class="anchor" href="#_migration_transition"></a>21. Migration &amp; Transition</h2>
+<h2 id="_migration_transition"><a class="anchor" href="#_migration_transition"></a>23. Migration &amp; Transition</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_migration_strategy"><a class="anchor" href="#_migration_strategy"></a>21.1. Migration Strategy</h3>
+<h3 id="_migration_strategy"><a class="anchor" href="#_migration_strategy"></a>23.1. Migration Strategy</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -2125,7 +2569,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_transition_phases"><a class="anchor" href="#_transition_phases"></a>21.2. Transition Phases</h3>
+<h3 id="_transition_phases"><a class="anchor" href="#_transition_phases"></a>23.2. Transition Phases</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 14.2857%;">
@@ -2170,7 +2614,7 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_rollback_plan"><a class="anchor" href="#_rollback_plan"></a>21.3. Rollback Plan</h3>
+<h3 id="_rollback_plan"><a class="anchor" href="#_rollback_plan"></a>23.3. Rollback Plan</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -2191,7 +2635,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_architecture_decision_records"><a class="anchor" href="#_architecture_decision_records"></a>22. Architecture Decision Records</h2>
+<h2 id="_architecture_decision_records"><a class="anchor" href="#_architecture_decision_records"></a>24. Architecture Decision Records</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Summary of key architecture decisions. Full ADR details in separate files (see <code>template/adr-template.adoc</code>).</p>
@@ -2240,22 +2684,22 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_technical_deep_dives"><a class="anchor" href="#_technical_deep_dives"></a>23. Technical Deep Dives</h2>
+<h2 id="_technical_deep_dives"><a class="anchor" href="#_technical_deep_dives"></a>25. Technical Deep Dives</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_performance_caching_strategy"><a class="anchor" href="#_performance_caching_strategy"></a>23.1. [Performance &amp; Caching Strategy]</h3>
+<h3 id="_performance_caching_strategy"><a class="anchor" href="#_performance_caching_strategy"></a>25.1. [Performance &amp; Caching Strategy]</h3>
 <div class="paragraph">
 <p><em>Technical details: caching layers, cache invalidation strategy, CDN configuration, database query optimization, connection pooling.</em></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_data_migration_etl_strategy"><a class="anchor" href="#_data_migration_etl_strategy"></a>23.2. [Data Migration / ETL Strategy]</h3>
+<h3 id="_data_migration_etl_strategy"><a class="anchor" href="#_data_migration_etl_strategy"></a>25.2. [Data Migration / ETL Strategy]</h3>
 <div class="paragraph">
 <p><em>Technical details: data transformation rules, validation logic, idempotency, error handling, progress tracking.</em></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_aiml_pipeline"><a class="anchor" href="#_aiml_pipeline"></a>23.3. [AI/ML Pipeline]</h3>
+<h3 id="_aiml_pipeline"><a class="anchor" href="#_aiml_pipeline"></a>25.3. [AI/ML Pipeline]</h3>
 <div class="paragraph">
 <p><em>Technical details: model serving infrastructure, training pipeline, feature store, model versioning, A/B testing framework.</em></p>
 </div>
@@ -2263,7 +2707,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_glossary"><a class="anchor" href="#_glossary"></a>24. Glossary</h2>
+<h2 id="_glossary"><a class="anchor" href="#_glossary"></a>26. Glossary</h2>
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -2310,7 +2754,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_references"><a class="anchor" href="#_references"></a>25. References</h2>
+<h2 id="_references"><a class="anchor" href="#_references"></a>27. References</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
@@ -2334,15 +2778,15 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect1">
-<h2 id="_appendix"><a class="anchor" href="#_appendix"></a>26. Appendix</h2>
+<h2 id="_appendix"><a class="anchor" href="#_appendix"></a>28. Appendix</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_diagram_engines_reference"><a class="anchor" href="#_diagram_engines_reference"></a>26.1. Diagram Engines Reference</h3>
+<h3 id="_diagram_engines_reference"><a class="anchor" href="#_diagram_engines_reference"></a>28.1. Diagram Engines Reference</h3>
 <div class="paragraph">
 <p>This template uses five diagram engines via Kroki. All are built into the <code>yuzutech/kroki</code> container (no additional setup).</p>
 </div>
 <div class="sect3">
-<h4 id="_structurizr_c4_model_diagrams"><a class="anchor" href="#_structurizr_c4_model_diagrams"></a>26.1.1. Structurizr — C4 Model Diagrams</h4>
+<h4 id="_structurizr_c4_model_diagrams"><a class="anchor" href="#_structurizr_c4_model_diagrams"></a>28.1.1. Structurizr — C4 Model Diagrams</h4>
 <div class="paragraph">
 <p>System context, container, deployment views from a shared model.</p>
 </div>
@@ -2353,7 +2797,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect3">
-<h4 id="_d2_component_infrastructure_diagrams"><a class="anchor" href="#_d2_component_infrastructure_diagrams"></a>26.1.2. D2 — Component &amp; Infrastructure Diagrams</h4>
+<h4 id="_d2_component_infrastructure_diagrams"><a class="anchor" href="#_d2_component_infrastructure_diagrams"></a>28.1.2. D2 — Component &amp; Infrastructure Diagrams</h4>
 <div class="paragraph">
 <p>Modern layout (ELK), nested containers, professional themes.</p>
 </div>
@@ -2364,7 +2808,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect3">
-<h4 id="_plantuml_behavioral_diagrams"><a class="anchor" href="#_plantuml_behavioral_diagrams"></a>26.1.3. PlantUML — Behavioral Diagrams</h4>
+<h4 id="_plantuml_behavioral_diagrams"><a class="anchor" href="#_plantuml_behavioral_diagrams"></a>28.1.3. PlantUML — Behavioral Diagrams</h4>
 <div class="paragraph">
 <p>Sequence, activity, state, Gantt, mind map, WBS.</p>
 </div>
@@ -2375,7 +2819,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect3">
-<h4 id="_erd_data_model_diagrams"><a class="anchor" href="#_erd_data_model_diagrams"></a>26.1.4. Erd — Data Model Diagrams</h4>
+<h4 id="_erd_data_model_diagrams"><a class="anchor" href="#_erd_data_model_diagrams"></a>28.1.4. Erd — Data Model Diagrams</h4>
 <div class="paragraph">
 <p>Entity-relationship diagrams with Chen notation.</p>
 </div>
@@ -2386,7 +2830,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect3">
-<h4 id="_vega_lite_data_visualization"><a class="anchor" href="#_vega_lite_data_visualization"></a>26.1.5. Vega-Lite — Data Visualization</h4>
+<h4 id="_vega_lite_data_visualization"><a class="anchor" href="#_vega_lite_data_visualization"></a>28.1.5. Vega-Lite — Data Visualization</h4>
 <div class="paragraph">
 <p>Statistical charts for cost comparison, capacity planning.</p>
 </div>
@@ -2398,7 +2842,7 @@ All three views below share one Structurizr model — define the model once, ren
 </div>
 </div>
 <div class="sect2">
-<h3 id="_project_complexity_guide"><a class="anchor" href="#_project_complexity_guide"></a>26.2. Project Complexity Guide</h3>
+<h3 id="_project_complexity_guide"><a class="anchor" href="#_project_complexity_guide"></a>28.2. Project Complexity Guide</h3>
 <div class="paragraph">
 <p>Which sections to include based on project size:</p>
 </div>
@@ -2572,10 +3016,10 @@ All three views below share one Structurizr model — define the model once, ren
 </table>
 </div>
 <div class="sect2">
-<h3 id="_rendering_instructions"><a class="anchor" href="#_rendering_instructions"></a>26.3. Rendering Instructions</h3>
+<h3 id="_rendering_instructions"><a class="anchor" href="#_rendering_instructions"></a>28.3. Rendering Instructions</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash"># Start Kroki server (from repository root)
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># Start Kroki server (from repository root)
 docker-compose up -d
 
 # Render to HTML
@@ -2598,8 +3042,15 @@ xdg-open template/solution-design-template.html</code></pre>
 <div id="footer">
 <div id="footer-text">
 Version 0.1<br>
-Last updated 2026-02-13 00:49:46 +0100
+Last updated 2026-02-13 02:06:30 +0100
 </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
+<script>
+if (!hljs.initHighlighting.called) {
+  hljs.initHighlighting.called = true
+  ;[].slice.call(document.querySelectorAll('pre.highlight > code[data-lang]')).forEach(function (el) { hljs.highlightBlock(el) })
+}
+</script>
 </body>
 </html>

@@ -43,9 +43,19 @@
 //   4. Render: npx asciidoctor -r asciidoctor-kroki solution-design.adoc
 //   5. Requires: docker-compose up -d (Kroki + PlantUML server)
 //
+// MAINTENANCE:
+//   This document should stay alive throughout the project. Assign an owner
+//   (typically the Solution Architect) responsible for keeping it current.
+//   A stale design doc is worse than no doc — it creates false confidence.
+//   Update after every major decision, scope change, or architecture review.
+//
 // ============================================================================
 
 == Version History
+
+// Review cadence: update this table after every steering committee,
+// major scope change, or architecture review. If the last entry is > 4 weeks
+// old and the project is active, the document is going stale.
 
 [cols="1,2,2,3"]
 |===
@@ -146,6 +156,16 @@ _R = Responsible, A = Accountable, C = Consulted, I = Informed_
 
 _One paragraph: what is the system, why is it needed, what does this document recommend._
 
+=== Elevator Pitch
+
+// The "one-screen" test: if a stakeholder only reads this box, they should
+// understand what we're building, for whom, and why it matters.
+
+****
+*For* [target users] *who need* [core need], *the* [system name] *is a* [category]
+*that* [key benefit]. *Unlike* [current alternative], *our solution* [key differentiator].
+****
+
 === Recommendation at a Glance
 
 [cols="1,3"]
@@ -156,16 +176,16 @@ _One paragraph: what is the system, why is it needed, what does this document re
 |[Option N — Name]
 
 |**Estimated CAPEX**
-|$[amount]
+|$[low]–$[high] (incl. [N]% contingency)
 
 |**Estimated OPEX**
-|$[amount]/month
+|$[low]–$[high]/month
 
 |**Timeline**
-|[N] months
+|[N]–[N] months
 
 |**Team Size**
-|[N] developers
+|[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])
 
 |**Key Risk**
 |[Primary risk and mitigation]
@@ -173,16 +193,22 @@ _One paragraph: what is the system, why is it needed, what does this document re
 
 === Key Decisions
 
-[cols="1,3"]
+[cols="1,3,1"]
 |===
-|Decision |Rationale
+|Decision |Rationale |Reversibility
 
 |**[Decision 1]**
 |[Why this matters and what was decided]
+|[Easy / Hard / One-way]
 
 |**[Decision 2]**
 |[Why this matters and what was decided]
+|[Easy / Hard / One-way]
 |===
+
+// Reversibility hint: "Easy" = config change or feature flag.
+// "Hard" = significant rework but possible. "One-way" = migration or data loss if reversed.
+// One-way decisions deserve an ADR and stakeholder sign-off.
 
 == Architecture Principles
 
@@ -216,6 +242,21 @@ Guiding principles that shape all design decisions. Derived from TOGAF Prelimina
 |Data quality, lineage, and governance are first-class concerns
 |Enables analytics, ML, and regulatory compliance
 |Requires data classification and retention policies per entity
+
+|**Pragmatism over Purity**
+|Choose the simplest solution that meets requirements today; refactor when proven necessary
+|Avoids over-engineering and premature abstraction; reduces time-to-value
+|Every "build for the future" decision must cite a concrete, funded requirement
+
+|**Design for Changeability**
+|Assume requirements and technology will change — architect for easy replacement of components
+|Reduces cost of future change; aligns with agile/iterative delivery
+|Prefer interfaces over implementations; isolate third-party dependencies behind adapters
+
+|**YAGNI (You Aren't Gonna Need It)**
+|Do not build capabilities until there is a validated need
+|Reduces wasted effort, keeps codebase lean, shortens delivery
+|Every "nice to have" feature must be justified by a user story with a real sponsor
 
 |**[Principle N]**
 |[Statement]
@@ -587,6 +628,56 @@ workspace {
 
 == Architecture
 
+=== Key Trade-Offs
+
+// Every architecture is a set of trade-offs. Make them explicit so
+// stakeholders understand WHY, not just WHAT was chosen.
+
+[cols="2,2,2,2"]
+|===
+|Trade-Off |We Chose |Over |Rationale
+
+|[e.g., Consistency vs. Availability]
+|[e.g., Strong consistency]
+|[e.g., High availability during partitions]
+|[e.g., Financial data requires ACID guarantees]
+
+|[e.g., Build vs. Buy]
+|[e.g., Buy (managed service)]
+|[e.g., Build (custom solution)]
+|[e.g., Team lacks ops capacity, faster time to market]
+
+|[e.g., Flexibility vs. Simplicity]
+|[e.g., Simpler monolith]
+|[e.g., Flexible microservices]
+|[e.g., Team of 4 cannot operate distributed system]
+|===
+
+=== Organizational Alignment (Conway's Law)
+
+// "Any organization that designs a system will produce a design whose structure
+// is a copy of the organization's communication structure." — Melvin Conway
+//
+// Map your service boundaries to team boundaries. If the architecture requires
+// two teams to coordinate on every release, you've created a coupling point.
+
+[cols="2,2,2"]
+|===
+|Component / Service |Owning Team |Communication Interface
+
+|[e.g., Auth & User Management]
+|[e.g., Platform Team]
+|[e.g., OAuth2 tokens, user API]
+
+|[e.g., Order Processing]
+|[e.g., Commerce Team]
+|[e.g., Event bus, REST API]
+
+|[e.g., Mobile App]
+|[e.g., Frontend Team]
+|[e.g., Consumes API Gateway]
+|===
+
 === Component Overview
 
 Shows internal services, data stores, and how they connect.
@@ -749,6 +840,11 @@ User 1--* AuditLog
 
 _Describe how data moves through the system: ingestion → processing → storage → delivery. Reference the sequence diagrams in the Key Flows section for runtime behavior._
 
+// ⚠️ Schema Evolution Warning: If multiple services share a database, every
+// schema change requires coordinating all consumers. Prefer service-owned
+// databases with published APIs. If shared DB is unavoidable, document the
+// coupling and establish a schema change protocol.
+
 == Key Flows
 
 === Happy Path — [Primary Use Case]
@@ -841,6 +937,15 @@ end note
 
 == Options Comparison
 
+// OPTIONS FRAMING GUIDANCE:
+// Always present at least 3 options — this is a consulting best practice:
+//   Option 1: MVP / lean (anchors "we can start small")
+//   Option 2: Recommended / balanced (this is what you actually want them to pick)
+//   Option 3: Premium / full (anchors the high end, makes Option 2 feel reasonable)
+//
+// The "decoy effect": Option 3 exists to make Option 2 look like the smart choice.
+// If you only present 2 options, clients agonize. With 3, they feel in control.
+
 === Summary Matrix
 
 [cols="2,1,1,1"]
@@ -852,25 +957,25 @@ end note
 |All features
 |All + multi-region
 
-|**Team size**
-|4 devs
-|8 devs
-|15 devs
+|**Team**
+|4 devs (2 BE + 1 FE + 1 QA)
+|8 devs (3 BE + 2 FE + 1 QA + 1 DevOps + 1 SA)
+|15 devs (multi-team)
 
 |**Timeline**
 |4 months
 |8 months
 |12 months
 
-|**CAPEX**
-|$[amount]
-|$[amount]
-|$[amount]
+|**CAPEX (incl. contingency)**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
 
 |**OPEX / month**
-|$[amount]
-|$[amount]
-|$[amount]
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
 
 |**Risk**
 |Low
@@ -960,6 +1065,25 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score)._
 }
 ....
 
+// ============================================================================
+// ESTIMATION APPROACH — READ BEFORE FILLING OUT COST SECTIONS
+// ============================================================================
+//
+// Cost = Capacity × Time. Always estimate based on man-hours, not per feature.
+//   Formula: (number of engineers) × (rate per month) × (duration) = CAPEX
+//
+// PRINCIPLES:
+//   - Show rate × duration: clients buy engineering hours, make this transparent
+//   - Use ranges, not point estimates: $[low]–$[high] acknowledges uncertainty
+//   - Include a contingency line (20–30%): this covers unknowns, not profit
+//   - Pair every cost line with a deliverable: show WHAT they get for the money
+//   - Min 2 engineers per workstream: avoids bus factor, enables knowledge sharing
+//   - Link phases to cost: each Gantt phase should have a corresponding cost row
+//   - Present total AND breakdown: total for approval, breakdown for trust
+//
+// See also: template/life-lessons.md § Estimation & Costing
+// ============================================================================
+
 == Option [N]: [Option Name]
 
 === Overview
@@ -1005,37 +1129,85 @@ svc --> db
 @enduml
 ....
 
+=== Team Composition
+
+// Principle: min 2 engineers per workstream (bus factor). Adding devs doesn't scale
+// linearly — factor in communication overhead (Brooks's Law).
+
+[cols="2,1,2"]
+|===
+|Workstream |Engineers |Roles
+
+|[e.g., Backend]
+|2
+|[e.g., 1 Senior + 1 Mid-level]
+
+|[e.g., Frontend / Mobile]
+|2
+|[e.g., 1 Senior + 1 Mid-level]
+
+|[e.g., DevOps / QA]
+|1
+|[e.g., 1 DevOps engineer (shared)]
+
+|*Total*
+|*[N]*
+|*[N] parallel workstreams*
+|===
+
 === Cost Breakdown
+
+// Cost = rate × time. Show the math — clients trust transparency.
+// Use ranges ($[low]–$[high]) to acknowledge estimation uncertainty.
+// Always include a contingency row — it covers unknowns, not profit margin.
 
 ==== CAPEX (One-Time)
 
-[cols="2,1,1,1,1"]
+[cols="2,1,1,1,2,1"]
 |===
-|Item |Count |Rate |Duration |Cost
+|Role / Item |Count |Rate |Duration |Deliverable |Cost
 
 |Backend Developer
 |2
 |$[rate]/mo
 |4 months
-|$[total]
+|[e.g., Core API, integrations, data model]
+|$[low]–$[high]
 
 |Mobile Developer
 |2
 |$[rate]/mo
 |4 months
-|$[total]
+|[e.g., Mobile app, offline support]
+|$[low]–$[high]
 
 |Cloud Setup
 |—
 |—
 |—
-|$[total]
+|[e.g., VPC, CI/CD, environments]
+|$[low]–$[high]
+
+|*Subtotal*
+|
+|
+|
+|
+|*$[subtotal]*
+
+|*Contingency ([N]%)*
+|—
+|—
+|—
+|_Covers: integration unknowns, scope clarification, vendor delays_
+|*$[contingency]*
 
 |*TOTAL CAPEX*
 |
 |
 |
-|*$[total]*
+|
+|*$[low]–$[high]*
 |===
 
 ==== OPEX (Monthly)
@@ -1064,9 +1236,13 @@ svc --> db
 |[spec]
 |$[cost]
 
+|Contingency / headroom (10%)
+|_Spike traffic, additional environments_
+|$[cost]
+
 |*TOTAL OPEX*
 |
-|*$[total]/mo*
+|*$[low]–$[high]/mo*
 |===
 
 === Timeline
@@ -1129,21 +1305,103 @@ end legend
 @endgantt
 ....
 
+=== Phase Cost Summary
+
+// Principle: link timeline to cost so stakeholders see what each phase costs.
+// This answers "why does it cost this much?" alongside the Gantt's "why does it take this long?"
+
+[cols="2,1,1,1,1"]
+|===
+|Phase |Duration |Team |Phase Cost |Cumulative
+
+|POC / Foundation
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Core Build (MVP)
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Polish / Launch
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Contingency ([N]%)
+|—
+|—
+|$[cost]
+|$[cumulative]
+
+|*TOTAL*
+|*[N] months*
+|
+|*$[total]*
+|*$[total]*
+|===
+
 === Risk Assessment
 
-[cols="2,1,1,2"]
+// Risk management tip: don't ignore medium-probability / medium-impact risks.
+// They are the most dangerous because nobody owns them. Every risk needs an
+// explicit owner. Include organizational and political risks — they kill
+// more projects than technical risks do.
+
+[cols="2,1,1,1,2,2"]
 |===
-|Risk |Probability |Impact |Mitigation
+|Risk |Category |Probability |Impact |Justification |Mitigation
 
 |[Risk 1]
+|Technical
 |Medium
 |High
+|[Why this probability/impact — e.g., "No sandbox available for payment API"]
 |[How to mitigate]
 
 |[Risk 2]
+|Organizational
 |Low
 |Medium
+|[e.g., "Key stakeholder on leave during UAT window"]
 |[How to mitigate]
+
+|[Risk 3]
+|Integration
+|High
+|Medium
+|[e.g., "Third-party API has no SLA guarantee"]
+|[How to mitigate]
+|===
+
+_Categories: Technical, Organizational, Integration, Commercial, Regulatory, Resource_
+
+=== Issues Log
+
+// Issues are risks that have materialized. Track them here so they don't
+// get lost in Slack threads and meeting minutes.
+
+[cols="1,2,1,2,2,1"]
+|===
+|# |Issue |Severity |Impact |Resolution / Action |Owner
+
+|1
+|[e.g., Payment gateway sandbox not accessible]
+|High
+|[Blocks integration testing]
+|[Escalated to client IT, fallback: mock service]
+|[Name]
+
+|2
+|[e.g., Requirements for reporting module still undefined]
+|Medium
+|[Cannot estimate Phase 2 accurately]
+|[Workshop scheduled for [date]]
+|[Name]
 |===
 
 == Assumptions, Constraints & Quality
@@ -1161,20 +1419,25 @@ end legend
 
 === Dependencies
 
-[cols="2,2,2,1"]
+[cols="2,2,2,1,1"]
 |===
-|Dependency |Owner |Expected Date |Risk
+|Dependency |Owner |Expected Date |Risk |Verified?
 
 |[Auth provider API access]
 |[Security team]
 |[2026-03-15]
 |Low
+|[ ] Yes / [ ] No
 
 |[Payment gateway sandbox]
 |[Finance team]
 |[2026-03-01]
 |Medium
+|[ ] Yes / [ ] No
 |===
+
+// ⚠️ "Verified?" column: a dependency isn't real until someone has tested it.
+// "They said the API works" ≠ "We called the API and got a 200."
 
 === Quality Scenarios (arc42)
 
@@ -1203,12 +1466,105 @@ Measurable quality requirements with concrete scenarios.
 |Traffic increases 10× during event
 |Auto-scaling provisions resources
 |No degradation above P95 target
+
+|Operability
+|Team member leaves mid-sprint
+|Remaining team can continue without blocking
+|< 1 day onboarding for replacement on any component
+
+|Evolvability
+|New payment provider must be added
+|Swap provider behind adapter interface
+|< 2 sprint integration effort
+|===
+
+=== Scope Governance
+
+// Scope creep is the #1 timeline killer. Establish the rules early.
+// This section sets expectations for how changes are handled.
+
+[cols="1,3"]
+|===
+|Aspect |Rule
+
+|**Change Request Process**
+|All scope changes go through [change request board / product owner]. No verbal agreements.
+
+|**Impact Assessment**
+|Every change request gets a written impact note: timeline, cost, risk, trade-off.
+
+|**Phase 2 Parking Lot**
+|Features that don't make the cut go into a visible "Phase 2" backlog, not silent deletion.
+
+|**Definition of Done**
+|A feature is "done" when: code reviewed, unit tested (>80% coverage), integration tested, deployed to staging, documentation updated, PO accepted.
 |===
 
 === Out of Scope
 
+// ⚠️ The "Phase 2 Graveyard" warning: features parked here have a habit of
+// never getting built. If something is critical, fight for it in Phase 1.
+// If it's truly deferrable, be honest about it.
+
 * [Item 1 — e.g., Native desktop application]
 * [Item 2 — e.g., Multi-language support in Phase 1]
+
+== Business Value & ROI
+
+// This section answers the executive question: "Why should we spend this money?"
+// Frame cost as investment, not expense. Show what the business GAINS.
+
+[cols="2,2,2"]
+|===
+|Value Driver |Current Cost / Pain |Expected Improvement
+
+|[e.g., Manual data entry]
+|[e.g., 40 hrs/week × $50/hr = $104K/year]
+|[e.g., 90% reduction → $94K/year savings]
+
+|[e.g., Customer churn from slow system]
+|[e.g., 5% monthly churn, ~$200K/year lost revenue]
+|[e.g., Target < 2% churn with improved UX]
+
+|[e.g., Compliance risk]
+|[e.g., Potential $500K fine for non-compliance]
+|[e.g., Automated controls eliminate manual audit gaps]
+|===
+
+**Payback period:** [e.g., Investment recovers in ~8 months based on operational savings]
+
+**Strategic value (hard to quantify):** [e.g., Enables expansion to 3 new markets, positions for acquisition]
+
+== Knowledge Transfer Plan
+
+// Knowledge transfer is not optional — it's a deliverable. Plan it from day one,
+// not as an afterthought in the last sprint. The project isn't done when the code
+// is deployed; it's done when the client team can operate and extend it.
+
+[cols="2,2,2,2"]
+|===
+|Topic |Format |Audience |Timing
+
+|Architecture overview & decisions
+|Workshop (2h) + recorded
+|Dev team + tech leads
+|End of Phase 1
+
+|Operational runbook
+|Written guide + walkthrough
+|Ops / SRE team
+|Before go-live
+
+|Codebase orientation
+|Pair programming sessions (3 days)
+|Client developers
+|Last sprint
+
+|Admin & configuration guide
+|Documentation + video
+|Business admins
+|Before go-live
+|===
 
 == Recommended Next Steps
 
@@ -1416,30 +1772,42 @@ end note
 
 === Integration Patterns
 
-[cols="2,2,2,2"]
+// THE 30/70 RULE: Budget 30% of effort for "your" code, 70% for integrations,
+// testing, and edge cases. Integrations always take longer than expected.
+// Budget 3× your initial estimate for any third-party integration.
+
+[cols="2,2,2,2,2"]
 |===
-|Integration |Pattern |Protocol |Error Handling
+|Integration |Pattern |Protocol |Error Handling |Failure Mode
 
 |[Auth Provider]
 |Request-Response (sync)
 |OAuth2 / HTTPS
 |Circuit breaker, 3 retries with exponential backoff
+|[e.g., Degrade to cached tokens for 5 min]
 
 |[Payment Gateway]
 |Request-Response (sync)
 |REST / HTTPS
 |Idempotency keys, webhook confirmation
+|[e.g., Queue payment, retry async, alert ops]
 
 |[Notification Service]
 |Event-Driven (async)
 |Message queue (AMQP)
 |Dead letter queue, 5 retries
+|[e.g., Notifications delayed, not lost]
 
 |[Analytics]
 |Fire-and-Forget (async)
 |Message queue
 |Best effort, no retry
+|[e.g., Data gap in analytics, acceptable]
 |===
+
+// Integration checkpoint: before each sprint that touches an integration,
+// verify: sandbox accessible? credentials valid? rate limits sufficient?
+// test data available? Don't discover issues on demo day.
 
 // OPTIONAL — Include for cloud deployments and distributed systems
 == Deployment & Infrastructure
@@ -1799,15 +2167,18 @@ title [Project Name] — WBS
 *** Infrastructure Setup
 *** CI/CD Pipeline
 *** Auth Integration
+*** Environment Provisioning
 ** Phase 2: Core
 *** Service A
 **** API Design
 **** Implementation
 **** Testing
+**** Integration Testing
 *** Service B
 **** API Design
 **** Implementation
 **** Testing
+**** Integration Testing
 *** Mobile App
 **** UI Shell
 **** Core Screens
@@ -1815,12 +2186,19 @@ title [Project Name] — WBS
 ** Phase 3: Launch
 *** Performance Testing
 *** Security Audit
+*** UAT & Bug Fixes
 *** Staged Rollout
+*** Knowledge Transfer
+*** Documentation
 @endwbs
 ....
 
 // OPTIONAL — Include when migrating from an existing system or re-platforming
 == Migration & Transition
+
+// ⚠️ Migration 3× Heuristic: whatever time you estimate for migration,
+// multiply by 3. Data migration reveals data quality issues nobody knew about.
+// Feature parity takes longer than new development because you're reverse-engineering.
 
 === Migration Strategy
 
@@ -1909,6 +2287,14 @@ Summary of key architecture decisions. Full ADR details in separate files (see `
 === [Performance & Caching Strategy]
 
 _Technical details: caching layers, cache invalidation strategy, CDN configuration, database query optimization, connection pooling._
+
+// Caching architecture checklist:
+// 1. What is cached? (query results, rendered pages, session data, config)
+// 2. Where? (CDN edge, API gateway, application layer, database query cache)
+// 3. TTL policy? (static: long TTL + cache-bust on deploy; dynamic: short TTL or event-based invalidation)
+// 4. Invalidation strategy? (TTL expiry, event-driven purge, versioned keys)
+// 5. Cache stampede protection? (lock/singleflight, stale-while-revalidate)
+// 6. Cold start plan? (pre-warm on deploy, lazy load with fallback)
 
 === [Data Migration / ETL Strategy]
 

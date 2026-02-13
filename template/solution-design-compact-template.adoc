@@ -20,6 +20,15 @@
 //   Omits deep technical sections (security, API, observability, etc.)
 //   that belong in the full solution-design-template.adoc.
 //
+// MEETING TIPS:
+//   - Start with the recommendation, not the problem. Executives want the
+//     answer first, then the justification. Lead with §1, deep-dive only if asked.
+//   - Print/share this doc BEFORE the meeting. Never surprise stakeholders
+//     with costs or timelines they haven't had time to digest.
+//   - Keep one slide per section — the "one-screen test". If a section
+//     doesn't fit on one screen, it's too detailed for this format.
+//   - Reserve 5 min for questions — the real meeting happens there.
+//
 // SECTIONS (8 total):
 //   §1  Executive Summary ......... 2 min — context + recommendation
 //   §2  Problem & Vision .......... 2 min — pain points + target state
@@ -62,16 +71,16 @@ _One paragraph: what is the project, who is it for, and why is it needed now._
 |[Option N — Name]
 
 |**Estimated CAPEX**
-|$[amount]
+|$[low]–$[high] (incl. [N]% contingency)
 
 |**Estimated OPEX**
-|$[amount]/month
+|$[low]–$[high]/month
 
 |**Timeline**
-|[N] months
+|[N]–[N] months
 
 |**Team Size**
-|[N] developers
+|[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])
 
 |**Go-Live Target**
 |[Date]
@@ -224,6 +233,10 @@ platform.services.svcB -> external.thirdParty: REST
 
 == Options Comparison
 
+// OPTIONS FRAMING: Always present 3 options. The middle one is your
+// recommendation. Option 3 (premium) exists to make Option 2 feel reasonable.
+// See life-lessons.md §7 for the decoy effect rationale.
+
 === Side-by-Side
 
 [cols="2,1,1,1"]
@@ -236,24 +249,24 @@ platform.services.svcB -> external.thirdParty: REST
 |All + multi-region
 
 |**Team**
-|4 devs
-|8 devs
-|15 devs
+|4 devs (2 BE + 1 FE + 1 QA)
+|8 devs (3 BE + 2 FE + 2 QA + 1 SA)
+|15 devs (multi-team)
 
 |**Timeline**
 |4 months
 |8 months
 |12 months
 
-|**CAPEX**
-|$[amount]
-|$[amount]
-|$[amount]
+|**CAPEX (incl. contingency)**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
 
 |**OPEX / month**
-|$[amount]
-|$[amount]
-|$[amount]
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
 
 |**Risk**
 |Low
@@ -351,27 +364,101 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 * [Key deliverable 2 — e.g., Admin portal for content management]
 * [Key deliverable 3 — e.g., Analytics dashboard]
 
+=== Business Value
+
+// Frame cost as investment, not expense. Answer: "What do we GET for this money?"
+
+[cols="2,2,2"]
+|===
+|Value Driver |Current Cost / Pain |Expected Improvement
+
+|[e.g., Manual processes]
+|[e.g., 40 hrs/week wasted]
+|[e.g., 90% automation → $X/year saved]
+
+|[e.g., Customer churn]
+|[e.g., X% monthly]
+|[e.g., Target < Y% with improved UX]
+|===
+
+**Estimated payback period:** [e.g., ~N months]
+
 === Cost Summary
+
+// Principle: Cost = capacity × time. Show rate × duration so the client
+// sees they’re buying engineering hours, not opaque line items.
+// Always include contingency and pair cost with deliverables.
+
+==== Development Investment (CAPEX)
+
+[cols="2,1,1,1,2,1"]
+|===
+|Role / Item |Count |Rate |Duration |Deliverable |Cost
+
+|Backend Developer
+|2
+|$[rate]/mo
+|[N] months
+|[e.g., Core API, integrations]
+|$[low]–$[high]
+
+|Frontend / Mobile
+|2
+|$[rate]/mo
+|[N] months
+|[e.g., Mobile app, admin portal]
+|$[low]–$[high]
+
+|Cloud Setup
+|—
+|—
+|—
+|[e.g., Infra, CI/CD, environments]
+|$[low]–$[high]
+
+|*Subtotal*
+|
+|
+|
+|
+|*$[subtotal]*
+
+|*Contingency ([N]%)*
+|—
+|—
+|—
+|_Integration unknowns, vendor delays_
+|*$[contingency]*
+
+|*TOTAL CAPEX*
+|
+|
+|
+|
+|*$[low]–$[high]*
+|===
+
+==== Operational Costs (OPEX)
 
 [cols="2,1,1"]
 |===
-|Category |One-Time (CAPEX) |Monthly (OPEX)
-
-|Development
-|$[amount]
-|—
+|Service |Spec |Monthly Cost
 
 |Cloud Infrastructure
-|$[setup]
-|$[amount]
+|[spec]
+|$[cost]
 
 |Third-Party Licenses
-|—
-|$[amount]
+|[spec]
+|$[cost]
 
-|*TOTAL*
-|*$[capex]*
-|*$[opex]/mo*
+|Contingency / headroom (10%)
+|_Spike traffic, extra environments_
+|$[cost]
+
+|*TOTAL OPEX*
+|
+|*$[low]–$[high]/mo*
 |===
 
 === Pros & Cons
@@ -497,6 +584,38 @@ legend right
 end legend
 @endgantt
 ....
+
+=== Phase Cost Summary
+
+[cols="2,1,1,1"]
+|===
+|Phase |Duration |Team |Cost
+
+|Foundation
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Core Build
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Launch
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Contingency ([N]%)
+|—
+|—
+|$[cost]
+
+|*TOTAL*
+|*[N] months*
+|
+|*$[total]*
+|===
 
 == Next Steps & Decisions Needed
 

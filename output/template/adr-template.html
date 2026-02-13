@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
 <meta name="author" content="[Author Name]">
-<title>[Project Name] — Solution Design (Compact)</title>
+<title>ADR-[NNN]: [Title of Decision]</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -434,10 +434,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>[Project Name] — Solution Design (Compact)</h1>
+<h1>ADR-[NNN]: [Title of Decision]</h1>
 <div class="details">
 <span id="author" class="author">[Author Name]</span><br>
 <span id="revdate">[YYYY-MM-DD]</span>
@@ -445,629 +446,273 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_executive_summary">1. Executive Summary</a>
+<li><a href="#_context">Context</a></li>
+<li><a href="#_decision">Decision</a></li>
+<li><a href="#_alternatives_considered">Alternatives Considered</a></li>
+<li><a href="#_consequences">Consequences</a>
 <ul class="sectlevel2">
-<li><a href="#_context">1.1. Context</a></li>
-<li><a href="#_recommendation_at_a_glance">1.2. Recommendation at a Glance</a></li>
-<li><a href="#_key_decisions_required">1.3. Key Decisions Required</a></li>
+<li><a href="#_positive">Positive</a></li>
+<li><a href="#_negative">Negative</a></li>
+<li><a href="#_dependency_hiring_impact">Dependency &amp; Hiring Impact</a></li>
+<li><a href="#_neutral">Neutral</a></li>
 </ul>
 </li>
-<li><a href="#_problem_vision">2. Problem &amp; Vision</a>
-<ul class="sectlevel2">
-<li><a href="#_current_pain_points">2.1. Current Pain Points</a></li>
-<li><a href="#_target_state">2.2. Target State</a></li>
-</ul>
-</li>
-<li><a href="#_solution_overview">3. Solution Overview</a>
-<ul class="sectlevel2">
-<li><a href="#_system_context">3.1. System Context</a></li>
-<li><a href="#_high_level_architecture">3.2. High-Level Architecture</a></li>
-</ul>
-</li>
-<li><a href="#_options_comparison">4. Options Comparison</a>
-<ul class="sectlevel2">
-<li><a href="#_side_by_side">4.1. Side-by-Side</a></li>
-<li><a href="#_weighted_scoring">4.2. Weighted Scoring</a></li>
-<li><a href="#_cost_comparison">4.3. Cost Comparison</a></li>
-</ul>
-</li>
-<li><a href="#_recommended_option_option_name">5. Recommended Option: [Option Name]</a>
-<ul class="sectlevel2">
-<li><a href="#_what_it_delivers">5.1. What It Delivers</a></li>
-<li><a href="#_cost_summary">5.2. Cost Summary</a></li>
-<li><a href="#_pros_cons">5.3. Pros &amp; Cons</a></li>
-</ul>
-</li>
-<li><a href="#_risks_assumptions">6. Risks &amp; Assumptions</a>
-<ul class="sectlevel2">
-<li><a href="#_key_risks">6.1. Key Risks</a></li>
-<li><a href="#_key_assumptions">6.2. Key Assumptions</a></li>
-<li><a href="#_key_dependencies">6.3. Key Dependencies</a></li>
-</ul>
-</li>
-<li><a href="#_timeline">7. Timeline</a></li>
-<li><a href="#_next_steps_decisions_needed">8. Next Steps &amp; Decisions Needed</a>
-<ul class="sectlevel2">
-<li><a href="#_immediate_actions">8.1. Immediate Actions</a></li>
-<li><a href="#_what_happens_after_approval">8.2. What Happens After Approval</a></li>
-</ul>
-</li>
+<li><a href="#_quality_attribute_impact">Quality Attribute Impact</a></li>
+<li><a href="#_follow_up_actions">Follow-Up Actions</a></li>
+<li><a href="#_references">References</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_executive_summary"><a class="anchor" href="#_executive_summary"></a>1. Executive Summary</h2>
+<h2 id="_context"><a class="anchor" href="#_context"></a>Context</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_context"><a class="anchor" href="#_context"></a>1.1. Context</h3>
 <div class="paragraph">
-<p><em>One paragraph: what is the project, who is it for, and why is it needed now.</em></p>
+<p><strong>Relevant constraints:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>[Technical constraint — e.g., must integrate with existing SSO]</p>
+</li>
+<li>
+<p>[Business constraint — e.g., team has no Go experience]</p>
+</li>
+<li>
+<p>[Timeline constraint — e.g., must be ready for Q3 launch]</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Related sections in Solution Design:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>[e.g., § System Context — shows where this component fits]</p>
+</li>
+<li>
+<p>[e.g., § Data Architecture — data model impacted by this choice]</p>
+</li>
+</ul>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_recommendation_at_a_glance"><a class="anchor" href="#_recommendation_at_a_glance"></a>1.2. Recommendation at a Glance</h3>
+</div>
+<div class="sect1">
+<h2 id="_decision"><a class="anchor" href="#_decision"></a>Decision</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>We will use [Technology / Pattern / Approach] because [primary reason].</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_alternatives_considered"><a class="anchor" href="#_alternatives_considered"></a>Alternatives Considered</h2>
+<div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
+<col style="width: 18.1818%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2728%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Aspect</th>
-<th class="tableblock halign-left valign-top">Summary</th>
+<th class="tableblock halign-left valign-top">Alternative</th>
+<th class="tableblock halign-left valign-top">Pros</th>
+<th class="tableblock halign-left valign-top">Cons</th>
+<th class="tableblock halign-left valign-top">Why Not Chosen</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Recommended Option</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Option N — Name]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 1]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 2]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]/month</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] months</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team Size</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] developers</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Go-Live Target</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 3]</strong> (if applicable)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+</div>
+<div class="sect1">
+<h2 id="_consequences"><a class="anchor" href="#_consequences"></a>Consequences</h2>
+<div class="sectionbody">
 <div class="sect2">
-<h3 id="_key_decisions_required"><a class="anchor" href="#_key_decisions_required"></a>1.3. Key Decisions Required</h3>
+<h3 id="_positive"><a class="anchor" href="#_positive"></a>Positive</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Benefit 1 — e.g., reduces deployment time by 50%]</p>
+</li>
+<li>
+<p>[Benefit 2 — e.g., enables horizontal scaling]</p>
+</li>
+<li>
+<p>[Benefit 3 — e.g., leverages existing team expertise]</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_negative"><a class="anchor" href="#_negative"></a>Negative</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Trade-off 1 — e.g., increased operational complexity]</p>
+</li>
+<li>
+<p>[Trade-off 2 — e.g., vendor lock-in risk]</p>
+</li>
+<li>
+<p>[Trade-off 3 — e.g., learning curve for some team members]</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dependency_hiring_impact"><a class="anchor" href="#_dependency_hiring_impact"></a>Dependency &amp; Hiring Impact</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Dependency accumulation risk:</strong> [Does this decision add a new runtime dependency, external service, or vendor relationship? What happens if that dependency is discontinued or changes pricing?]</p>
+</li>
+<li>
+<p><strong>Hiring impact:</strong> [Does this technology narrow or widen the hiring pool? Can the current team maintain this without the original author?]</p>
+</li>
+<li>
+<p><strong>Operational burden:</strong> [What new operational skills does this require? Monitoring, upgrades, security patches?]</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_neutral"><a class="anchor" href="#_neutral"></a>Neutral</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Observation 1 — e.g., requires updating CI/CD pipeline]</p>
+</li>
+<li>
+<p>[Observation 2 — e.g., no impact on existing APIs]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quality_attribute_impact"><a class="anchor" href="#_quality_attribute_impact"></a>Quality Attribute Impact</h2>
+<div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
+<col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
-<col style="width: 50%;">
-<col style="width: 33.3334%;">
+<col style="width: 50.0001%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Decision</th>
-<th class="tableblock halign-left valign-top">Needed By</th>
+<th class="tableblock halign-left valign-top">Quality Attribute</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Explanation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Approve recommended option and budget]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect performance?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Confirm cloud provider (AWS preferred)]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect security?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Allocate team for POC sprint]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_problem_vision"><a class="anchor" href="#_problem_vision"></a>2. Problem &amp; Vision</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_current_pain_points"><a class="anchor" href="#_current_pain_points"></a>2.1. Current Pain Points</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 16.6666%;">
-<col style="width: 50%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Problem</th>
-<th class="tableblock halign-left valign-top">Business Impact</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Manual data entry across 3 disconnected systems]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 40 hrs/week wasted, error rate ~15%]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., No real-time visibility into operations]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Delayed decisions, missed SLAs]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Cannot scale to new regions]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Blocked revenue growth]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_target_state"><a class="anchor" href="#_target_state"></a>2.2. Target State</h3>
-<div class="paragraph">
-<p><em>2-3 sentences describing what the world looks like after this solution is delivered. Focus on business outcomes, not technology.</em></p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_solution_overview"><a class="anchor" href="#_solution_overview"></a>3. Solution Overview</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_system_context"><a class="anchor" href="#_system_context"></a>3.1. System Context</h3>
-<div class="paragraph">
-<p>Who uses the system and what does it connect to.</p>
-</div>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-c4-context-c0ac139f99178f3157f8ca8d4a6fc079b86a3aae.svg" alt="System Context — [Project Name]">
-</div>
-<div class="title">Figure 1. System Context — [Project Name]</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>3.2. High-Level Architecture</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-architecture-15f7feac6d0bbae473f1401dd2c5f2f83089a069.svg" alt="Architecture — Recommended Option">
-</div>
-<div class="title">Figure 2. Architecture — Recommended Option</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options_comparison"><a class="anchor" href="#_options_comparison"></a>4. Options Comparison</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_side_by_side"><a class="anchor" href="#_side_by_side"></a>4.1. Side-by-Side</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 40%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Aspect</th>
-<th class="tableblock halign-left valign-top">Option 1: MVP</th>
-<th class="tableblock halign-left valign-top">Option 2: Full</th>
-<th class="tableblock halign-left valign-top">Option 3: Scale</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Core features only</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All features</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All + multi-region</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_weighted_scoring"><a class="anchor" href="#_weighted_scoring"></a>4.2. Weighted Scoring</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 42.8571%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2858%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Criteria</th>
-<th class="tableblock halign-left valign-top">Weight</th>
-<th class="tableblock halign-left valign-top">Opt 1</th>
-<th class="tableblock halign-left valign-top">Opt 2</th>
-<th class="tableblock halign-left valign-top">Opt 3</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Time to Market</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Total Cost</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maintainability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect maintenance?]</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect scalability?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Feature Completeness</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Operational Risk</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Weighted Total</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>44</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Testability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect testability?]</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p><em>Score: 1 (worst) to 5 (best). Total = Σ(weight × score). <strong>Recommendation: Option [N]</strong>.</em></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>4.3. Cost Comparison</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-cost-comparison-d46abe0af3bbb86f4aa3dc10b70fb44b542786c0.svg" alt="Monthly OPEX by Option">
-</div>
-<div class="title">Figure 3. Monthly OPEX by Option</div>
-</div>
+<p><em>Impact: + improves, − degrades, = neutral</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_recommended_option_option_name"><a class="anchor" href="#_recommended_option_option_name"></a>5. Recommended Option: [Option Name]</h2>
+<h2 id="_follow_up_actions"><a class="anchor" href="#_follow_up_actions"></a>Follow-Up Actions</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_what_it_delivers"><a class="anchor" href="#_what_it_delivers"></a>5.1. What It Delivers</h3>
-<div class="ulist">
-<ul>
+<div class="ulist checklist">
+<ul class="checklist">
 <li>
-<p>[Key deliverable 1 — e.g., Mobile app with AI-powered recommendations]</p>
+<p><i class="fa fa-square-o"></i> [Action 1 — e.g., Update deployment scripts]</p>
 </li>
 <li>
-<p>[Key deliverable 2 — e.g., Admin portal for content management]</p>
+<p><i class="fa fa-square-o"></i> [Action 2 — e.g., Train team on new technology]</p>
 </li>
 <li>
-<p>[Key deliverable 3 — e.g., Analytics dashboard]</p>
+<p><i class="fa fa-square-o"></i> [Action 3 — e.g., Create monitoring dashboards]</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> [Action 4 — e.g., Update architecture diagrams]</p>
 </li>
 </ul>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_cost_summary"><a class="anchor" href="#_cost_summary"></a>5.2. Cost Summary</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Category</th>
-<th class="tableblock halign-left valign-top">One-Time (CAPEX)</th>
-<th class="tableblock halign-left valign-top">Monthly (OPEX)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Development</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cloud Infrastructure</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[setup]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Third-Party Licenses</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[amount]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[capex]</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[opex]/mo</strong></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_pros_cons"><a class="anchor" href="#_pros_cons"></a>5.3. Pros &amp; Cons</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Pros</th>
-<th class="tableblock halign-left valign-top">Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 2]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 3]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 3]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
 </div>
 <div class="sect1">
-<h2 id="_risks_assumptions"><a class="anchor" href="#_risks_assumptions"></a>6. Risks &amp; Assumptions</h2>
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_key_risks"><a class="anchor" href="#_key_risks"></a>6.1. Key Risks</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 28.5714%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 42.8572%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Risk</th>
-<th class="tableblock halign-left valign-top">Likelihood</th>
-<th class="tableblock halign-left valign-top">Impact</th>
-<th class="tableblock halign-left valign-top">Mitigation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Third-party API changes]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Abstraction layer, contract tests]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Team ramp-up delay]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pair programming, documentation]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Scope creep]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Fixed scope per phase, change request process]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_key_assumptions"><a class="anchor" href="#_key_assumptions"></a>6.2. Key Assumptions</h3>
 <div class="ulist">
 <ul>
 <li>
-<p>[Assumption 1 — e.g., Cloud account provisioned before kickoff]</p>
+<p>[Link to relevant documentation]</p>
 </li>
 <li>
-<p>[Assumption 2 — e.g., Product backlog prioritized by Sprint 1]</p>
+<p>[Link to benchmark results or PoC findings]</p>
 </li>
 <li>
-<p>[Assumption 3 — e.g., Client provides test data within 2 weeks]</p>
+<p>[Link to related ADRs (superseded, related)]</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_key_dependencies"><a class="anchor" href="#_key_dependencies"></a>6.3. Key Dependencies</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Dependency</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Needed By</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., SSO credentials &amp; config]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client IT team]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Payment gateway sandbox]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client Finance]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_timeline"><a class="anchor" href="#_timeline"></a>7. Timeline</h2>
-<div class="sectionbody">
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-timeline-e34e38fa37f12d22d64f3507e66d1dd93ac6d227.svg" alt="Project Timeline — [Option Name]">
-</div>
-<div class="title">Figure 4. Project Timeline — [Option Name]</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_next_steps_decisions_needed"><a class="anchor" href="#_next_steps_decisions_needed"></a>8. Next Steps &amp; Decisions Needed</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_immediate_actions"><a class="anchor" href="#_immediate_actions"></a>8.1. Immediate Actions</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 37.5%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Target Date</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Approve option and budget at steering committee]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client Sponsor]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Sign off on team composition and start date]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client PM + Vendor PM]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Provide SSO / API credentials for development]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client IT]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Schedule kick-off and Sprint 0 planning]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Vendor PM]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Confirm environments and access provisioning]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client DevOps]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_what_happens_after_approval"><a class="anchor" href="#_what_happens_after_approval"></a>8.2. What Happens After Approval</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Week 1-2</strong> — Kick-off, environment setup, Sprint 0</p>
-</li>
-<li>
-<p><strong>Week 3-4</strong> — POC delivery, first client demo</p>
-</li>
-<li>
-<p><strong>Month 2-3</strong> — Core build sprints with bi-weekly demos</p>
-</li>
-<li>
-<p><strong>Month 3-4</strong> — UAT, bug fixes, go-live preparation</p>
-</li>
-<li>
-<p><strong>Go-Live</strong> — Production deployment + hypercare (2 weeks)</p>
-</li>
-</ol>
-</div>
-<hr>
-<div class="paragraph text-center">
-<p><em>For technical deep-dive see the full <a href="solution-design-template.adoc">Solution Design Document</a> (25 sections, 16 diagrams).</em></p>
-</div>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-13 00:55:51 +0100
+Last updated 2026-02-13 02:06:30 +0100
 </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
+<script>
+if (!hljs.initHighlighting.called) {
+  hljs.initHighlighting.called = true
+  ;[].slice.call(document.querySelectorAll('pre.highlight > code[data-lang]')).forEach(function (el) { hljs.highlightBlock(el) })
+}
+</script>
 </body>
 </html>

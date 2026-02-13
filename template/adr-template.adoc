@@ -3,6 +3,8 @@
 :revdate: [YYYY-MM-DD]
 :status: [Proposed | Accepted | Deprecated | Superseded by ADR-XXX]
 :deciders: [List of people involved in the decision]
+:reversibility: [Easy | Hard | One-way]
+:validated-by: [PoC | Benchmark | Team vote | Expert opinion | Not yet validated]
 :toc:
 :icons: font
 
@@ -25,6 +27,18 @@
 // STATUS LIFECYCLE:
 //   Proposed → Accepted → [Deprecated | Superseded by ADR-XXX]
 //
+// REVERSIBILITY:
+//   Easy     = config change, feature flag, or minor code update
+//   Hard     = significant rework (weeks), but technically possible
+//   One-way  = migration, data format change, or public API — cannot undo
+//             → One-way decisions deserve extra scrutiny and stakeholder sign-off
+//
+// BORING TECHNOLOGY BIAS:
+//   Unless there's a compelling, specific reason for something novel,
+//   prefer mature, well-understood technology. Every new technology
+//   adds operational burden and narrows your hiring pool.
+//   Ask: "Is this technology essential, or just exciting?"
+//
 // ============================================================================
 
 == Context
@@ -43,6 +57,10 @@
 * [e.g., § Data Architecture — data model impacted by this choice]
 
 == Decision
+
+// TIP: Write the decision as if you're explaining it to a new team member
+// who joins 6 months from now. They should understand not just WHAT was
+// decided, but WHY — including what was explicitly rejected and why.
 
 [State the decision clearly. Use present tense: "We will use..." or "We adopt...". Be specific about what was chosen and any conditions or parameters.]
 
@@ -83,6 +101,12 @@
 * [Trade-off 1 — e.g., increased operational complexity]
 * [Trade-off 2 — e.g., vendor lock-in risk]
 * [Trade-off 3 — e.g., learning curve for some team members]
+
+=== Dependency & Hiring Impact
+
+* **Dependency accumulation risk:** [Does this decision add a new runtime dependency, external service, or vendor relationship? What happens if that dependency is discontinued or changes pricing?]
+* **Hiring impact:** [Does this technology narrow or widen the hiring pool? Can the current team maintain this without the original author?]
+* **Operational burden:** [What new operational skills does this require? Monitoring, upgrades, security patches?]
 
 === Neutral
 

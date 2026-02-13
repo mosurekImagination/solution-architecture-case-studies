@@ -1,20 +1,31 @@
-Cost not by module
-But developer price x price 
-Provide timeline - with cost
-What can be in parallel
-in the end we sell manhours
+## Estimation & Costing Principles
 
-gant chart - to visualise dependencies, and timeline
+- Estimate cost based on **effort (man-hours)**, not per module or feature.
+  - Formula: `developer rate × time = cost`
+- Present a **timeline with cost breakdown** so stakeholders see both schedule and budget impact.
+- Identify which workstreams can run **in parallel** to shorten the critical path.
+- The deliverable we sell is **capacity × time** — make this transparent.
 
-Why does it take that long :D 
+## Visualization
 
-you need to account risk (e.g. bus factor for developer - thats why at least 2).
-eg. 2 middles instead od 1 senior
-eg. external vendor risks (api not working, docs )
+- Use a **Gantt chart** to communicate:
+  - Task dependencies and sequencing
+  - Parallelizable workstreams
+  - Overall timeline and milestones
+- This helps justify duration to stakeholders ("why does it take this long?").
 
-we need to balance all risks
-usually 20-50%
+## Risk Management
 
-3-4 devs up to 1 stream - communication overhead
+- Always include a **risk buffer** — typically **20–50%** on top of base estimates.
+- Account for **team risks (bus factor)**:
+  - Assign at least **2 engineers per workstream** to avoid single points of failure.
+  - Consider staffing trade-offs (e.g., 2 mid-level engineers vs. 1 senior).
+- Account for **external / vendor risks**:
+  - Unreliable or undocumented third-party APIs
+  - Dependency on external teams or services
+- **Break down risk factors explicitly** — explain why the risk level is rated low, medium, or high for each area.
 
-break down why the risk is low and 
+## Team Scaling Considerations
+
+- Adding more developers to a single workstream does **not** scale linearly.
+- Factor in **communication overhead** (cf. Brooks's Law) before expanding a stream's team size.
