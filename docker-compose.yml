@@ -7,15 +7,26 @@ services:
       - KROKI_PLANTUML_HOST=plantuml
       - KROKI_MERMAID_HOST=mermaid
     depends_on:
-      - plantuml
-      - mermaid
+      plantuml:
+        condition: service_started
+      mermaid:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
 
   plantuml:
     image: plantuml/plantuml-server:jetty
     expose:
       - "8080"
+    restart: unless-stopped
 
   mermaid:
     image: yuzutech/kroki-mermaid
     expose:
       - "8002"
+    restart: unless-stopped

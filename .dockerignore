@@ -20,8 +20,9 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Output directory (will be mounted as volume)
+# Rendered output
 output/
+*.html
 
 # Git
 .git/
@@ -32,7 +33,14 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Generated diagrams (except in output/)
+# Scripts & docs (not needed in container)
+render.sh
+README.md
+template/README.md
+learnings.md
+template/life-lessons.md
+
+# Generated diagrams
 *.png
 *.jpg
 *.svg
