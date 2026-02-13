@@ -1,0 +1,2526 @@
+= [Project Name] — Solution Design
+:author: [Author Name]
+:revnumber: 0.1
+:revdate: 2026-02-13
+:status: Draft
+:toc: left
+:toclevels: 3
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+// ============================================================================
+// HOW TO USE THIS TEMPLATE
+// ============================================================================
+//
+// STRUCTURE: This template follows a modular, layered approach blending
+// arc42, C4, TOGAF, and AWS Well-Architected principles.
+//
+//   - CORE sections (§1–§13): Always include — they form the minimum
+//     viable solution design document.
+//   - OPTIONAL sections (§14–§25): Include based on project complexity.
+//     Each is marked with "// OPTIONAL" and can be removed entirely.
+//
+// AUDIENCE LAYERING:
+//   Executive    → §1 Stakeholders, §3 Executive Summary, §10 Options
+//   Architect    → + §6 C4, §7 Architecture, §8 Data, §14 Security
+//   Developer    → + §9 Flows, §15 API, §18 Entity Lifecycle, §22 ADRs
+//
+// DIAGRAM ENGINES (all via Kroki — no additional containers needed):
+//   PlantUML    → Sequence, Activity, State, Gantt, Mindmap, WBS
+//   Structurizr → C4 Context, Container, Deployment (shared model)
+//   D2          → Component architecture, infrastructure, observability
+//   Erd         → Data model / ER diagrams
+//   Vega-Lite   → Cost comparison charts
+//
+// STEPS:
+//   1. Replace all [bracketed placeholders] with your project details
+//   2. Delete sections marked "// OPTIONAL" that don't apply
+//   3. Replace sample diagrams with your actual content
+//   4. Render: npx asciidoctor -r asciidoctor-kroki solution-design.adoc
+//   5. Requires: docker-compose up -d (Kroki + PlantUML server)
+//
+// MAINTENANCE:
+//   This document should stay alive throughout the project. Assign an owner
+//   (typically the Solution Architect) responsible for keeping it current.
+//   A stale design doc is worse than no doc — it creates false confidence.
+//   Update after every major decision, scope change, or architecture review.
+//
+// ============================================================================
+
+== Version History
+
+// Review cadence: update this table after every steering committee,
+// major scope change, or architecture review. If the last entry is > 4 weeks
+// old and the project is active, the document is going stale.
+
+[cols="1,2,2,3"]
+|===
+|Version |Date |Author |Changes
+
+|0.1
+|[YYYY-MM-DD]
+|[Author]
+|Initial draft
+
+|0.2
+|[YYYY-MM-DD]
+|[Author]
+|[Description of changes]
+|===
+
+== Stakeholders
+
+Identifies who has a stake in the architecture decisions and what they care about.
+
+=== Stakeholder Register
+
+[cols="2,2,2,2"]
+|===
+|Name / Role |Organization |Key Concerns |Communication Needs
+
+|[Sponsor Name]
+|[Company / Dept]
+|Budget, timeline, business value
+|Executive summary, cost tables
+
+|[Tech Lead]
+|[Company / Dept]
+|Technical feasibility, team capacity
+|Architecture diagrams, API design
+
+|[Product Owner]
+|[Company / Dept]
+|Feature scope, user experience
+|Feature breakdown, user flows
+
+|[Security Officer]
+|[Company / Dept]
+|Compliance, data protection
+|Security architecture, threat model
+
+|[Ops / SRE Lead]
+|[Company / Dept]
+|Reliability, monitoring, deployment
+|Deployment view, SLOs, observability
+|===
+
+=== RACI Matrix
+
+[cols="3,1,1,1,1,1"]
+|===
+|Decision |Sponsor |Tech Lead |Product Owner |Security |Ops
+
+|Architecture pattern selection
+|A
+|R
+|C
+|C
+|I
+
+|Technology stack decisions
+|I
+|R
+|C
+|C
+|C
+
+|Security & compliance approach
+|A
+|C
+|I
+|R
+|C
+
+|Deployment strategy
+|I
+|C
+|I
+|C
+|R
+
+|Budget approval
+|R
+|C
+|C
+|I
+|I
+|===
+
+_R = Responsible, A = Accountable, C = Consulted, I = Informed_
+
+== Executive Summary
+
+_One paragraph: what is the system, why is it needed, what does this document recommend._
+
+=== Elevator Pitch
+
+// The "one-screen" test: if a stakeholder only reads this box, they should
+// understand what we're building, for whom, and why it matters.
+
+****
+*For* [target users] *who need* [core need], *the* [system name] *is a* [category]
+*that* [key benefit]. *Unlike* [current alternative], *our solution* [key differentiator].
+****
+
+=== Recommendation at a Glance
+
+[cols="1,3"]
+|===
+|Aspect |Summary
+
+|**Recommended Option**
+|[Option N — Name]
+
+|**Estimated CAPEX**
+|$[low]–$[high] (incl. [N]% contingency)
+
+|**Estimated OPEX**
+|$[low]–$[high]/month
+
+|**Timeline**
+|[N]–[N] months
+
+|**Team Size**
+|[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])
+
+|**Key Risk**
+|[Primary risk and mitigation]
+|===
+
+=== Key Decisions
+
+[cols="1,3,1"]
+|===
+|Decision |Rationale |Reversibility
+
+|**[Decision 1]**
+|[Why this matters and what was decided]
+|[Easy / Hard / One-way]
+
+|**[Decision 2]**
+|[Why this matters and what was decided]
+|[Easy / Hard / One-way]
+|===
+
+// Reversibility hint: "Easy" = config change or feature flag.
+// "Hard" = significant rework but possible. "One-way" = migration or data loss if reversed.
+// One-way decisions deserve an ADR and stakeholder sign-off.
+
+== Architecture Principles
+
+Guiding principles that shape all design decisions. Derived from TOGAF Preliminary Phase.
+
+[cols="2,3,3,3"]
+|===
+|Principle |Statement |Rationale |Implications
+
+|**API-First**
+|All capabilities are exposed via well-defined APIs
+|Enables multi-channel delivery and third-party integration
+|Requires API design review before implementation
+
+|**Cloud-Native**
+|Design for cloud deployment using managed services where practical
+|Reduces operational burden, enables elastic scaling
+|Vendor lock-in risk must be managed via abstraction layers
+
+|**Security by Design**
+|Security controls are built-in, not bolted on
+|Reduces cost of security fixes, meets compliance requirements
+|Security review required at every design stage
+
+|**Observability by Default**
+|Every service emits logs, metrics, and traces from day one
+|Enables rapid incident response and continuous performance optimization
+|Standard telemetry libraries must be adopted across all services
+
+|**Data as an Asset**
+|Data quality, lineage, and governance are first-class concerns
+|Enables analytics, ML, and regulatory compliance
+|Requires data classification and retention policies per entity
+
+|**Pragmatism over Purity**
+|Choose the simplest solution that meets requirements today; refactor when proven necessary
+|Avoids over-engineering and premature abstraction; reduces time-to-value
+|Every "build for the future" decision must cite a concrete, funded requirement
+
+|**Design for Changeability**
+|Assume requirements and technology will change — architect for easy replacement of components
+|Reduces cost of future change; aligns with agile/iterative delivery
+|Prefer interfaces over implementations; isolate third-party dependencies behind adapters
+
+|**YAGNI (You Aren't Gonna Need It)**
+|Do not build capabilities until there is a validated need
+|Reduces wasted effort, keeps codebase lean, shortens delivery
+|Every "nice to have" feature must be justified by a user story with a real sponsor
+
+|**[Principle N]**
+|[Statement]
+|[Why it matters]
+|[What it means for the project]
+|===
+
+== Problem Statement
+
+=== Current Pain Points
+
+_Describe the problem users/business face today. What is broken, slow, manual, or missing?_
+
+=== Current State Architecture
+
+Shows the existing system landscape (if applicable). Skip if greenfield.
+
+.AS-IS Architecture
+[d2,as-is-architecture,format=svg]
+....
+direction: right
+
+users: Users {
+  shape: person
+}
+
+legacy: Legacy System {
+  style.fill: "#FFE0B2"
+  app: Monolith App
+  db: Database {
+    shape: cylinder
+  }
+  app -> db
+}
+
+manual: Manual Processes {
+  style.fill: "#FFCDD2"
+  spreadsheets: Excel Spreadsheets
+  email: Email Workflows
+}
+
+users -> legacy.app: Uses
+users -> manual.spreadsheets: Tracks data
+legacy.app -> manual.email: Sends notifications
+....
+
+=== Proposed Solution
+
+_2-3 sentences on the high-level approach: what type of system, key technology choices, core value proposition._
+
+== System Context (C4 Model)
+
+Defines the system boundary, actors, and external dependencies using the C4 Model.
+All three views below share one Structurizr model — define the model once, render three views.
+
+// ---------------------------------------------------------------------------
+// NOTE: The Structurizr DSL block below is reused for Context, Container,
+// and Deployment views. Each AsciiDoc block references the same source
+// but selects a different view via the view-key attribute.
+// In practice, you can use an include directive to avoid duplication:
+//   structurizr::diagrams/c4-model.dsl[format=svg,view-key=ctx]
+// ---------------------------------------------------------------------------
+
+=== Context Diagram (Level 1)
+
+Shows the system as a black box — who uses it and what it depends on.
+
+.System Context — [Project Name]
+[structurizr,c4-context,format=svg,view-key=ctx]
+....
+workspace {
+
+  model {
+    user = person "End User" "Uses the application via mobile or web"
+    admin = person "Administrator" "Manages configuration and content"
+
+    system = softwareSystem "[System Name]" "Core application delivering [value proposition]" {
+      webapp = container "Web Application" "Serves the UI and handles user interactions" "React / Next.js"
+      api = container "API Server" "Business logic and data access" "Node.js / Spring Boot"
+      worker = container "Background Worker" "Async processing: notifications, ETL, analytics" "Node.js / Python"
+      db = container "Primary Database" "Stores core domain data" "PostgreSQL" "database"
+      cache = container "Cache" "Session and query caching" "Redis" "database"
+      storage = container "Object Storage" "Files, images, documents" "S3 / Blob Storage" "database"
+      queue = container "Message Queue" "Event streaming and async commands" "SQS / RabbitMQ" "database"
+    }
+
+    auth = softwareSystem "Auth Provider" "OAuth2 / SSO identity provider" "Existing System"
+    payment = softwareSystem "Payment Gateway" "Payment processing" "Existing System"
+    cdn = softwareSystem "CDN" "Static asset delivery" "Existing System"
+    monitoring = softwareSystem "Monitoring Platform" "Observability and alerting" "Existing System"
+
+    # Relationships
+    user -> system "Uses" "HTTPS"
+    admin -> system "Manages" "HTTPS"
+    system -> auth "Authenticates via" "OAuth2 / OIDC"
+    system -> payment "Processes payments" "REST API"
+    system -> cdn "Serves static assets" "HTTPS"
+    system -> monitoring "Sends telemetry" "OTLP"
+
+    # Internal relationships
+    user -> webapp "Browses" "HTTPS"
+    webapp -> api "API calls" "REST / GraphQL"
+    api -> db "Reads/Writes" "SQL"
+    api -> cache "Caches" "Redis Protocol"
+    api -> queue "Publishes events" "AMQP"
+    worker -> queue "Consumes events" "AMQP"
+    worker -> db "Reads/Writes" "SQL"
+    worker -> storage "Stores files" "S3 API"
+    api -> auth "Validates tokens" "OAuth2"
+    api -> payment "Charges" "REST API"
+
+    # Deployment
+    prod = deploymentEnvironment "Production" {
+      deploymentNode "Cloud Region" "Primary region" "[Cloud Provider]" {
+        deploymentNode "VPC" "" "" {
+          deploymentNode "Public Subnet" "" "" {
+            deploymentNode "Load Balancer" "Distributes traffic" "ALB / NLB" {
+              lbInstance = containerInstance webapp
+            }
+          }
+          deploymentNode "Private Subnet — App" "" "" {
+            deploymentNode "App Cluster" "Auto-scaling group" "ECS / EKS" {
+              apiInstance = containerInstance api
+              workerInstance = containerInstance worker
+            }
+          }
+          deploymentNode "Private Subnet — Data" "" "" {
+            deploymentNode "Database Cluster" "Primary + Read Replica" "RDS" {
+              dbInstance = containerInstance db
+            }
+            deploymentNode "Cache Cluster" "Multi-AZ" "ElastiCache" {
+              cacheInstance = containerInstance cache
+            }
+          }
+        }
+        deploymentNode "Object Storage" "" "S3" {
+          storageInstance = containerInstance storage
+        }
+        deploymentNode "Message Broker" "" "SQS / SNS" {
+          queueInstance = containerInstance queue
+        }
+      }
+    }
+  }
+
+  views {
+    systemContext system "ctx" {
+      include *
+      autoLayout
+    }
+
+    container system "cont" {
+      include *
+      autoLayout
+    }
+
+    deployment system "Production" "deploy" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+=== Container Diagram (Level 2)
+
+Shows the applications, data stores, and message brokers inside the system boundary.
+
+.Container View — [Project Name]
+[structurizr,c4-container,format=svg,view-key=cont]
+....
+workspace {
+
+  model {
+    user = person "End User" "Uses the application via mobile or web"
+    admin = person "Administrator" "Manages configuration and content"
+
+    system = softwareSystem "[System Name]" "Core application delivering [value proposition]" {
+      webapp = container "Web Application" "Serves the UI and handles user interactions" "React / Next.js"
+      api = container "API Server" "Business logic and data access" "Node.js / Spring Boot"
+      worker = container "Background Worker" "Async processing: notifications, ETL, analytics" "Node.js / Python"
+      db = container "Primary Database" "Stores core domain data" "PostgreSQL" "database"
+      cache = container "Cache" "Session and query caching" "Redis" "database"
+      storage = container "Object Storage" "Files, images, documents" "S3 / Blob Storage" "database"
+      queue = container "Message Queue" "Event streaming and async commands" "SQS / RabbitMQ" "database"
+    }
+
+    auth = softwareSystem "Auth Provider" "OAuth2 / SSO identity provider" "Existing System"
+    payment = softwareSystem "Payment Gateway" "Payment processing" "Existing System"
+    cdn = softwareSystem "CDN" "Static asset delivery" "Existing System"
+    monitoring = softwareSystem "Monitoring Platform" "Observability and alerting" "Existing System"
+
+    # Relationships
+    user -> system "Uses" "HTTPS"
+    admin -> system "Manages" "HTTPS"
+    system -> auth "Authenticates via" "OAuth2 / OIDC"
+    system -> payment "Processes payments" "REST API"
+    system -> cdn "Serves static assets" "HTTPS"
+    system -> monitoring "Sends telemetry" "OTLP"
+
+    # Internal relationships
+    user -> webapp "Browses" "HTTPS"
+    webapp -> api "API calls" "REST / GraphQL"
+    api -> db "Reads/Writes" "SQL"
+    api -> cache "Caches" "Redis Protocol"
+    api -> queue "Publishes events" "AMQP"
+    worker -> queue "Consumes events" "AMQP"
+    worker -> db "Reads/Writes" "SQL"
+    worker -> storage "Stores files" "S3 API"
+    api -> auth "Validates tokens" "OAuth2"
+    api -> payment "Charges" "REST API"
+
+    # Deployment
+    prod = deploymentEnvironment "Production" {
+      deploymentNode "Cloud Region" "Primary region" "[Cloud Provider]" {
+        deploymentNode "VPC" "" "" {
+          deploymentNode "Public Subnet" "" "" {
+            deploymentNode "Load Balancer" "Distributes traffic" "ALB / NLB" {
+              lbInstance = containerInstance webapp
+            }
+          }
+          deploymentNode "Private Subnet — App" "" "" {
+            deploymentNode "App Cluster" "Auto-scaling group" "ECS / EKS" {
+              apiInstance = containerInstance api
+              workerInstance = containerInstance worker
+            }
+          }
+          deploymentNode "Private Subnet — Data" "" "" {
+            deploymentNode "Database Cluster" "Primary + Read Replica" "RDS" {
+              dbInstance = containerInstance db
+            }
+            deploymentNode "Cache Cluster" "Multi-AZ" "ElastiCache" {
+              cacheInstance = containerInstance cache
+            }
+          }
+        }
+        deploymentNode "Object Storage" "" "S3" {
+          storageInstance = containerInstance storage
+        }
+        deploymentNode "Message Broker" "" "SQS / SNS" {
+          queueInstance = containerInstance queue
+        }
+      }
+    }
+  }
+
+  views {
+    systemContext system "ctx" {
+      include *
+      autoLayout
+    }
+
+    container system "cont" {
+      include *
+      autoLayout
+    }
+
+    deployment system "Production" "deploy" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+=== Deployment Diagram
+
+Shows infrastructure nodes and how containers map to them.
+
+.Deployment View — [Project Name] Production
+[structurizr,c4-deployment,format=svg,view-key=deploy]
+....
+workspace {
+
+  model {
+    user = person "End User" "Uses the application via mobile or web"
+    admin = person "Administrator" "Manages configuration and content"
+
+    system = softwareSystem "[System Name]" "Core application delivering [value proposition]" {
+      webapp = container "Web Application" "Serves the UI and handles user interactions" "React / Next.js"
+      api = container "API Server" "Business logic and data access" "Node.js / Spring Boot"
+      worker = container "Background Worker" "Async processing: notifications, ETL, analytics" "Node.js / Python"
+      db = container "Primary Database" "Stores core domain data" "PostgreSQL" "database"
+      cache = container "Cache" "Session and query caching" "Redis" "database"
+      storage = container "Object Storage" "Files, images, documents" "S3 / Blob Storage" "database"
+      queue = container "Message Queue" "Event streaming and async commands" "SQS / RabbitMQ" "database"
+    }
+
+    auth = softwareSystem "Auth Provider" "OAuth2 / SSO identity provider" "Existing System"
+    payment = softwareSystem "Payment Gateway" "Payment processing" "Existing System"
+    cdn = softwareSystem "CDN" "Static asset delivery" "Existing System"
+    monitoring = softwareSystem "Monitoring Platform" "Observability and alerting" "Existing System"
+
+    # Relationships
+    user -> system "Uses" "HTTPS"
+    admin -> system "Manages" "HTTPS"
+    system -> auth "Authenticates via" "OAuth2 / OIDC"
+    system -> payment "Processes payments" "REST API"
+    system -> cdn "Serves static assets" "HTTPS"
+    system -> monitoring "Sends telemetry" "OTLP"
+
+    # Internal relationships
+    user -> webapp "Browses" "HTTPS"
+    webapp -> api "API calls" "REST / GraphQL"
+    api -> db "Reads/Writes" "SQL"
+    api -> cache "Caches" "Redis Protocol"
+    api -> queue "Publishes events" "AMQP"
+    worker -> queue "Consumes events" "AMQP"
+    worker -> db "Reads/Writes" "SQL"
+    worker -> storage "Stores files" "S3 API"
+    api -> auth "Validates tokens" "OAuth2"
+    api -> payment "Charges" "REST API"
+
+    # Deployment
+    prod = deploymentEnvironment "Production" {
+      deploymentNode "Cloud Region" "Primary region" "[Cloud Provider]" {
+        deploymentNode "VPC" "" "" {
+          deploymentNode "Public Subnet" "" "" {
+            deploymentNode "Load Balancer" "Distributes traffic" "ALB / NLB" {
+              lbInstance = containerInstance webapp
+            }
+          }
+          deploymentNode "Private Subnet — App" "" "" {
+            deploymentNode "App Cluster" "Auto-scaling group" "ECS / EKS" {
+              apiInstance = containerInstance api
+              workerInstance = containerInstance worker
+            }
+          }
+          deploymentNode "Private Subnet — Data" "" "" {
+            deploymentNode "Database Cluster" "Primary + Read Replica" "RDS" {
+              dbInstance = containerInstance db
+            }
+            deploymentNode "Cache Cluster" "Multi-AZ" "ElastiCache" {
+              cacheInstance = containerInstance cache
+            }
+          }
+        }
+        deploymentNode "Object Storage" "" "S3" {
+          storageInstance = containerInstance storage
+        }
+        deploymentNode "Message Broker" "" "SQS / SNS" {
+          queueInstance = containerInstance queue
+        }
+      }
+    }
+  }
+
+  views {
+    systemContext system "ctx" {
+      include *
+      autoLayout
+    }
+
+    container system "cont" {
+      include *
+      autoLayout
+    }
+
+    deployment system "Production" "deploy" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+== Architecture
+
+=== Key Trade-Offs
+
+// Every architecture is a set of trade-offs. Make them explicit so
+// stakeholders understand WHY, not just WHAT was chosen.
+
+[cols="2,2,2,2"]
+|===
+|Trade-Off |We Chose |Over |Rationale
+
+|[e.g., Consistency vs. Availability]
+|[e.g., Strong consistency]
+|[e.g., High availability during partitions]
+|[e.g., Financial data requires ACID guarantees]
+
+|[e.g., Build vs. Buy]
+|[e.g., Buy (managed service)]
+|[e.g., Build (custom solution)]
+|[e.g., Team lacks ops capacity, faster time to market]
+
+|[e.g., Flexibility vs. Simplicity]
+|[e.g., Simpler monolith]
+|[e.g., Flexible microservices]
+|[e.g., Team of 4 cannot operate distributed system]
+|===
+
+=== Organizational Alignment (Conway's Law)
+
+// "Any organization that designs a system will produce a design whose structure
+// is a copy of the organization's communication structure." — Melvin Conway
+//
+// Map your service boundaries to team boundaries. If the architecture requires
+// two teams to coordinate on every release, you've created a coupling point.
+
+[cols="2,2,2"]
+|===
+|Component / Service |Owning Team |Communication Interface
+
+|[e.g., Auth & User Management]
+|[e.g., Platform Team]
+|[e.g., OAuth2 tokens, user API]
+
+|[e.g., Order Processing]
+|[e.g., Commerce Team]
+|[e.g., Event bus, REST API]
+
+|[e.g., Mobile App]
+|[e.g., Frontend Team]
+|[e.g., Consumes API Gateway]
+|===
+
+=== Component Overview
+
+Shows internal services, data stores, and how they connect.
+
+.Component Architecture — [Project Name]
+[d2,component-architecture,format=svg,layout=elk]
+....
+direction: right
+
+clients: Client Layer {
+  style.fill: "#E3F2FD"
+  mobile: Mobile App
+  web: Web App
+}
+
+gateway: API Layer {
+  style.fill: "#E8F5E9"
+  gw: API Gateway
+  auth: Auth Service
+}
+
+services: Business Logic {
+  style.fill: "#FFF3E0"
+  svcA: Service A
+  svcB: Service B
+  worker: Background Worker
+}
+
+data: Data Layer {
+  style.fill: "#F3E5F5"
+  db: PostgreSQL {
+    shape: cylinder
+  }
+  cache: Redis Cache {
+    shape: cylinder
+  }
+  storage: Object Storage {
+    shape: cylinder
+  }
+  queue: Message Queue {
+    shape: queue
+  }
+}
+
+external: External Services {
+  style.fill: "#ECEFF1"
+  thirdParty: 3rd Party API
+  monitoring: Monitoring
+}
+
+# Connections
+clients.mobile -> gateway.gw: HTTPS
+clients.web -> gateway.gw: HTTPS
+gateway.gw -> gateway.auth: Validate
+gateway.gw -> services.svcA: Route
+gateway.gw -> services.svcB: Route
+services.svcA -> data.db: SQL
+services.svcA -> data.cache: Read/Write
+services.svcB -> data.db: SQL
+services.svcB -> data.storage: Files
+services.svcA -> data.queue: Publish
+data.queue -> services.worker: Consume
+services.worker -> external.thirdParty: REST
+services.svcA -> external.monitoring: Telemetry
+....
+
+== Data Architecture
+
+=== Data Model
+
+Entity-relationship diagram showing the core domain model.
+
+.Data Model — [Project Name]
+[erd,data-model,format=svg]
+....
+title {label: "[Project Name] — Data Model", size: "20"}
+
+# Entities
+
+[User]
+*id {label: "bigint, PK"}
+username {label: "varchar(255), unique"}
+email {label: "varchar(255), unique"}
+password_hash {label: "varchar(255)"}
+role {label: "enum(admin, user)"}
+created_at {label: "timestamp"}
+updated_at {label: "timestamp"}
+
+[Organization]
+*id {label: "bigint, PK"}
+name {label: "varchar(255)"}
+plan {label: "enum(free, pro, enterprise)"}
+created_at {label: "timestamp"}
+
+[Project]
+*id {label: "bigint, PK"}
++organization_id {label: "bigint, FK"}
+name {label: "varchar(255)"}
+status {label: "enum(draft, active, archived)"}
+created_at {label: "timestamp"}
+
+[Resource]
+*id {label: "bigint, PK"}
++project_id {label: "bigint, FK"}
++created_by {label: "bigint, FK"}
+type {label: "varchar(100)"}
+content {label: "jsonb"}
+created_at {label: "timestamp"}
+
+[AuditLog]
+*id {label: "bigint, PK"}
++user_id {label: "bigint, FK"}
+action {label: "varchar(100)"}
+entity_type {label: "varchar(100)"}
+entity_id {label: "bigint"}
+metadata {label: "jsonb"}
+created_at {label: "timestamp"}
+
+# Relationships
+User *--1 Organization
+Organization 1--* Project
+Project 1--* Resource
+User 1--* Resource
+User 1--* AuditLog
+....
+
+=== Data Classification
+
+[cols="2,1,2,2"]
+|===
+|Data Entity |Classification |Retention |Encryption
+
+|User credentials
+|Restricted
+|Account lifetime + 30 days
+|AES-256 at rest, TLS 1.3 in transit
+
+|PII (name, email)
+|Confidential
+|Account lifetime + GDPR deletion
+|AES-256 at rest, TLS 1.3 in transit
+
+|Project data
+|Internal
+|Active + 1 year archived
+|TLS 1.3 in transit
+
+|Audit logs
+|Internal
+|7 years (compliance)
+|TLS 1.3 in transit
+
+|Analytics / telemetry
+|Public
+|90 days raw, 2 years aggregated
+|TLS 1.3 in transit
+|===
+
+=== Data Flow
+
+_Describe how data moves through the system: ingestion → processing → storage → delivery. Reference the sequence diagrams in the Key Flows section for runtime behavior._
+
+// ⚠️ Schema Evolution Warning: If multiple services share a database, every
+// schema change requires coordinating all consumers. Prefer service-owned
+// databases with published APIs. If shared DB is unavoidable, document the
+// coupling and establish a schema change protocol.
+
+== Key Flows
+
+=== Happy Path — [Primary Use Case]
+
+.Core Flow — [Use Case Name]
+[plantuml,flow-happy-path,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title [Use Case] — Happy Path
+
+actor User
+participant "Mobile App" as app
+participant "API Gateway" as gw
+participant "Auth Service" as auth
+participant "Service A" as svc
+database "PostgreSQL" as db
+queue "Message Queue" as queue
+
+User -> app: Initiates action
+app -> gw: POST /api/action
+gw -> auth: Validate token
+auth --> gw: 200 OK
+
+gw -> svc: Process request
+svc -> db: Query / Write
+db --> svc: Result
+
+svc -> queue: Emit event (async)
+svc --> gw: 200 Response
+gw --> app: JSON result
+app --> User: Show confirmation
+
+note right of queue
+  Async processing:
+  notifications, analytics,
+  3rd-party sync
+end note
+@enduml
+....
+
+=== Error / Edge Case — [Secondary Flow]
+
+.Error Flow — [Scenario Name]
+[plantuml,flow-error-handling,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title [Scenario] — Error Handling
+
+actor User
+participant "Mobile App" as app
+participant "API Gateway" as gw
+participant "Auth Service" as auth
+participant "Service A" as svc
+database "PostgreSQL" as db
+
+User -> app: Initiates action
+app -> gw: POST /api/action
+
+gw -> auth: Validate token
+auth --> gw: 401 Token expired
+
+alt Token refresh available
+  gw -> auth: Refresh token
+  auth --> gw: 200 New token
+  gw -> svc: Retry with new token
+  svc -> db: Query
+  db --> svc: Result
+  svc --> gw: 200 OK
+  gw --> app: JSON result
+else No refresh token
+  gw --> app: 401 Unauthorized
+  app --> User: Redirect to login
+end
+
+note right of auth
+  Circuit breaker:
+  After 5 failures in 30s,
+  fail-fast for 60s
+end note
+@enduml
+....
+
+== Options Comparison
+
+// OPTIONS FRAMING GUIDANCE:
+// Always present at least 3 options — this is a consulting best practice:
+//   Option 1: MVP / lean (anchors "we can start small")
+//   Option 2: Recommended / balanced (this is what you actually want them to pick)
+//   Option 3: Premium / full (anchors the high end, makes Option 2 feel reasonable)
+//
+// The "decoy effect": Option 3 exists to make Option 2 look like the smart choice.
+// If you only present 2 options, clients agonize. With 3, they feel in control.
+
+=== Summary Matrix
+
+[cols="2,1,1,1"]
+|===
+|Aspect |Option 1: MVP |Option 2: Full |Option 3: Scale
+
+|**Scope**
+|Core features only
+|All features
+|All + multi-region
+
+|**Team**
+|4 devs (2 BE + 1 FE + 1 QA)
+|8 devs (3 BE + 2 FE + 1 QA + 1 DevOps + 1 SA)
+|15 devs (multi-team)
+
+|**Timeline**
+|4 months
+|8 months
+|12 months
+
+|**CAPEX (incl. contingency)**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
+
+|**OPEX / month**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
+
+|**Risk**
+|Low
+|Medium
+|High
+|===
+
+=== Weighted Scoring Matrix
+
+[cols="3,1,1,1,1"]
+|===
+|Criteria (weight) |Weight |Option 1 |Option 2 |Option 3
+
+|Time to Market
+|3
+|5
+|3
+|1
+
+|Total Cost
+|2
+|5
+|3
+|2
+
+|Scalability
+|4
+|2
+|4
+|5
+
+|Feature Completeness
+|2
+|2
+|5
+|5
+
+|Operational Risk
+|3
+|5
+|3
+|2
+
+|*Weighted Total*
+|
+|*50*
+|*50*
+|*44*
+|===
+
+_Score: 1 (worst) to 5 (best). Total = Σ(weight × score)._
+
+=== Cost Comparison
+
+.OPEX Comparison by Option
+[vegalite,cost-comparison,format=svg]
+....
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Monthly OPEX Comparison by Option",
+  "width": 400,
+  "height": 250,
+  "data": {
+    "values": [
+      {"option": "Option 1: MVP", "category": "Compute", "cost": 500},
+      {"option": "Option 1: MVP", "category": "Database", "cost": 300},
+      {"option": "Option 1: MVP", "category": "Storage", "cost": 100},
+      {"option": "Option 1: MVP", "category": "Other", "cost": 100},
+      {"option": "Option 2: Full", "category": "Compute", "cost": 1200},
+      {"option": "Option 2: Full", "category": "Database", "cost": 600},
+      {"option": "Option 2: Full", "category": "Storage", "cost": 300},
+      {"option": "Option 2: Full", "category": "Other", "cost": 400},
+      {"option": "Option 3: Scale", "category": "Compute", "cost": 3000},
+      {"option": "Option 3: Scale", "category": "Database", "cost": 1500},
+      {"option": "Option 3: Scale", "category": "Storage", "cost": 800},
+      {"option": "Option 3: Scale", "category": "Other", "cost": 700}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": 0}},
+    "y": {"field": "cost", "type": "quantitative", "title": "Monthly Cost ($)", "stack": true},
+    "color": {"field": "category", "type": "nominal", "title": "Cost Category",
+      "scale": {"range": ["#1976D2", "#388E3C", "#E65100", "#7B1FA2"]}
+    }
+  }
+}
+....
+
+// ============================================================================
+// ESTIMATION APPROACH — READ BEFORE FILLING OUT COST SECTIONS
+// ============================================================================
+//
+// Cost = Capacity × Time. Always estimate based on man-hours, not per feature.
+//   Formula: (number of engineers) × (rate per month) × (duration) = CAPEX
+//
+// PRINCIPLES:
+//   - Show rate × duration: clients buy engineering hours, make this transparent
+//   - Use ranges, not point estimates: $[low]–$[high] acknowledges uncertainty
+//   - Include a contingency line (20–30%): this covers unknowns, not profit
+//   - Pair every cost line with a deliverable: show WHAT they get for the money
+//   - Min 2 engineers per workstream: avoids bus factor, enables knowledge sharing
+//   - Link phases to cost: each Gantt phase should have a corresponding cost row
+//   - Present total AND breakdown: total for approval, breakdown for trust
+//
+// See also: template/life-lessons.md § Estimation & Costing
+// ============================================================================
+
+== Option [N]: [Option Name]
+
+=== Overview
+
+_2-3 sentences: what this option delivers, team size, timeline._
+
+=== Pros & Cons
+
+[cols="1,1"]
+|===
+|Pros |Cons
+
+|[Pro 1]
+|[Con 1]
+
+|[Pro 2]
+|[Con 2]
+
+|[Pro 3]
+|[Con 3]
+|===
+
+=== Architecture
+
+.Option [N] Architecture
+[plantuml,option-architecture,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+title Option [N]: [Name]
+
+node "API" {
+  [API Gateway] as gw
+  [Service A] as svc
+}
+
+database "Database" as db
+
+gw --> svc
+svc --> db
+@enduml
+....
+
+=== Team Composition
+
+// Principle: min 2 engineers per workstream (bus factor). Adding devs doesn't scale
+// linearly — factor in communication overhead (Brooks's Law).
+
+[cols="2,1,2"]
+|===
+|Workstream |Engineers |Roles
+
+|[e.g., Backend]
+|2
+|[e.g., 1 Senior + 1 Mid-level]
+
+|[e.g., Frontend / Mobile]
+|2
+|[e.g., 1 Senior + 1 Mid-level]
+
+|[e.g., DevOps / QA]
+|1
+|[e.g., 1 DevOps engineer (shared)]
+
+|*Total*
+|*[N]*
+|*[N] parallel workstreams*
+|===
+
+=== Cost Breakdown
+
+// Cost = rate × time. Show the math — clients trust transparency.
+// Use ranges ($[low]–$[high]) to acknowledge estimation uncertainty.
+// Always include a contingency row — it covers unknowns, not profit margin.
+
+==== CAPEX (One-Time)
+
+[cols="2,1,1,1,2,1"]
+|===
+|Role / Item |Count |Rate |Duration |Deliverable |Cost
+
+|Backend Developer
+|2
+|$[rate]/mo
+|4 months
+|[e.g., Core API, integrations, data model]
+|$[low]–$[high]
+
+|Mobile Developer
+|2
+|$[rate]/mo
+|4 months
+|[e.g., Mobile app, offline support]
+|$[low]–$[high]
+
+|Cloud Setup
+|—
+|—
+|—
+|[e.g., VPC, CI/CD, environments]
+|$[low]–$[high]
+
+|*Subtotal*
+|
+|
+|
+|
+|*$[subtotal]*
+
+|*Contingency ([N]%)*
+|—
+|—
+|—
+|_Covers: integration unknowns, scope clarification, vendor delays_
+|*$[contingency]*
+
+|*TOTAL CAPEX*
+|
+|
+|
+|
+|*$[low]–$[high]*
+|===
+
+==== OPEX (Monthly)
+
+[cols="2,1,1"]
+|===
+|Service |Spec |Monthly Cost
+
+|Compute (ECS/EKS)
+|[spec]
+|$[cost]
+
+|Database (RDS)
+|[spec]
+|$[cost]
+
+|Cache (ElastiCache)
+|[spec]
+|$[cost]
+
+|Storage (S3)
+|[spec]
+|$[cost]
+
+|Monitoring (CloudWatch)
+|[spec]
+|$[cost]
+
+|Contingency / headroom (10%)
+|_Spike traffic, additional environments_
+|$[cost]
+
+|*TOTAL OPEX*
+|
+|*$[low]–$[high]/mo*
+|===
+
+=== Timeline
+
+.Option [N] Development Timeline
+[plantuml,option-timeline,format=svg]
+....
+@startgantt
+title Option [N]: [Name] — [duration], [team] devs
+printscale weekly zoom 2
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 11
+  }
+  milestone {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 12
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Backend --
+[Task 1 - Setup] starts 2026-03-01 and ends 2026-03-15
+[Task 1 - Setup] is colored in #BBDEFB/#1976D2
+[Task 2 - Core API] starts 2026-03-10 and ends 2026-04-01
+[Task 2 - Core API] is colored in #BBDEFB/#1976D2
+[Task 3 - Integration] starts 2026-04-01 and ends 2026-04-20
+[Task 3 - Integration] is colored in #C8E6C9/#388E3C
+[Task 4 - Polish] starts 2026-04-15 and ends 2026-05-01
+[Task 4 - Polish] is colored in #FFE0B2/#E65100
+
+-- Frontend --
+[Task 5 - UI Shell] starts 2026-03-01 and ends 2026-03-20
+[Task 5 - UI Shell] is colored in #BBDEFB/#1976D2
+[Task 6 - Core Screens] starts 2026-03-20 and ends 2026-04-10
+[Task 6 - Core Screens] is colored in #C8E6C9/#388E3C
+[Task 7 - Final QA] starts 2026-04-20 and ends 2026-05-10
+[Task 7 - Final QA] is colored in #FFE0B2/#E65100
+
+-- Milestones --
+[POC Demo] happens 2026-03-25
+[MVP Launch] happens 2026-05-10
+
+legend right
+  |<#BBDEFB> POC Phase |
+  |<#C8E6C9> MVP Phase |
+  |<#FFE0B2> Full Phase |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
+
+=== Phase Cost Summary
+
+// Principle: link timeline to cost so stakeholders see what each phase costs.
+// This answers "why does it cost this much?" alongside the Gantt's "why does it take this long?"
+
+[cols="2,1,1,1,1"]
+|===
+|Phase |Duration |Team |Phase Cost |Cumulative
+
+|POC / Foundation
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Core Build (MVP)
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Polish / Launch
+|[N] weeks
+|[N] devs
+|$[cost]
+|$[cumulative]
+
+|Contingency ([N]%)
+|—
+|—
+|$[cost]
+|$[cumulative]
+
+|*TOTAL*
+|*[N] months*
+|
+|*$[total]*
+|*$[total]*
+|===
+
+=== Risk Assessment
+
+// Risk management tip: don't ignore medium-probability / medium-impact risks.
+// They are the most dangerous because nobody owns them. Every risk needs an
+// explicit owner. Include organizational and political risks — they kill
+// more projects than technical risks do.
+
+[cols="2,1,1,1,2,2"]
+|===
+|Risk |Category |Probability |Impact |Justification |Mitigation
+
+|[Risk 1]
+|Technical
+|Medium
+|High
+|[Why this probability/impact — e.g., "No sandbox available for payment API"]
+|[How to mitigate]
+
+|[Risk 2]
+|Organizational
+|Low
+|Medium
+|[e.g., "Key stakeholder on leave during UAT window"]
+|[How to mitigate]
+
+|[Risk 3]
+|Integration
+|High
+|Medium
+|[e.g., "Third-party API has no SLA guarantee"]
+|[How to mitigate]
+|===
+
+_Categories: Technical, Organizational, Integration, Commercial, Regulatory, Resource_
+
+=== Issues Log
+
+// Issues are risks that have materialized. Track them here so they don't
+// get lost in Slack threads and meeting minutes.
+
+[cols="1,2,1,2,2,1"]
+|===
+|# |Issue |Severity |Impact |Resolution / Action |Owner
+
+|1
+|[e.g., Payment gateway sandbox not accessible]
+|High
+|[Blocks integration testing]
+|[Escalated to client IT, fallback: mock service]
+|[Name]
+
+|2
+|[e.g., Requirements for reporting module still undefined]
+|Medium
+|[Cannot estimate Phase 2 accurately]
+|[Workshop scheduled for [date]]
+|[Name]
+|===
+
+== Assumptions, Constraints & Quality
+
+=== Assumptions
+
+* [Assumption 1 — e.g., Cloud provider account is provisioned]
+* [Assumption 2 — e.g., Team has React and Node.js experience]
+* [Assumption 3 — e.g., Third-party API SLA is 99.9%]
+
+=== Constraints
+
+* [Constraint 1 — e.g., Must use existing corporate SSO]
+* [Constraint 2 — e.g., Budget capped at $X]
+
+=== Dependencies
+
+[cols="2,2,2,1,1"]
+|===
+|Dependency |Owner |Expected Date |Risk |Verified?
+
+|[Auth provider API access]
+|[Security team]
+|[2026-03-15]
+|Low
+|[ ] Yes / [ ] No
+
+|[Payment gateway sandbox]
+|[Finance team]
+|[2026-03-01]
+|Medium
+|[ ] Yes / [ ] No
+|===
+
+// ⚠️ "Verified?" column: a dependency isn't real until someone has tested it.
+// "They said the API works" ≠ "We called the API and got a 200."
+
+=== Quality Scenarios (arc42)
+
+Measurable quality requirements with concrete scenarios.
+
+[cols="2,2,3,2"]
+|===
+|Quality Attribute |Stimulus |Expected Response |Measure
+
+|Performance
+|1000 concurrent users submit requests
+|System responds within SLA
+|P95 latency < 200ms
+
+|Availability
+|Primary database fails
+|System fails over to read replica
+|Recovery < 30 seconds
+
+|Security
+|Attacker submits SQL injection
+|Input is sanitized, attack is logged
+|Zero data exposure
+
+|Scalability
+|Traffic increases 10× during event
+|Auto-scaling provisions resources
+|No degradation above P95 target
+
+|Operability
+|Team member leaves mid-sprint
+|Remaining team can continue without blocking
+|< 1 day onboarding for replacement on any component
+
+|Evolvability
+|New payment provider must be added
+|Swap provider behind adapter interface
+|< 2 sprint integration effort
+|===
+
+=== Scope Governance
+
+// Scope creep is the #1 timeline killer. Establish the rules early.
+// This section sets expectations for how changes are handled.
+
+[cols="1,3"]
+|===
+|Aspect |Rule
+
+|**Change Request Process**
+|All scope changes go through [change request board / product owner]. No verbal agreements.
+
+|**Impact Assessment**
+|Every change request gets a written impact note: timeline, cost, risk, trade-off.
+
+|**Phase 2 Parking Lot**
+|Features that don't make the cut go into a visible "Phase 2" backlog, not silent deletion.
+
+|**Definition of Done**
+|A feature is "done" when: code reviewed, unit tested (>80% coverage), integration tested, deployed to staging, documentation updated, PO accepted.
+|===
+
+=== Out of Scope
+
+// ⚠️ The "Phase 2 Graveyard" warning: features parked here have a habit of
+// never getting built. If something is critical, fight for it in Phase 1.
+// If it's truly deferrable, be honest about it.
+
+* [Item 1 — e.g., Native desktop application]
+* [Item 2 — e.g., Multi-language support in Phase 1]
+
+== Business Value & ROI
+
+// This section answers the executive question: "Why should we spend this money?"
+// Frame cost as investment, not expense. Show what the business GAINS.
+
+[cols="2,2,2"]
+|===
+|Value Driver |Current Cost / Pain |Expected Improvement
+
+|[e.g., Manual data entry]
+|[e.g., 40 hrs/week × $50/hr = $104K/year]
+|[e.g., 90% reduction → $94K/year savings]
+
+|[e.g., Customer churn from slow system]
+|[e.g., 5% monthly churn, ~$200K/year lost revenue]
+|[e.g., Target < 2% churn with improved UX]
+
+|[e.g., Compliance risk]
+|[e.g., Potential $500K fine for non-compliance]
+|[e.g., Automated controls eliminate manual audit gaps]
+|===
+
+**Payback period:** [e.g., Investment recovers in ~8 months based on operational savings]
+
+**Strategic value (hard to quantify):** [e.g., Enables expansion to 3 new markets, positions for acquisition]
+
+== Knowledge Transfer Plan
+
+// Knowledge transfer is not optional — it's a deliverable. Plan it from day one,
+// not as an afterthought in the last sprint. The project isn't done when the code
+// is deployed; it's done when the client team can operate and extend it.
+
+[cols="2,2,2,2"]
+|===
+|Topic |Format |Audience |Timing
+
+|Architecture overview & decisions
+|Workshop (2h) + recorded
+|Dev team + tech leads
+|End of Phase 1
+
+|Operational runbook
+|Written guide + walkthrough
+|Ops / SRE team
+|Before go-live
+
+|Codebase orientation
+|Pair programming sessions (3 days)
+|Client developers
+|Last sprint
+
+|Admin & configuration guide
+|Documentation + video
+|Business admins
+|Before go-live
+|===
+
+== Recommended Next Steps
+
+. [Step 1 — e.g., Approve Option N at steering committee]
+. [Step 2 — e.g., Finalize team allocation and onboarding]
+. [Step 3 — e.g., Begin POC sprint (2 weeks)]
+. [Step 4 — e.g., Schedule architecture review with security team]
+. [Step 5 — e.g., Set up CI/CD pipeline and environments]
+
+// ============================================================================
+// OPTIONAL SECTIONS — Include based on project complexity
+// ============================================================================
+
+// OPTIONAL — Include for systems with authentication, sensitive data, or compliance requirements
+== Security Architecture
+
+=== Authentication & Authorization Flow
+
+.OAuth2 / OIDC Authentication Flow
+[plantuml,security-auth-flow,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+
+title Authentication Flow — OAuth2 / OIDC
+
+actor User
+participant "Client App" as app
+participant "API Gateway" as gw
+participant "Identity Provider" as idp
+participant "API Server" as api
+database "User Store" as db
+
+User -> app: Click "Login"
+app -> idp: Redirect to /authorize
+idp -> User: Show login page
+User -> idp: Enter credentials
+
+alt Credentials valid
+  idp -> app: Authorization code (redirect)
+  app -> idp: Exchange code for tokens\n(client_id + client_secret)
+  idp --> app: Access token + Refresh token + ID token
+
+  app -> gw: API request + Bearer token
+  gw -> gw: Validate JWT signature\n(JWKS from IdP)
+  gw -> api: Forward + decoded claims
+  api -> db: Check user permissions
+  db --> api: User roles
+  api --> gw: 200 Response
+  gw --> app: JSON result
+else Credentials invalid
+  idp --> User: 401 Invalid credentials
+end
+
+note right of idp
+  Tokens:
+  • Access token: 15 min TTL
+  • Refresh token: 7 day TTL
+  • ID token: user profile claims
+end note
+@enduml
+....
+
+=== Threat Model (STRIDE)
+
+[cols="2,1,1,2,2"]
+|===
+|Threat |Category |Impact |Mitigation |Status
+
+|Stolen JWT tokens
+|Spoofing
+|High
+|Short TTL (15min), refresh rotation, token blacklist
+|[Planned / Implemented]
+
+|SQL injection via API
+|Tampering
+|Critical
+|Parameterized queries, input validation, WAF rules
+|[Planned / Implemented]
+
+|Unauthorized data access
+|Elevation of Privilege
+|High
+|RBAC enforcement at API gateway + service level
+|[Planned / Implemented]
+
+|Sensitive data in logs
+|Information Disclosure
+|Medium
+|PII redaction in logging pipeline, log access controls
+|[Planned / Implemented]
+
+|API abuse / DDoS
+|Denial of Service
+|High
+|Rate limiting, WAF, auto-scaling, CDN absorption
+|[Planned / Implemented]
+|===
+
+=== Data Protection
+
+[cols="2,3"]
+|===
+|Control |Implementation
+
+|**Encryption at rest**
+|AES-256 via [KMS / managed keys]. Database: TDE. Storage: SSE-S3/SSE-KMS
+
+|**Encryption in transit**
+|TLS 1.3 for all external connections. mTLS for service-to-service
+
+|**Key management**
+|[AWS KMS / Azure Key Vault / HashiCorp Vault]. Key rotation every 90 days
+
+|**Secrets management**
+|[AWS Secrets Manager / Vault]. No secrets in code or environment variables
+
+|**Network segmentation**
+|Public subnet (LB only) → Private subnet (apps) → Private subnet (data). No direct internet access from data tier
+|===
+
+=== Compliance Mapping
+
+[cols="2,2,3"]
+|===
+|Requirement |Regulation |Architectural Control
+
+|Right to deletion
+|GDPR Art. 17
+|Soft-delete with 30-day purge job, cascade to all related data
+
+|Data portability
+|GDPR Art. 20
+|Export API endpoint returning user data in JSON/CSV
+
+|Access logging
+|SOC 2 CC6.1
+|Audit log for all data access, 7-year retention
+
+|Encryption at rest
+|PCI-DSS Req. 3
+|AES-256 encryption for all stored data via KMS
+|===
+
+// OPTIONAL — Include for API-heavy or integration-heavy systems
+== API Design
+
+=== API Style Decision
+
+[cols="1,3"]
+|===
+|Aspect |Decision
+
+|**Style**
+|[REST / GraphQL / gRPC / Event-driven]
+
+|**Rationale**
+|[Why this style fits the use case]
+
+|**Versioning**
+|[URL path (/v1/) / Header / Query parameter]
+
+|**Authentication**
+|Bearer JWT tokens via Authorization header
+|===
+
+=== Key Endpoints
+
+[cols="1,2,3,1,2"]
+|===
+|Method |Path |Description |Auth |Notes
+
+|GET
+|/api/v1/[resources]
+|List all [resources] with pagination
+|Bearer
+|Supports ?page=&limit=&sort=
+
+|POST
+|/api/v1/[resources]
+|Create a new [resource]
+|Bearer
+|Validates against JSON Schema
+
+|GET
+|/api/v1/[resources]/{id}
+|Get [resource] by ID
+|Bearer
+|Returns 404 if not found
+
+|PUT
+|/api/v1/[resources]/{id}
+|Update [resource]
+|Bearer
+|Full replacement, requires all fields
+
+|DELETE
+|/api/v1/[resources]/{id}
+|Soft-delete [resource]
+|Bearer + Admin
+|Sets status=archived, audit logged
+|===
+
+=== Integration Patterns
+
+// THE 30/70 RULE: Budget 30% of effort for "your" code, 70% for integrations,
+// testing, and edge cases. Integrations always take longer than expected.
+// Budget 3× your initial estimate for any third-party integration.
+
+[cols="2,2,2,2,2"]
+|===
+|Integration |Pattern |Protocol |Error Handling |Failure Mode
+
+|[Auth Provider]
+|Request-Response (sync)
+|OAuth2 / HTTPS
+|Circuit breaker, 3 retries with exponential backoff
+|[e.g., Degrade to cached tokens for 5 min]
+
+|[Payment Gateway]
+|Request-Response (sync)
+|REST / HTTPS
+|Idempotency keys, webhook confirmation
+|[e.g., Queue payment, retry async, alert ops]
+
+|[Notification Service]
+|Event-Driven (async)
+|Message queue (AMQP)
+|Dead letter queue, 5 retries
+|[e.g., Notifications delayed, not lost]
+
+|[Analytics]
+|Fire-and-Forget (async)
+|Message queue
+|Best effort, no retry
+|[e.g., Data gap in analytics, acceptable]
+|===
+
+// Integration checkpoint: before each sprint that touches an integration,
+// verify: sandbox accessible? credentials valid? rate limits sufficient?
+// test data available? Don't discover issues on demo day.
+
+// OPTIONAL — Include for cloud deployments and distributed systems
+== Deployment & Infrastructure
+
+=== Deployment Strategy
+
+[cols="1,3"]
+|===
+|Aspect |Decision
+
+|**Strategy**
+|[Blue-Green / Canary / Rolling]
+
+|**Rationale**
+|[Why this strategy fits]
+
+|**Rollback**
+|[How to roll back: revert deployment, feature flag, database migration rollback]
+|===
+
+=== Environment Strategy
+
+[cols="2,2,2,2"]
+|===
+|Environment |Purpose |Infrastructure |Data
+
+|Development
+|Daily development and testing
+|Shared, minimal resources
+|Synthetic test data
+
+|Staging
+|Pre-production validation
+|Production-like, scaled down
+|Anonymized production snapshot
+
+|Production
+|Live user traffic
+|Full scale, multi-AZ
+|Real data, encrypted
+|===
+
+=== Infrastructure Topology
+
+.Infrastructure Overview — [Project Name]
+[d2,infrastructure-topology,format=svg,layout=elk]
+....
+direction: right
+
+internet: Internet {
+  shape: cloud
+}
+
+cdn: CDN / WAF {
+  style.fill: "#E3F2FD"
+}
+
+vpc: VPC (10.0.0.0/16) {
+  style.fill: "#FAFAFA"
+
+  public: Public Subnet {
+    style.fill: "#E8F5E9"
+    lb: Load Balancer
+    bastion: Bastion Host
+  }
+
+  private_app: Private Subnet — App {
+    style.fill: "#FFF3E0"
+    ecs: App Cluster (ECS/EKS) {
+      api: API Containers
+      worker: Worker Containers
+    }
+  }
+
+  private_data: Private Subnet — Data {
+    style.fill: "#F3E5F5"
+    rds: PostgreSQL (RDS) {
+      shape: cylinder
+      primary: Primary
+      replica: Read Replica
+    }
+    elasticache: Redis (ElastiCache) {
+      shape: cylinder
+    }
+  }
+}
+
+s3: Object Storage (S3) {
+  shape: cylinder
+}
+
+sqs: Message Queue (SQS) {
+  shape: queue
+}
+
+monitoring: Monitoring {
+  style.fill: "#ECEFF1"
+  cloudwatch: CloudWatch
+  xray: X-Ray Tracing
+}
+
+# Connections
+internet -> cdn: HTTPS
+cdn -> vpc.public.lb: HTTPS
+vpc.public.lb -> vpc.private_app.ecs.api: HTTP
+vpc.private_app.ecs.api -> vpc.private_data.rds.primary: SQL
+vpc.private_app.ecs.api -> vpc.private_data.elasticache: Redis
+vpc.private_app.ecs.api -> sqs: Publish
+sqs -> vpc.private_app.ecs.worker: Consume
+vpc.private_app.ecs.worker -> s3: Store
+vpc.private_app.ecs.api -> monitoring.cloudwatch: Metrics
+vpc.private_app.ecs.api -> monitoring.xray: Traces
+....
+
+// OPTIONAL — Include for systems requiring high reliability and operational maturity
+== Observability & Monitoring
+
+=== SLOs / SLIs
+
+[cols="2,2,2,1"]
+|===
+|Service Level Objective |Indicator (SLI) |Target |Alert Threshold
+
+|Availability
+|Successful requests / total requests
+|99.9% (monthly)
+|< 99.5% over 5 min
+
+|Latency
+|P95 response time
+|< 200ms
+|> 500ms over 5 min
+
+|Error rate
+|5xx responses / total responses
+|< 0.1%
+|> 1% over 5 min
+
+|Throughput
+|Requests per second
+|> 1000 RPS sustained
+|< 500 RPS over 5 min
+|===
+
+=== Observability Stack
+
+.Observability Architecture
+[d2,observability-stack,format=svg,layout=elk]
+....
+direction: down
+
+services: Application Services {
+  style.fill: "#E3F2FD"
+  api: API Server
+  worker: Worker
+  webapp: Web App
+}
+
+collectors: Collection Layer {
+  style.fill: "#E8F5E9"
+  otel: OpenTelemetry Collector
+  fluentbit: Fluent Bit (Logs)
+}
+
+backends: Storage & Analysis {
+  style.fill: "#FFF3E0"
+  logs: Log Store {
+    shape: cylinder
+    label: "CloudWatch Logs\n/ ELK / Loki"
+  }
+  metrics: Metrics Store {
+    shape: cylinder
+    label: "CloudWatch Metrics\n/ Prometheus"
+  }
+  traces: Trace Store {
+    shape: cylinder
+    label: "X-Ray\n/ Jaeger / Tempo"
+  }
+}
+
+visualization: Dashboards & Alerts {
+  style.fill: "#F3E5F5"
+  dashboards: Grafana / CloudWatch Dashboards
+  alerts: Alert Manager
+  oncall: On-Call (PagerDuty)
+}
+
+# Data flow
+services.api -> collectors.otel: OTLP (metrics + traces)
+services.worker -> collectors.otel: OTLP
+services.api -> collectors.fluentbit: stdout/stderr
+services.worker -> collectors.fluentbit: stdout/stderr
+services.webapp -> collectors.otel: Browser traces
+
+collectors.otel -> backends.metrics: Push metrics
+collectors.otel -> backends.traces: Push traces
+collectors.fluentbit -> backends.logs: Push logs
+
+backends.logs -> visualization.dashboards: Query
+backends.metrics -> visualization.dashboards: Query
+backends.traces -> visualization.dashboards: Query
+backends.metrics -> visualization.alerts: Threshold rules
+visualization.alerts -> visualization.oncall: Page on-call
+....
+
+=== Logging Strategy
+
+[cols="1,3"]
+|===
+|Aspect |Approach
+
+|**Format**
+|Structured JSON (timestamp, level, service, traceId, message, context)
+
+|**Levels**
+|ERROR: failures requiring attention. WARN: degraded but functional. INFO: business events. DEBUG: diagnostic (staging only)
+
+|**PII handling**
+|Automatic redaction of email, phone, IP via logging pipeline filter
+
+|**Retention**
+|30 days hot (searchable), 90 days warm (archived), 7 years cold (compliance)
+|===
+
+// OPTIONAL — Include for complex business workflows
+== Business Process Flows
+
+Shows decision flows and business process logic.
+
+.Business Process — [Process Name]
+[plantuml,business-process-flow,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+title [Process Name] — Decision Flow
+
+start
+
+:User submits request;
+
+if (Authenticated?) then (yes)
+  :Validate input;
+
+  if (Input valid?) then (yes)
+    :Process request;
+
+    fork
+      :Update database;
+    fork again
+      :Send notification;
+    fork again
+      :Log analytics event;
+    end fork
+
+    :Return success;
+  else (no)
+    :Return validation error;
+  endif
+else (no)
+  :Return 401 Unauthorized;
+endif
+
+stop
+@enduml
+....
+
+// OPTIONAL — Include for systems with complex entity lifecycle
+== Entity Lifecycle
+
+Shows entity lifecycle — useful for orders, tickets, deployments, etc.
+
+.Entity Lifecycle — [Entity Name]
+[plantuml,entity-lifecycle,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+title [Entity] State Machine
+
+[*] --> Draft
+
+Draft --> Submitted : User submits
+Draft --> Cancelled : User cancels
+
+Submitted --> UnderReview : Auto-assign reviewer
+Submitted --> Cancelled : User withdraws
+
+UnderReview --> Approved : Reviewer approves
+UnderReview --> Rejected : Reviewer rejects
+UnderReview --> Submitted : Request changes
+
+Approved --> Active : System activates
+Rejected --> Draft : User revises
+
+Active --> Suspended : Policy violation
+Active --> Completed : Natural end
+
+Suspended --> Active : Issue resolved
+Suspended --> Cancelled : Escalation
+
+Completed --> [*]
+Cancelled --> [*]
+@enduml
+....
+
+// OPTIONAL — Include for feature-rich applications needing scope visualization
+== Feature Breakdown
+
+=== Mind Map
+
+Quick visual of feature areas and sub-features.
+
+.Feature Breakdown — [Project Name]
+[plantuml,feature-mindmap,format=svg]
+....
+@startmindmap
+title [Project Name] — Feature Areas
+
+* [Project Name]
+** Core Features
+*** Feature A
+**** Sub-feature A1
+**** Sub-feature A2
+*** Feature B
+*** Feature C
+** Integrations
+*** Auth Provider
+*** Payment Gateway
+*** Analytics
+** Non-Functional
+*** Performance
+**** < 200ms P95 latency
+**** 1000 req/s capacity
+*** Security
+**** OAuth2 + MFA
+**** Encryption at rest
+*** Reliability
+**** 99.9% SLA
+**** Multi-AZ deployment
+** Future / Phase 2
+*** Feature D
+*** Feature E
+@endmindmap
+....
+
+=== Work Breakdown Structure
+
+Hierarchical decomposition of deliverables — useful for estimation and planning.
+
+.Work Breakdown — [Project Name]
+[plantuml,work-breakdown,format=svg]
+....
+@startwbs
+title [Project Name] — WBS
+
+* Project Delivery
+** Phase 1: Foundation
+*** Infrastructure Setup
+*** CI/CD Pipeline
+*** Auth Integration
+*** Environment Provisioning
+** Phase 2: Core
+*** Service A
+**** API Design
+**** Implementation
+**** Testing
+**** Integration Testing
+*** Service B
+**** API Design
+**** Implementation
+**** Testing
+**** Integration Testing
+*** Mobile App
+**** UI Shell
+**** Core Screens
+**** Offline Support
+** Phase 3: Launch
+*** Performance Testing
+*** Security Audit
+*** UAT & Bug Fixes
+*** Staged Rollout
+*** Knowledge Transfer
+*** Documentation
+@endwbs
+....
+
+// OPTIONAL — Include when migrating from an existing system or re-platforming
+== Migration & Transition
+
+// ⚠️ Migration 3× Heuristic: whatever time you estimate for migration,
+// multiply by 3. Data migration reveals data quality issues nobody knew about.
+// Feature parity takes longer than new development because you're reverse-engineering.
+
+=== Migration Strategy
+
+[cols="1,3"]
+|===
+|Aspect |Approach
+
+|**Pattern**
+|[Big-bang / Strangler Fig / Parallel Run / Phased cutover]
+
+|**Rationale**
+|[Why this pattern fits the project risk profile and timeline]
+
+|**Data migration**
+|[ETL pipeline / database replication / manual export-import]
+
+|**Feature parity check**
+|[How to validate the new system matches old system behavior]
+|===
+
+=== Transition Phases
+
+[cols="1,2,2,2"]
+|===
+|Phase |What Happens |Duration |Success Criteria
+
+|1. Shadow Mode
+|New system runs alongside old, receives mirrored traffic
+|2 weeks
+|< 1% response difference
+
+|2. Canary
+|10% of real traffic routed to new system
+|1 week
+|Error rate ≤ old system
+
+|3. Incremental
+|Gradually shift 25% → 50% → 75% → 100%
+|2 weeks
+|SLO targets met at each step
+
+|4. Decommission
+|Old system shut down, DNS/routes updated
+|1 week
+|Zero traffic to old system
+|===
+
+=== Rollback Plan
+
+* **Trigger**: [Define what conditions trigger a rollback — e.g., error rate > 5%, P95 > 1s]
+* **Process**: [DNS failback / feature flag toggle / container image revert]
+* **Data**: [How to handle data written to new system during cutover — replay, reconcile, or discard]
+* **Communication**: [Who is notified, status page update, stakeholder email]
+
+// OPTIONAL — Include for projects with multiple significant design decisions to document
+== Architecture Decision Records
+
+Summary of key architecture decisions. Full ADR details in separate files (see `template/adr-template.adoc`).
+
+[cols="1,3,1,1,3"]
+|===
+|ID |Title |Status |Date |Summary
+
+|ADR-001
+|[e.g., Use PostgreSQL over MongoDB]
+|Accepted
+|[YYYY-MM-DD]
+|[One sentence: why this was decided]
+
+|ADR-002
+|[e.g., Event-driven async processing]
+|Accepted
+|[YYYY-MM-DD]
+|[One sentence: why this was decided]
+
+|ADR-003
+|[e.g., API Gateway pattern with rate limiting]
+|Proposed
+|[YYYY-MM-DD]
+|[One sentence: what is being proposed]
+|===
+
+// OPTIONAL — Include for deep technical topics that need extended discussion
+== Technical Deep Dives
+
+=== [Performance & Caching Strategy]
+
+_Technical details: caching layers, cache invalidation strategy, CDN configuration, database query optimization, connection pooling._
+
+// Caching architecture checklist:
+// 1. What is cached? (query results, rendered pages, session data, config)
+// 2. Where? (CDN edge, API gateway, application layer, database query cache)
+// 3. TTL policy? (static: long TTL + cache-bust on deploy; dynamic: short TTL or event-based invalidation)
+// 4. Invalidation strategy? (TTL expiry, event-driven purge, versioned keys)
+// 5. Cache stampede protection? (lock/singleflight, stale-while-revalidate)
+// 6. Cold start plan? (pre-warm on deploy, lazy load with fallback)
+
+=== [Data Migration / ETL Strategy]
+
+_Technical details: data transformation rules, validation logic, idempotency, error handling, progress tracking._
+
+=== [AI/ML Pipeline]
+
+_Technical details: model serving infrastructure, training pipeline, feature store, model versioning, A/B testing framework._
+
+== Glossary
+
+[cols="2,4"]
+|===
+|Term |Definition
+
+|**[Term 1]**
+|[Clear definition in the context of this project]
+
+|**[Term 2]**
+|[Clear definition in the context of this project]
+
+|**SLO**
+|Service Level Objective — a target level of reliability measured by SLIs
+
+|**SLI**
+|Service Level Indicator — a quantitative measure of service reliability
+
+|**ADR**
+|Architecture Decision Record — a document capturing a significant design decision
+
+|**CAPEX**
+|Capital Expenditure — one-time upfront costs
+
+|**OPEX**
+|Operational Expenditure — recurring monthly/annual costs
+|===
+
+== References
+
+* [Link to external spec or RFC]
+* [Link to vendor documentation]
+* [Link to related ADR files]
+* [Link to API documentation / Swagger]
+* [Link to compliance framework documentation]
+
+== Appendix
+
+=== Diagram Engines Reference
+
+This template uses five diagram engines via Kroki. All are built into the `yuzutech/kroki` container (no additional setup).
+
+==== Structurizr — C4 Model Diagrams
+System context, container, deployment views from a shared model.
+
+ `[structurizr,format=svg,view-key=myView]` with Structurizr DSL
+
+==== D2 — Component & Infrastructure Diagrams
+Modern layout (ELK), nested containers, professional themes.
+
+ `[d2,format=svg,layout=elk]` with D2 language
+
+==== PlantUML — Behavioral Diagrams
+Sequence, activity, state, Gantt, mind map, WBS.
+
+ `[plantuml,format=svg]` with `@startuml/@enduml` or `@startgantt/@endgantt` etc.
+
+==== Erd — Data Model Diagrams
+Entity-relationship diagrams with Chen notation.
+
+ `[erd,format=svg]` with Erd language
+
+==== Vega-Lite — Data Visualization
+Statistical charts for cost comparison, capacity planning.
+
+ `[vegalite,format=svg]` with JSON specification
+
+=== Project Complexity Guide
+
+Which sections to include based on project size:
+
+[cols="3,1,1,1"]
+|===
+|Section |Small |Medium |Large
+
+|Version History
+|✓
+|✓
+|✓
+
+|Stakeholders
+|✓
+|✓
+|✓
+
+|Executive Summary
+|✓
+|✓
+|✓
+
+|Architecture Principles
+|—
+|✓
+|✓
+
+|Problem Statement
+|✓
+|✓
+|✓
+
+|C4 Context (Level 1)
+|✓
+|✓
+|✓
+
+|C4 Container (Level 2)
+|—
+|✓
+|✓
+
+|C4 Deployment
+|—
+|—
+|✓
+
+|Component Architecture
+|✓
+|✓
+|✓
+
+|Data Architecture
+|—
+|✓
+|✓
+
+|Key Flows
+|✓
+|✓
+|✓
+
+|Options Comparison
+|✓
+|✓
+|✓
+
+|Option Detail
+|✓
+|✓
+|✓
+
+|Assumptions & Quality
+|✓
+|✓
+|✓
+
+|Security Architecture
+|—
+|✓
+|✓
+
+|API Design
+|—
+|✓
+|✓
+
+|Deployment & Infrastructure
+|—
+|—
+|✓
+
+|Observability
+|—
+|—
+|✓
+
+|Business Process Flows
+|—
+|✓
+|✓
+
+|Entity Lifecycle
+|—
+|—
+|✓
+
+|Feature Breakdown
+|—
+|✓
+|✓
+
+|Migration & Transition
+|—
+|—
+|✓
+
+|ADRs
+|—
+|✓
+|✓
+
+|Technical Deep Dives
+|—
+|—
+|✓
+
+|Glossary
+|—
+|✓
+|✓
+|===
+
+=== Rendering Instructions
+
+[source,bash]
+----
+# Start Kroki server (from repository root)
+docker-compose up -d
+
+# Render to HTML
+npx asciidoctor -r asciidoctor-kroki template/solution-design-template.adoc
+
+# Open in browser (Windows)
+start template/solution-design-template.html
+
+# Open in browser (macOS)
+open template/solution-design-template.html
+
+# Open in browser (Linux)
+xdg-open template/solution-design-template.html
+----

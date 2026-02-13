@@ -4,6 +4,8 @@
 :numbered:
 :icons: font
 :sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
 
 == Executive Summary
 
@@ -106,7 +108,34 @@ Four options are presented, each building on the previous:
 |===
 
 .Cost Comparison
-image::../diagrams/cost-comparison.png[Cost Comparison, align="center"]
+[cols="2,1,1,1,1", options="header"]
+|===
+|Option |CAPEX |OPEX/mo |Timeline |Regions
+
+|**1: MVP**
+|$240,000
+|$835
+|4 months
+|US
+
+|**2: Progressive** ⭐
+|$532,000
+|$2,630
+|7 months
+|US + China
+
+|**3: All Features**
+|$1,654,000
+|$6,550
+|10 months
+|US + China + EU
+
+|**4: Klook Scale**
+|$3,528,000
+|$74,800
+|12 months
+|Global (5 regions)
+|===
 
 
 
@@ -144,7 +173,92 @@ image::../diagrams/cost-comparison.png[Cost Comparison, align="center"]
 === Architecture
 
 .Option 1 Architecture Diagram
-image::../diagrams/option-1-mvp.png[Option 1 Architecture, align="center"]
+[plantuml,format=svg]
+....
+@startuml
+title Option 1: MVP Architecture (US Only)
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  roundCorner 10
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor #DEE2E6
+}
+
+actor "Mobile Users\n(iOS/Android)" as users
+cloud "Route 53\nDNS" as dns
+cloud "CloudFront CDN\nCache static content" as cdn
+
+rectangle "AWS US-EAST-1 Region" as us #FAFAFA {
+  component "Application LB\nHTTPS termination" as alb #ED7100
+
+  package "Compute Layer" {
+    package "Modular Monolith" #E8F5E9 {
+      component "ECS: User Mgmt\nAuth & profiles" as ecs1 #FF9900
+      component "ECS: Partner Mgmt\nBusiness profiles" as ecs2 #FF9900
+      component "ECS: Recommendations\nGeo queries" as ecs3 #FF9900
+    }
+    package "AR Microservice" #E3F2FD {
+      queue "SQS: Recognition Queue" as sqs #FF4F8B
+      component "Lambda: Photo Recognition\nOn-demand scaling" as ar #FF9900
+    }
+  }
+
+  package "Data Layer" #EDE7F6 {
+    database "PostgreSQL Primary\nt4g.large, 100GB\nPostGIS" as db #3B48CC
+    database "Redis Cache 5GB\nSessions & hot data" as cache #3B48CC
+    storage "S3 Photos\nUser uploads" as s3p #3F8624
+    storage "S3 Static Assets\nCDN origin" as s3s #3F8624
+  }
+
+  component "CloudWatch\nLogs, metrics, alerts" as cw #FF4F8B
+}
+
+component "AWS Cognito\nOAuth 2.0/OIDC" as auth #DD344C
+
+package "AI Services" #E8F5E9 {
+  component "Google Vision API" as gv #4285F4
+  component "OpenAI GPT-4V" as openai #00A67E
+  component "Google Gemini (Fallback)" as gemini #4285F4
+}
+
+package "3rd Party" #FFF3E0 {
+  component "SendGrid" as email #1A82E2
+  component "Google Maps API" as maps #4285F4
+}
+
+component "Slack Alerts" as slack #611f69
+
+users --> dns : HTTPS TLS 1.3
+dns --> cdn
+cdn --> alb
+alb --> ecs1 : Route requests
+alb --> auth : JWT validation
+
+ecs1 --> s3p : Upload photo
+s3p --> sqs : S3 event trigger
+sqs --> ar : Process async
+ar --> gv : 1. Landmark detect
+ar --> openai : 2. Rich description
+ar --> gemini : 3. Fallback
+
+ecs1 --> db : ACID transactions
+ecs1 --> cache : Hot data
+ecs2 --> db : PostGIS geo queries
+ecs2 --> cache : Cache popular results
+ecs3 --> email : Notifications
+ecs3 --> maps : POI data
+
+ecs1 --> cw : Structured logs
+ar --> cw : Execution logs
+cw --> slack : Error rate >5%
+cdn --> s3s : Cache origin
+@enduml
+....
 
 Key components:
 
@@ -158,15 +272,176 @@ Key components:
 === Cost Breakdown
 
 .Option 1 CAPEX
-image::../diagrams/capex-option-1-mvp.png[Option 1 CAPEX, align="center"]
+[cols="1,1,1,1,1,1,1", options="header"]
+|===
+|Phase |Duration |Team |Rate |Base Cost |Risk |Total
+
+|POC
+|2 months
+|4 devs
+|$600/day
+|$96,000
+|25%
+|$120,000
+
+|MVP
+|2 months
+|4 devs
+|$600/day
+|$96,000
+|25%
+|$120,000
+
+6+|**Total CAPEX**
+|**$240,000**
+|===
 
 .Option 1 Monthly OPEX
-image::../diagrams/opex-option-1-mvp.png[Option 1 OPEX, align="center"]
+[cols="2,1,3", options="header"]
+|===
+|Service |Monthly Cost |Notes
+
+|AWS ECS (Fargate)
+|$180
+|2 tasks, 0.5 vCPU / 1GB each
+
+|RDS PostgreSQL
+|$200
+|db.t4g.large, 100GB, single-AZ
+
+|ElastiCache Redis
+|$75
+|cache.t3.micro, 5GB
+
+|S3 Storage
+|$25
+|Photos + static assets, ~50GB
+
+|CloudFront CDN
+|$50
+|US distribution, ~100GB/mo
+
+|Route 53
+|$5
+|DNS, health checks
+
+|Lambda (AI)
+|$30
+|Photo recognition, ~5k invocations/mo
+
+|SQS
+|$5
+|Recognition queue
+
+|CloudWatch
+|$30
+|Logs, metrics, alarms
+
+|Cognito
+|$25
+|~1,000 MAU (Year 1)
+
+|OpenAI API
+|$150
+|GPT-4V, ~3k requests/mo
+
+|Google Vision API
+|$30
+|Landmark detection, ~3k/mo
+
+|SendGrid
+|$15
+|Transactional emails, free tier
+
+|Google Maps API
+|$15
+|Geocoding + Places, ~2k requests/mo
+
+2+|**Total Monthly OPEX**
+|**$835**
+|===
 
 === Timeline
 
 .Option 1 Development Timeline
-image::../diagrams/timeline-option-1-mvp.png[Option 1 Timeline, align="center"]
+[plantuml,format=svg]
+....
+@startgantt
+title Option 1: MVP Timeline — 4 months, 4 devs, US only
+printscale weekly zoom 2
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 11
+  }
+  milestone {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 12
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Backend (2 devs) --
+[DB Schema + PostGIS Setup] starts 2026-03-01 and ends 2026-03-15
+[DB Schema + PostGIS Setup] is colored in #BBDEFB/#1976D2
+[Core API - Auth, Users] starts 2026-03-01 and ends 2026-03-25
+[Core API - Auth, Users] is colored in #BBDEFB/#1976D2
+[Photo Upload + S3 Integration] starts 2026-03-15 and ends 2026-04-01
+[Photo Upload + S3 Integration] is colored in #BBDEFB/#1976D2
+[AI Recognition Lambda] starts 2026-03-20 and ends 2026-04-15
+[AI Recognition Lambda] is colored in #BBDEFB/#1976D2
+[Partner API - CRUD, Geo queries] starts 2026-04-25 and ends 2026-05-20
+[Partner API - CRUD, Geo queries] is colored in #C8E6C9/#388E3C
+[Recommendation Engine] starts 2026-05-01 and ends 2026-05-25
+[Recommendation Engine] is colored in #C8E6C9/#388E3C
+[Redis Cache Layer] starts 2026-05-20 and ends 2026-06-05
+[Redis Cache Layer] is colored in #C8E6C9/#388E3C
+
+-- Mobile (2 devs) --
+[Native iOS/Android Shell + Nav] starts 2026-03-01 and ends 2026-03-20
+[Native iOS/Android Shell + Nav] is colored in #BBDEFB/#1976D2
+[Camera + Photo Upload UI] starts 2026-03-15 and ends 2026-04-05
+[Camera + Photo Upload UI] is colored in #BBDEFB/#1976D2
+[Attraction Description Screen] starts 2026-03-25 and ends 2026-04-15
+[Attraction Description Screen] is colored in #BBDEFB/#1976D2
+[Partner Venues List + Details] starts 2026-04-25 and ends 2026-05-20
+[Partner Venues List + Details] is colored in #C8E6C9/#388E3C
+[QR Code Discount Generation] starts 2026-05-10 and ends 2026-05-30
+[QR Code Discount Generation] is colored in #C8E6C9/#388E3C
+[Audio Playback + TTS] starts 2026-05-15 and ends 2026-06-01
+[Audio Playback + TTS] is colored in #C8E6C9/#388E3C
+
+-- DevOps (shared) --
+[CI/CD + Monitoring Setup] starts 2026-03-01 and ends 2026-03-25
+[CI/CD + Monitoring Setup] is colored in #BBDEFB/#1976D2
+[CloudWatch Alerts + Dashboards] starts 2026-05-15 and ends 2026-06-05
+[CloudWatch Alerts + Dashboards] is colored in #C8E6C9/#388E3C
+
+-- Integration --
+[POC Integration + Testing] starts 2026-04-10 and ends 2026-04-25
+[POC Integration + Testing] is colored in #BBDEFB/#1976D2
+[MVP Integration + QA + App Store] starts 2026-06-01 and ends 2026-06-25
+[MVP Integration + QA + App Store] is colored in #C8E6C9/#388E3C
+
+[POC Demo] happens 2026-04-25
+[MVP Launch] happens 2026-06-25
+
+legend right
+  |<#BBDEFB> POC Phase |
+  |<#C8E6C9> MVP Phase |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
 
 **Work Streams:**
 
@@ -239,7 +514,163 @@ Risk buffer: **25%** — justified by:
 === Architecture
 
 .Option 2 Architecture Diagram
-image::../diagrams/option-2-progressive.png[Option 2 Architecture, align="center"]
+[plantuml,format=svg]
+....
+@startuml
+title Option 2: Progressive Build - US + China (RECOMMENDED)
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  roundCorner 10
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor #DEE2E6
+}
+
+actor "Mobile Users\n(iOS/Android)\nUS + China" as users
+cloud "Route 53\nGlobal routing\nMulti-region" as dns
+
+package "CDN Layer" {
+  cloud "CloudFront\nUS/Global CDN" as cdn_us #FF9900
+  cloud "Alibaba CDN\nChina CDN\n(Great Firewall)" as cdn_cn #FF6A00
+}
+
+rectangle "AWS US-EAST-1 Region" as us_region #FAFAFA {
+  component "ALB\nUS Region" as alb_us #ED7100
+
+  package "Compute Layer" {
+    package "Modular Monolith" #E8F5E9 {
+      component "ECS: User Mgmt" as ecs1_us #FF9900
+      component "ECS: Partner Mgmt" as ecs2_us #FF9900
+      component "ECS: Recommendations" as ecs3_us #FF9900
+    }
+    package "AR Microservice" #E3F2FD {
+      queue "SQS: Recognition Queue" as sqs_us #FF4F8B
+      component "Lambda: Photo Recognition" as ar_us #FF9900
+    }
+    package "Payment & Loyalty (Phase 2)" #FFF3E0 {
+      component "Lambda: Payment\n(Stripe)" as pay #FF9900
+      component "Lambda: Loyalty\nPoints Engine" as loyalty #FF9900
+    }
+  }
+
+  package "Data Layer" #EDE7F6 {
+    database "PostgreSQL Primary\nt4g.xlarge, 500GB" as db_us #3B48CC
+    database "Read Replica US" as db_us_ro #3B48CC
+    database "Redis 10GB" as cache_us #3B48CC
+    storage "S3 Photos US" as s3_us #3F8624
+  }
+
+  package "Event & Messaging" #FFFDE7 {
+    component "EventBridge" as eb #FF4F8B
+    component "SNS\nPush notifications" as sns #FF4F8B
+  }
+
+  component "CloudWatch US" as cw_us #FF4F8B
+}
+
+rectangle "AWS CN-NORTH-1 Region (China)" as cn_region #F5F5F5 {
+  component "ALB\nChina Region" as alb_cn #ED7100
+
+  package "Compute Layer" {
+    package "Modular Monolith" #E8F5E9 {
+      component "ECS: User Mgmt" as ecs1_cn #FF9900
+      component "ECS: Partner Mgmt" as ecs2_cn #FF9900
+      component "ECS: Recommendations" as ecs3_cn #FF9900
+    }
+    package "AR Microservice" #E3F2FD {
+      queue "SQS: Recognition Queue" as sqs_cn #FF4F8B
+      component "Lambda: Photo Recognition" as ar_cn #FF9900
+    }
+  }
+
+  package "Data Layer" #EDE7F6 {
+    database "PostgreSQL\nt4g.xlarge, 500GB\nChina data" as db_cn #3B48CC
+    database "Redis 10GB" as cache_cn #3B48CC
+    storage "S3 Photos China" as s3_cn #3F8624
+  }
+
+  component "CloudWatch CN" as cw_cn #FF4F8B
+}
+
+rectangle "Cross-Region Replication" #FFEBEE {
+  component "Async Replication\nRPO: 15 min" as repl
+}
+
+component "AWS Cognito\nOAuth 2.0/OIDC" as auth #DD344C
+
+package "AI Services" #E8F5E9 {
+  component "Google Vision API" as gv #4285F4
+  component "OpenAI GPT-4V" as openai #00A67E
+  component "Google Gemini" as gemini #4285F4
+}
+
+package "3rd Party (Phase 2)" #FFF3E0 {
+  component "Stripe\nPCI-DSS L2" as stripe #635BFF
+  component "SendGrid" as email #1A82E2
+  component "Google Maps" as maps #4285F4
+}
+
+component "Slack Alerts" as slack #611f69
+
+' User flows
+users --> dns : HTTPS TLS 1.3
+dns --> cdn_us : Route to US
+dns --> cdn_cn : Route to China
+cdn_us --> alb_us
+cdn_cn --> alb_cn
+
+' US flows
+alb_us --> ecs1_us : Route tasks
+alb_us --> auth : JWT validation
+ecs1_us --> s3_us : Upload photo
+s3_us --> sqs_us : S3 trigger
+sqs_us --> ar_us
+ar_us --> gv : Landmark detect
+ar_us --> openai : Generate description
+ar_us --> gemini : Fallback
+
+ecs1_us --> db_us : ACID transactions
+ecs1_us --> db_us_ro : Read offload
+ecs1_us --> cache_us : Cache hot data
+
+' Payment flow
+ecs2_us --> pay : Process payment
+pay --> stripe : Stripe API
+pay --> loyalty : Update points
+
+' Events
+ecs1_us --> eb : Events
+eb --> sns : Publish
+
+' China flows
+alb_cn --> ecs1_cn : Route tasks
+ecs1_cn --> s3_cn : Upload photo
+s3_cn --> sqs_cn : S3 trigger
+sqs_cn --> ar_cn
+ar_cn --> gv : Landmark detect
+ar_cn --> openai : Description
+ecs1_cn --> db_cn : ACID transactions
+ecs1_cn --> cache_cn : Cache
+
+' Replication
+db_us --> repl : Replicate
+repl --> db_cn
+
+' Monitoring
+ecs1_us --> cw_us : Structured logs
+ar_us --> cw_us : Execution logs
+ecs1_cn --> cw_cn : Structured logs
+cw_us --> slack : Alert if error >5%
+
+' External
+ecs1_us --> email : Send emails
+ecs1_us --> maps : POI data
+@enduml
+....
 
 Key components added vs Option 1:
 
@@ -253,10 +684,118 @@ Key components added vs Option 1:
 === Cost Breakdown
 
 .Option 2 CAPEX
-image::../diagrams/capex-option-2-progressive.png[Option 2 CAPEX, align="center"]
+[cols="1,1,1,1,1,1,1", options="header"]
+|===
+|Phase |Duration |Team |Rate |Base Cost |Risk |Total
+
+|POC
+|2 months
+|4 devs
+|$600/day
+|$96,000
+|25%
+|$120,000
+
+|MVP
+|2 months
+|4 devs
+|$600/day
+|$96,000
+|25%
+|$120,000
+
+|Full
+|3 months
+|6 devs
+|$600/day
+|$216,000
+|35%
+|$291,600
+
+6+|**Total CAPEX**
+|**$531,600**
+|===
 
 .Option 2 Monthly OPEX
-image::../diagrams/opex-option-2-progressive.png[Option 2 OPEX, align="center"]
+[cols="2,1,3", options="header"]
+|===
+|Service |Monthly Cost |Notes
+
+|AWS ECS (Fargate) US
+|$250
+|3 tasks, 1 vCPU / 2GB
+
+|AWS ECS (Fargate) CN
+|$250
+|3 tasks, China region
+
+|RDS PostgreSQL US
+|$350
+|db.t4g.xlarge, 500GB, Multi-AZ
+
+|RDS PostgreSQL CN
+|$350
+|db.t4g.xlarge, 500GB, China
+
+|RDS Read Replica US
+|$200
+|Read replica, same tier
+
+|ElastiCache Redis
+|$150
+|cache.t3.medium, 10GB, US+CN
+
+|S3 Storage (US+CN)
+|$50
+|~200GB total both regions
+
+|CloudFront CDN
+|$80
+|US/Global distribution
+
+|Alibaba CDN (China)
+|$100
+|China content delivery
+
+|Lambda (AI) US+CN
+|$60
+|~10k invocations/mo combined
+
+|EventBridge + SQS
+|$20
+|Event-driven flows
+
+|CloudWatch (US+CN)
+|$60
+|Both regions monitoring
+
+|Cognito
+|$50
+|~5,000 MAU
+
+|OpenAI API
+|$300
+|GPT-4V, ~8k requests/mo
+
+|Google Vision API
+|$60
+|~8k requests/mo
+
+|Stripe Processing
+|$200
+|2.9% + $0.30 per transaction
+
+|SendGrid
+|$20
+|Transactional + marketing
+
+|Google Maps API
+|$30
+|~5k requests/mo
+
+2+|**Total Monthly OPEX**
+|**$2,630**
+|===
 
 **Cost rationale:**
 
@@ -269,7 +808,108 @@ image::../diagrams/opex-option-2-progressive.png[Option 2 OPEX, align="center"]
 === Timeline
 
 .Option 2 Development Timeline
-image::../diagrams/timeline-option-2-progressive.png[Option 2 Timeline, align="center"]
+[plantuml,format=svg]
+....
+@startgantt
+title Option 2: Progressive Build — 7 months, 4 to 6 devs, US+China (RECOMMENDED)
+printscale weekly zoom 2
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 11
+  }
+  milestone {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 12
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Backend (2 devs) --
+[DB Schema + PostGIS + Migrations] starts 2026-03-01 and ends 2026-03-15
+[DB Schema + PostGIS + Migrations] is colored in #BBDEFB/#1976D2
+[Core API - Auth, Users, Profiles] starts 2026-03-01 and ends 2026-03-28
+[Core API - Auth, Users, Profiles] is colored in #BBDEFB/#1976D2
+[Photo Upload + SQS + S3 Pipeline] starts 2026-03-15 and ends 2026-04-05
+[Photo Upload + SQS + S3 Pipeline] is colored in #BBDEFB/#1976D2
+[AI Recognition Lambda - Multi-LLM] starts 2026-03-20 and ends 2026-04-20
+[AI Recognition Lambda - Multi-LLM] is colored in #BBDEFB/#1976D2
+[Partner CRUD + Geo Queries API] starts 2026-05-01 and ends 2026-05-25
+[Partner CRUD + Geo Queries API] is colored in #C8E6C9/#388E3C
+[Recommendation Engine + Cache] starts 2026-05-10 and ends 2026-06-05
+[Recommendation Engine + Cache] is colored in #C8E6C9/#388E3C
+[QR Code Discount System] starts 2026-05-25 and ends 2026-06-15
+[QR Code Discount System] is colored in #C8E6C9/#388E3C
+[Stripe Payment Integration] starts 2026-07-01 and ends 2026-07-30
+[Stripe Payment Integration] is colored in #FFE0B2/#E65100
+[Loyalty Points Engine] starts 2026-07-15 and ends 2026-08-15
+[Loyalty Points Engine] is colored in #FFE0B2/#E65100
+[Partner Portal API] starts 2026-08-01 and ends 2026-08-25
+[Partner Portal API] is colored in #FFE0B2/#E65100
+
+-- Mobile (2 devs) --
+[Native iOS/Android Shell + Nav] starts 2026-03-01 and ends 2026-03-20
+[Native iOS/Android Shell + Nav] is colored in #BBDEFB/#1976D2
+[Camera + Photo Upload Flow] starts 2026-03-15 and ends 2026-04-05
+[Camera + Photo Upload Flow] is colored in #BBDEFB/#1976D2
+[Attraction Description + Audio] starts 2026-03-25 and ends 2026-04-20
+[Attraction Description + Audio] is colored in #BBDEFB/#1976D2
+[Partner Venues UI + Map View] starts 2026-05-01 and ends 2026-05-25
+[Partner Venues UI + Map View] is colored in #C8E6C9/#388E3C
+[QR Code + Discount Screens] starts 2026-05-20 and ends 2026-06-10
+[QR Code + Discount Screens] is colored in #C8E6C9/#388E3C
+[Offline Cache Mode - Phase 1] starts 2026-06-01 and ends 2026-06-20
+[Offline Cache Mode - Phase 1] is colored in #C8E6C9/#388E3C
+[Payment + Checkout Flow] starts 2026-07-01 and ends 2026-07-28
+[Payment + Checkout Flow] is colored in #FFE0B2/#E65100
+[Loyalty Dashboard UI] starts 2026-07-20 and ends 2026-08-15
+[Loyalty Dashboard UI] is colored in #FFE0B2/#E65100
+[Multi-language Support] starts 2026-08-10 and ends 2026-09-01
+[Multi-language Support] is colored in #FFE0B2/#E65100
+
+-- China Infra (2 devs, from month 5) --
+[China Region Infra - CN-North-1] starts 2026-07-01 and ends 2026-07-25
+[China Region Infra - CN-North-1] is colored in #FFE0B2/#E65100
+[Alibaba CDN + Data Residency] starts 2026-07-20 and ends 2026-08-15
+[Alibaba CDN + Data Residency] is colored in #FFE0B2/#E65100
+[Cross-Region Replication] starts 2026-08-10 and ends 2026-09-05
+[Cross-Region Replication] is colored in #FFE0B2/#E65100
+
+-- DevOps (shared) --
+[CI/CD + IaC - Terraform] starts 2026-03-01 and ends 2026-03-28
+[CI/CD + IaC - Terraform] is colored in #BBDEFB/#1976D2
+[US Region Prod Setup] starts 2026-05-15 and ends 2026-06-10
+[US Region Prod Setup] is colored in #C8E6C9/#388E3C
+
+-- Integration --
+[POC Integration Sprint] starts 2026-04-15 and ends 2026-04-30
+[POC Integration Sprint] is colored in #BBDEFB/#1976D2
+[MVP Integration + QA + Submit] starts 2026-06-15 and ends 2026-06-30
+[MVP Integration + QA + Submit] is colored in #C8E6C9/#388E3C
+[Full Release QA + Regression] starts 2026-09-01 and ends 2026-09-20
+[Full Release QA + Regression] is colored in #FFE0B2/#E65100
+
+[POC Demo] happens 2026-04-30
+[MVP Launch - US] happens 2026-06-30
+[Full Release] happens 2026-09-20
+
+legend right
+  |<#BBDEFB> POC Phase |
+  |<#C8E6C9> MVP Phase |
+  |<#FFE0B2> Full Phase |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
 
 **Work Streams:**
 
@@ -359,20 +999,409 @@ Risk buffer: **25% (POC/MVP) → 35% (Full)** — justified by:
 === Architecture
 
 .Option 3 Architecture Diagram
-image::../diagrams/option-3-all-features.png[Option 3 Architecture, align="center"]
+[plantuml,format=svg]
+....
+@startuml
+title Option 3: All Features Day 1 - Complete Platform
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  roundCorner 10
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor #DEE2E6
+}
+
+actor "Mobile Users\n(iOS/Android)\nGlobal" as users
+cloud "Route 53\nGlobal routing" as dns
+component "WAF\nDDoS protection" as waf #DD344C
+
+package "CDN Layer" {
+  cloud "CloudFront\nGlobal CDN" as cdn #FF9900
+  cloud "Alibaba CDN\nChina" as cdn_cn #FF6A00
+}
+
+rectangle "AWS US-EAST-1 Primary Region" as us #FAFAFA {
+  component "API Gateway\nRate limiting & auth" as apigw #FF9900
+  component "ALB\nHealthchecks" as alb #ED7100
+
+  package "Microservices (Independent scaling)" #E8F5E9 {
+    component "ECS: User Service\nAuth & profiles" as user_svc #FF9900
+    component "ECS: Partner Service\nBusiness mgmt" as partner_svc #FF9900
+    component "ECS: Recommendation\nML engine" as rec_svc #FF9900
+    component "ECS: Payment Service\nStripe integration" as pay_svc #FF9900
+    component "ECS: Loyalty Service\nPoints engine" as loy_svc #FF9900
+  }
+
+  package "AI & Recognition" #E3F2FD {
+    queue "SQS: Recognition Queue" as sqs #FF4F8B
+    component "Lambda: Photo Recognition\nMulti-model" as ar_lambda #FF9900
+  }
+
+  package "Data Layer" #EDE7F6 {
+    database "PostgreSQL Primary\nr6g.2xlarge, 1TB+\nRead replicas" as db #3B48CC
+    database "Redis Cluster 20GB+\nHA mode" as cache #3B48CC
+    database "DynamoDB\nAR logs (time-series)" as dynamo #3B48CC
+    storage "S3\nPhotos + assets" as s3 #3F8624
+    database "OpenSearch\nGeo search, full-text" as opensearch #3B48CC
+  }
+
+  package "Analytics & Events" #FFFDE7 {
+    component "Kinesis\nReal-time streams" as kinesis #FF4F8B
+    database "Redshift\nData warehouse" as redshift #3B48CC
+    component "EventBridge\nEvent mesh" as eb #FF4F8B
+  }
+
+  component "CloudWatch\nFull observability" as cw #FF4F8B
+}
+
+rectangle "AWS CN-NORTH-1 China Region" as cn #F5F5F5 {
+  component "ALB China" as alb_cn #ED7100
+
+  package "Microservices" #E8F5E9 {
+    component "ECS: User Service" as user_cn #FF9900
+    component "ECS: Partner Service" as partner_cn #FF9900
+    component "ECS: Recommendation" as rec_cn #FF9900
+  }
+
+  package "Data Layer" #EDE7F6 {
+    database "PostgreSQL 1TB+\nChina data" as db_cn #3B48CC
+    database "Redis Cluster 20GB+" as cache_cn #3B48CC
+    storage "S3 China" as s3_cn #3F8624
+    database "OpenSearch" as os_cn #3B48CC
+  }
+
+  component "CloudWatch CN" as cw_cn #FF4F8B
+}
+
+rectangle "AWS EU Region (Prepared)" #F5F5F5 {
+  component "ALB EU\n(GDPR ready)" as alb_eu #ED7100
+  database "PostgreSQL\n(Prepared)" as db_eu #3B48CC
+}
+
+rectangle "Cross-Region" #FFEBEE {
+  component "Active-Active\nAsync replication" as repl
+  component "Disaster Recovery\nRPO: 15 min" as dr
+}
+
+component "AWS Cognito\nMulti-factor" as auth #DD344C
+component "KMS\nEncryption AES-256" as kms #DD344C
+
+package "AI Services" #E8F5E9 {
+  component "Google Vision" as gv #4285F4
+  component "OpenAI GPT-4V" as openai #00A67E
+  component "Google Gemini" as gemini #4285F4
+}
+
+package "Payments & Notifications" #FFF3E0 {
+  component "Stripe PCI-DSS L2" as stripe #635BFF
+  component "SNS Push/SMS" as sns #FF4F8B
+  component "SendGrid" as email #1A82E2
+}
+
+package "Services" #FFF3E0 {
+  component "Google Maps" as maps #4285F4
+  component "Google Translate" as translate #4285F4
+}
+
+component "Slack Alerts" as slack #611f69
+
+' Main flow
+users --> dns : HTTPS TLS 1.3
+dns --> waf
+waf --> cdn
+cdn --> apigw
+apigw --> alb
+
+' Microservices
+alb --> user_svc : Route requests
+alb --> partner_svc
+alb --> rec_svc
+
+' Payment flow
+user_svc --> pay_svc : Initiate checkout
+pay_svc --> stripe : Process card
+pay_svc --> loy_svc : Update points
+
+' AR flow
+user_svc --> s3 : Upload photo
+s3 --> sqs : S3 event
+sqs --> ar_lambda
+ar_lambda --> gv : Landmark detect
+ar_lambda --> openai : Describe
+ar_lambda --> gemini : Fallback
+ar_lambda --> dynamo : Store logs
+
+' Data layer
+user_svc --> db : ACID
+partner_svc --> db : ACID
+rec_svc --> opensearch : Geo queries
+user_svc --> cache : Session cache
+partner_svc --> cache : Cache results
+
+' Analytics
+user_svc --> kinesis : Stream events
+kinesis --> redshift : Real-time
+eb --> sns : Coordinate
+
+' Notifications
+pay_svc --> sns : Send SMS
+user_svc --> email : Send email
+user_svc --> maps : POI
+user_svc --> translate : i18n
+
+' China
+dns --> cdn_cn : CN users
+cdn_cn --> alb_cn
+alb_cn --> user_cn
+user_cn --> db_cn
+user_cn --> cache_cn
+
+' Cross-region
+db --> repl : Replicate
+repl --> db_cn
+
+' Security
+alb --> auth : JWT
+user_svc --> kms : Encrypt secrets
+
+' Monitoring
+user_svc --> cw : APM
+ar_lambda --> cw : Traces
+cw --> slack : Alert
+@enduml
+....
 
 === Cost Breakdown
 
 .Option 3 CAPEX
-image::../diagrams/capex-option-3-all-features.png[Option 3 CAPEX, align="center"]
+[cols="1,1,1,1,1,1,1", options="header"]
+|===
+|Phase |Duration |Team |Rate |Base Cost |Risk |Total
+
+|POC
+|3 months
+|8 devs
+|$650/day
+|$312,000
+|30%
+|$405,600
+
+|MVP
+|4 months
+|10 devs
+|$650/day
+|$520,000
+|35%
+|$702,000
+
+|Full
+|3 months
+|10 devs
+|$650/day
+|$390,000
+|40%
+|$546,000
+
+6+|**Total CAPEX**
+|**$1,653,600**
+|===
 
 .Option 3 Monthly OPEX
-image::../diagrams/opex-option-3-all-features.png[Option 3 OPEX, align="center"]
+[cols="2,1,3", options="header"]
+|===
+|Service |Monthly Cost |Notes
+
+|ECS/Fargate (5 services × 3 regions)
+|$1,200
+|Microservices across US, CN, EU
+
+|RDS Aurora (3 regions)
+|$1,500
+|db.r6g.2xlarge, 1TB+, Multi-AZ each
+
+|ElastiCache Redis Cluster
+|$400
+|20GB+, HA mode, 3 regions
+
+|DynamoDB (AR logs)
+|$100
+|Time-series, on-demand capacity
+
+|OpenSearch Cluster
+|$350
+|3-node cluster, geo search
+
+|S3 Storage (Global)
+|$100
+|~500GB across regions
+
+|CloudFront + Alibaba CDN
+|$250
+|Global + China CDN
+
+|Lambda (AI Workers)
+|$120
+|~25k invocations/mo
+
+|Kinesis + Redshift
+|$500
+|Analytics pipeline + data warehouse
+
+|EventBridge + SQS + SNS
+|$50
+|Event mesh + messaging
+
+|CloudWatch + X-Ray
+|$150
+|Full observability, 3 regions
+
+|WAF + Shield
+|$100
+|DDoS protection, bot mitigation
+
+|Cognito + KMS
+|$80
+|MFA, encryption, ~50k MAU
+
+|OpenAI API
+|$800
+|GPT-4V, ~25k requests/mo
+
+|Google Vision + Gemini
+|$200
+|Multi-model fallback
+
+|Stripe Processing
+|$500
+|Higher volume transactions
+
+|Google Maps + Translate
+|$100
+|POI + translation, ~20k/mo
+
+|SendGrid + SNS Push
+|$50
+|Email + push notifications
+
+2+|**Total Monthly OPEX**
+|**$6,550**
+|===
 
 === Timeline
 
 .Option 3 Development Timeline
-image::../diagrams/timeline-option-3-all-features.png[Option 3 Timeline, align="center"]
+[plantuml,format=svg]
+....
+@startgantt
+title Option 3: All Features Day 1 — 10 months, 8 to 10 devs, US+China+EU
+printscale weekly
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 10
+  }
+  milestone {
+    FontSize 10
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Backend Core (3 devs) --
+[Microservices Scaffold + API GW] starts 2026-03-01 and ends 2026-03-25
+[Microservices Scaffold + API GW] is colored in #BBDEFB/#1976D2
+[User Service + Auth - Cognito MFA] starts 2026-03-01 and ends 2026-04-01
+[User Service + Auth - Cognito MFA] is colored in #BBDEFB/#1976D2
+[Partner Service + Admin API] starts 2026-03-20 and ends 2026-04-20
+[Partner Service + Admin API] is colored in #BBDEFB/#1976D2
+[Photo Recognition - Multi-LLM] starts 2026-03-15 and ends 2026-04-25
+[Photo Recognition - Multi-LLM] is colored in #BBDEFB/#1976D2
+[Recommendation + OpenSearch] starts 2026-04-15 and ends 2026-05-20
+[Recommendation + OpenSearch] is colored in #BBDEFB/#1976D2
+[Stripe Payment Service - PCI-DSS] starts 2026-06-01 and ends 2026-07-10
+[Stripe Payment Service - PCI-DSS] is colored in #C8E6C9/#388E3C
+[Loyalty Points Engine] starts 2026-06-15 and ends 2026-07-20
+[Loyalty Points Engine] is colored in #C8E6C9/#388E3C
+[Kinesis Analytics Pipeline] starts 2026-07-01 and ends 2026-08-01
+[Kinesis Analytics Pipeline] is colored in #FFE0B2/#E65100
+[EventBridge + Notifications] starts 2026-07-15 and ends 2026-08-10
+[EventBridge + Notifications] is colored in #FFE0B2/#E65100
+
+-- Mobile (3 devs) --
+[Native iOS/Android + Design System] starts 2026-03-01 and ends 2026-03-28
+[Native iOS/Android + Design System] is colored in #BBDEFB/#1976D2
+[Camera + Upload + Description] starts 2026-03-20 and ends 2026-04-20
+[Camera + Upload + Description] is colored in #BBDEFB/#1976D2
+[Partner Venues + Map Integration] starts 2026-04-10 and ends 2026-05-10
+[Partner Venues + Map Integration] is colored in #BBDEFB/#1976D2
+[QR Code + Discount Flows] starts 2026-05-01 and ends 2026-05-25
+[QR Code + Discount Flows] is colored in #C8E6C9/#388E3C
+[Payment + Checkout Flow] starts 2026-06-01 and ends 2026-07-01
+[Payment + Checkout Flow] is colored in #C8E6C9/#388E3C
+[Loyalty Dashboard + History] starts 2026-06-20 and ends 2026-07-20
+[Loyalty Dashboard + History] is colored in #C8E6C9/#388E3C
+[Offline Mode + Local LLM] starts 2026-07-01 and ends 2026-08-05
+[Offline Mode + Local LLM] is colored in #FFE0B2/#E65100
+[Multi-language + Translations] starts 2026-07-20 and ends 2026-08-20
+[Multi-language + Translations] is colored in #FFE0B2/#E65100
+[Partner Portal Web App] starts 2026-09-01 and ends 2026-10-15
+[Partner Portal Web App] is colored in #FFE0B2/#E65100
+
+-- DevOps (2 devs) --
+[IaC Terraform + CI/CD Pipelines] starts 2026-03-01 and ends 2026-04-01
+[IaC Terraform + CI/CD Pipelines] is colored in #BBDEFB/#1976D2
+[US Region Full Deploy] starts 2026-04-01 and ends 2026-04-25
+[US Region Full Deploy] is colored in #BBDEFB/#1976D2
+[Observability Stack - CW + X-Ray] starts 2026-04-15 and ends 2026-05-15
+[Observability Stack - CW + X-Ray] is colored in #C8E6C9/#388E3C
+[Security Audit + Pen Testing] starts 2026-09-01 and ends 2026-10-01
+[Security Audit + Pen Testing] is colored in #FFE0B2/#E65100
+[Performance Testing - Load/Stress] starts 2026-09-15 and ends 2026-10-15
+[Performance Testing - Load/Stress] is colored in #FFE0B2/#E65100
+
+-- Multi-Region (2 devs) --
+[China Region Infra - CN-North-1] starts 2026-06-01 and ends 2026-07-01
+[China Region Infra - CN-North-1] is colored in #FFE0B2/#E65100
+[Alibaba CDN + GFW Compliance] starts 2026-06-25 and ends 2026-07-25
+[Alibaba CDN + GFW Compliance] is colored in #FFE0B2/#E65100
+[EU Region Prep - GDPR Setup] starts 2026-07-15 and ends 2026-08-15
+[EU Region Prep - GDPR Setup] is colored in #FFE0B2/#E65100
+[Cross-Region Replication + DR] starts 2026-08-01 and ends 2026-09-01
+[Cross-Region Replication + DR] is colored in #FFE0B2/#E65100
+
+-- Integration --
+[POC Integration Sprint] starts 2026-05-10 and ends 2026-05-28
+[POC Integration Sprint] is colored in #BBDEFB/#1976D2
+[Full Integration + Regression] starts 2026-10-15 and ends 2026-11-15
+[Full Integration + Regression] is colored in #FFE0B2/#E65100
+[Staged Rollout + Launch] starts 2026-11-15 and ends 2026-12-15
+[Staged Rollout + Launch] is colored in #FFE0B2/#E65100
+
+[POC Demo] happens 2026-05-28
+[MVP - US Launch] happens 2026-08-01
+[Full Release - Global] happens 2026-12-15
+
+legend right
+  |<#BBDEFB> POC Phase |
+  |<#C8E6C9> MVP Phase |
+  |<#FFE0B2> Full Phase |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
 
 === Trade-offs vs Option 2
 
@@ -437,20 +1466,450 @@ Risk buffer: **30-40%** — justified by:
 === Architecture
 
 .Option 4 Architecture Diagram
-image::../diagrams/option-4-scale-klook.png[Option 4 Architecture, align="center"]
+[plantuml,format=svg]
+....
+@startuml
+title Option 4: Klook/Viator Scale - 50M+ Users
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  roundCorner 10
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor #DEE2E6
+}
+
+actor "Mobile Users\n50M+\nGlobal" as users
+cloud "Route 53\nGeographic routing" as dns
+component "AWS Shield\nDDoS protection" as shield #DD344C
+component "WAF\nBot mitigation" as waf #DD344C
+
+package "CDN & Edge" {
+  cloud "CloudFront\n500+ edge locations" as cdn #FF9900
+  cloud "Alibaba CDN\nChina" as cdn_cn #FF6A00
+  cloud "Regional CDN\nLatAm" as cdn_latam #FF6A00
+  cloud "Regional CDN\nAPAC" as cdn_apac #FF6A00
+}
+
+rectangle "AWS US-EAST-1 Primary" as us #FAFAFA {
+  component "Network LB\n10k+ QPS" as nlb #ED7100
+  component "API Gateway V2\nPayload compression" as apigw #FF9900
+
+  package "Kubernetes (EKS)" #E8F5E9 {
+    package "Microservices (30+ services)" {
+      component "User Service" as user_pod #FF9900
+      component "Partner Service" as partner_pod #FF9900
+      component "Recommendation\nML-based" as rec_pod #FF9900
+      component "Payment Service\nPCI-DSS" as pay_pod #FF9900
+      component "Loyalty Points" as loy_pod #FF9900
+      component "Photo Recognition\nGPU workers" as ar_pod #FF9900
+      component "Search Service\nOpenSearch" as search_pod #FF9900
+    }
+    package "Service Mesh" #E3F2FD {
+      component "Istio\nTraffic mgmt\nCanary deploys" as mesh
+    }
+  }
+
+  package "Data Layer - Sharded" #EDE7F6 {
+    database "Aurora PostgreSQL\n10+ shards" as db_us #3B48CC
+    database "Read replicas 50+" as db_ro #3B48CC
+    database "Redis Cluster\n100GB+ sharded" as cache_us #3B48CC
+    database "DynamoDB\nGlobal tables" as dynamo #3B48CC
+    storage "S3 Multi-tier\nStandard\u2192IA\u2192Glacier" as s3_us #3F8624
+  }
+
+  package "Search & Analytics" #FFFDE7 {
+    database "OpenSearch\nSharded cluster" as opensearch #3B48CC
+    component "Kinesis\nMultiple streams" as kinesis #FF4F8B
+    component "Kafka\nHigh-throughput" as kafka #000000
+    database "Redshift\nPeta-scale" as redshift #3B48CC
+  }
+
+  package "Messaging & Events" {
+    queue "SQS FIFO + Standard\nDead-letter queues" as sqs #FF4F8B
+    component "SNS\nFan-out millions/sec" as sns #FF4F8B
+    component "EventBridge\nCross-region" as eb #FF4F8B
+  }
+
+  component "DataDog APM\nDistributed tracing" as observability #632CA6
+}
+
+rectangle "AWS US-WEST-2 Secondary" as us_west #F5F5F5 {
+  component "NLB Active-active" as nlb_west #ED7100
+  component "EKS Cluster\nFull stack" as eks_west #FF9900
+  database "Aurora 10+ shards" as db_west #3B48CC
+  database "Redis Cluster 100GB+" as cache_west #3B48CC
+}
+
+rectangle "AWS CN-NORTH-1 China" as cn #F5F5F5 {
+  component "NLB" as nlb_cn #ED7100
+  component "EKS China data" as eks_cn #FF9900
+  database "Aurora China shards" as db_cn #3B48CC
+}
+
+rectangle "AWS EU-WEST-1 Europe" as eu #F5F5F5 {
+  component "NLB GDPR compliant" as nlb_eu #ED7100
+  component "EKS EU data" as eks_eu #FF9900
+  database "Aurora EU shards" as db_eu #3B48CC
+}
+
+rectangle "AWS APAC" as apac #F5F5F5 {
+  component "NLB" as nlb_apac #ED7100
+  component "EKS APAC data" as eks_apac #FF9900
+}
+
+rectangle "Global Data Replication" #FFEBEE {
+  component "Aurora Global DB\nCross-region replicas" as global_repl
+  component "S3 Cross-Region\nReplication" as s3_repl
+}
+
+rectangle "DR & Backup" #FFEBEE {
+  component "Backup Service\n35-day PITR" as backup
+  component "DR Automation\nRPO: 5 min, RTO: 15 min" as dr
+}
+
+component "Cognito\nMFA mandatory" as auth #DD344C
+component "KMS Regional keys" as kms #DD344C
+component "Secrets Manager" as secrets #DD344C
+
+package "AI & ML" #E3F2FD {
+  component "SageMaker\nModel serving" as sagemaker
+  component "GPU Workers\nPhoto recognition" as gpu
+}
+
+package "Payment & Compliance" #FFF3E0 {
+  component "Stripe High-volume" as stripe #635BFF
+  component "PayPal Fallback" as paypal #003087
+}
+
+package "AI Services" #E8F5E9 {
+  component "OpenAI\nToken pooling" as openai #00A67E
+  component "Google Gemini" as gemini #4285F4
+}
+
+package "Communications" #FFF3E0 {
+  component "Twilio Global SMS" as twilio
+  component "SendGrid Marketing" as sendgrid #1A82E2
+}
+
+package "Content" #FFF3E0 {
+  component "Google Maps Advanced" as maps #4285F4
+  component "Neural Translation" as translation #4285F4
+}
+
+package "Developer Tools" {
+  component "CloudWatch + DataDog" as logging
+  component "Prometheus + Grafana" as metrics
+  component "X-Ray + Jaeger" as tracing
+}
+
+component "Slack + PagerDuty" as slack #611f69
+
+' Main flow
+users --> dns : HTTPS TLS 1.3
+dns --> shield
+shield --> waf
+dns --> cdn : US users
+dns --> cdn_cn : China users
+dns --> cdn_latam : LatAm users
+dns --> cdn_apac : APAC users
+
+' Primary region
+cdn --> nlb
+nlb --> apigw
+apigw --> mesh
+mesh --> user_pod
+mesh --> partner_pod
+mesh --> rec_pod
+mesh --> pay_pod
+
+' AR flow
+user_pod --> ar_pod
+ar_pod --> gpu
+ar_pod --> sagemaker
+
+' Data
+pay_pod --> db_us
+user_pod --> cache_us
+rec_pod --> opensearch
+
+' Events
+user_pod --> kinesis
+kinesis --> kafka
+kafka --> redshift
+
+' Payments
+pay_pod --> stripe
+pay_pod --> paypal
+
+' Messaging
+user_pod --> sqs
+sqs --> sns
+
+' Global replication
+db_us --> global_repl
+global_repl --> db_west
+global_repl --> db_cn
+global_repl --> db_eu
+
+' Secondary regions
+cdn_cn --> nlb_cn
+nlb_cn --> eks_cn
+nlb_west --> eks_west
+nlb_eu --> eks_eu
+cdn_apac --> nlb_apac
+nlb_apac --> eks_apac
+
+' Observability
+user_pod --> observability : Real-time traces
+observability --> slack : Alert
+
+' Backup & DR
+db_us --> backup
+backup --> dr
+
+' Security
+user_pod --> auth
+user_pod --> secrets
+@enduml
+....
 
 === Cost Breakdown
 
 .Option 4 CAPEX
-image::../diagrams/capex-option-4-scale.png[Option 4 CAPEX, align="center"]
+[cols="1,1,1,1,1,1,1", options="header"]
+|===
+|Phase |Duration |Team |Rate |Base Cost |Risk |Total
+
+|POC
+|4 months
+|15 devs
+|$700/day
+|$840,000
+|35%
+|$1,134,000
+
+|MVP
+|4 months
+|15 devs
+|$700/day
+|$840,000
+|40%
+|$1,176,000
+
+|Full
+|4 months
+|15 devs
+|$700/day
+|$840,000
+|45%
+|$1,218,000
+
+6+|**Total CAPEX**
+|**$3,528,000**
+|===
 
 .Option 4 Monthly OPEX
-image::../diagrams/opex-option-4-scale.png[Option 4 OPEX, align="center"]
+[cols="2,1,3", options="header"]
+|===
+|Service |Monthly Cost |Notes
+
+|EKS Clusters (5 regions)
+|$8,000
+|30+ microservices, auto-scaling pods
+
+|Aurora Global DB (Sharded)
+|$12,000
+|10+ shards, 50+ read replicas, 5 regions
+
+|Redis Cluster (Sharded)
+|$3,000
+|100GB+, sharded across regions
+
+|DynamoDB Global Tables
+|$2,000
+|AR logs, high-throughput, global
+
+|OpenSearch (Sharded Cluster)
+|$2,500
+|Multi-node, geo search, full-text
+
+|S3 Multi-tier Storage
+|$800
+|5TB+, Standard→IA→Glacier lifecycle
+
+|CloudFront + Regional CDNs
+|$2,000
+|500+ edge locations, global
+
+|ALB/NLB (5 regions)
+|$1,500
+|Ultra-high throughput, 10k+ QPS
+
+|Kinesis + Kafka
+|$3,000
+|Real-time streams, partitioned
+
+|Redshift
+|$2,000
+|Peta-scale analytics warehouse
+
+|SageMaker ML Endpoints
+|$4,000
+|GPU workers, model serving
+
+|DataDog APM + Monitoring
+|$5,000
+|Distributed tracing, 50+ hosts
+
+|AWS Shield Advanced + WAF
+|$3,500
+|DDoS protection, $3k/mo base
+
+|Cognito + Secrets Manager
+|$500
+|MFA, rotation, 5M+ MAU
+
+|OpenAI API (Token Pooling)
+|$5,000
+|Bulk pricing, ~500k requests/mo
+
+|Google Vision + Gemini
+|$2,000
+|Multi-model, high volume
+
+|Stripe + PayPal
+|$15,000
+|High-volume global payments
+
+|Twilio + SendGrid
+|$2,000
+|Global SMS + email marketing
+
+|Google Maps Advanced
+|$1,500
+|POI, routing, ~200k/mo
+
+|Neural Translation API
+|$500
+|Real-time translation, 20+ languages
+
+2+|**Total Monthly OPEX**
+|**$74,800**
+|===
 
 === Timeline
 
 .Option 4 Development Timeline
-image::../diagrams/timeline-option-4-scale.png[Option 4 Timeline, align="center"]
+[plantuml,format=svg]
+....
+@startgantt
+title Option 4: Klook/Viator Scale — 12 months migration, 15 devs, Global
+printscale weekly
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 10
+  }
+  milestone {
+    FontSize 10
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Platform (3 devs) --
+[EKS Cluster Setup + Istio Mesh] starts 2026-03-01 and ends 2026-04-15
+[EKS Cluster Setup + Istio Mesh] is colored in #BBDEFB/#1976D2
+[CI/CD Migration - GitOps/ArgoCD] starts 2026-03-15 and ends 2026-04-20
+[CI/CD Migration - GitOps/ArgoCD] is colored in #BBDEFB/#1976D2
+[Observability - DataDog + Prometheus] starts 2026-04-01 and ends 2026-05-01
+[Observability - DataDog + Prometheus] is colored in #BBDEFB/#1976D2
+[Aurora Global DB Migration] starts 2026-04-15 and ends 2026-06-01
+[Aurora Global DB Migration] is colored in #C8E6C9/#388E3C
+[Load Testing - 10k+ QPS] starts 2026-11-01 and ends 2026-12-01
+[Load Testing - 10k+ QPS] is colored in #FFE0B2/#E65100
+[DR Automation - RTO 15min] starts 2026-11-15 and ends 2026-12-15
+[DR Automation - RTO 15min] is colored in #FFE0B2/#E65100
+[Security Hardening + Compliance] starts 2026-12-01 and ends 2027-01-15
+[Security Hardening + Compliance] is colored in #FFE0B2/#E65100
+[Chaos Engineering + Resilience] starts 2026-12-15 and ends 2027-01-25
+[Chaos Engineering + Resilience] is colored in #FFE0B2/#E65100
+
+-- Microservices (4 devs) --
+[Monolith to User Service - K8s] starts 2026-03-01 and ends 2026-04-15
+[Monolith to User Service - K8s] is colored in #BBDEFB/#1976D2
+[Monolith to Partner Service - K8s] starts 2026-03-20 and ends 2026-04-30
+[Monolith to Partner Service - K8s] is colored in #BBDEFB/#1976D2
+[Monolith to Payment Service - K8s] starts 2026-04-01 and ends 2026-05-15
+[Monolith to Payment Service - K8s] is colored in #C8E6C9/#388E3C
+[Monolith to Recommendation - K8s] starts 2026-04-20 and ends 2026-06-01
+[Monolith to Recommendation - K8s] is colored in #C8E6C9/#388E3C
+[Event Mesh - Kafka + EventBridge] starts 2026-05-15 and ends 2026-06-20
+[Event Mesh - Kafka + EventBridge] is colored in #C8E6C9/#388E3C
+
+-- Data (3 devs) --
+[PostgreSQL to Aurora Sharding] starts 2026-03-15 and ends 2026-05-15
+[PostgreSQL to Aurora Sharding] is colored in #BBDEFB/#1976D2
+[Redis to Redis Cluster - 100GB+] starts 2026-04-01 and ends 2026-05-01
+[Redis to Redis Cluster - 100GB+] is colored in #C8E6C9/#388E3C
+[OpenSearch Cluster - Sharded] starts 2026-04-15 and ends 2026-05-20
+[OpenSearch Cluster - Sharded] is colored in #C8E6C9/#388E3C
+[Kinesis + Kafka Analytics Pipeline] starts 2026-05-15 and ends 2026-06-25
+[Kinesis + Kafka Analytics Pipeline] is colored in #FFE0B2/#E65100
+[Redshift Data Warehouse] starts 2026-06-01 and ends 2026-07-01
+[Redshift Data Warehouse] is colored in #FFE0B2/#E65100
+
+-- Global Infra (3 devs) --
+[US-West-2 Active-Active Deploy] starts 2026-07-01 and ends 2026-08-01
+[US-West-2 Active-Active Deploy] is colored in #FFE0B2/#E65100
+[China Region - AWS CN + Alibaba] starts 2026-07-15 and ends 2026-08-25
+[China Region - AWS CN + Alibaba] is colored in #FFE0B2/#E65100
+[EU Region - GDPR + Data Residency] starts 2026-08-15 and ends 2026-09-25
+[EU Region - GDPR + Data Residency] is colored in #FFE0B2/#E65100
+[APAC Region Deploy] starts 2026-09-15 and ends 2026-10-20
+[APAC Region Deploy] is colored in #FFE0B2/#E65100
+[Global Aurora Replication] starts 2026-10-01 and ends 2026-11-01
+[Global Aurora Replication] is colored in #FFE0B2/#E65100
+
+-- ML/AI (3 devs) --
+[ML Pipeline - SageMaker + GPU] starts 2026-07-01 and ends 2026-08-20
+[ML Pipeline - SageMaker + GPU] is colored in #FFE0B2/#E65100
+[Custom Model Training Pipeline] starts 2026-08-15 and ends 2026-10-01
+[Custom Model Training Pipeline] is colored in #FFE0B2/#E65100
+[Real-time Recommendation ML] starts 2026-09-15 and ends 2026-11-01
+[Real-time Recommendation ML] is colored in #FFE0B2/#E65100
+
+-- Integration --
+[Migration Validation Sprint] starts 2026-06-15 and ends 2026-07-10
+[Migration Validation Sprint] is colored in #C8E6C9/#388E3C
+[Full Scale Launch Readiness] starts 2027-01-15 and ends 2027-02-15
+[Full Scale Launch Readiness] is colored in #FFE0B2/#E65100
+
+[Migration Complete] happens 2026-07-10
+[Multi-Region Live] happens 2026-11-01
+[Scale-Ready Launch] happens 2027-02-15
+
+legend right
+  |<#BBDEFB> Architecture Phase |
+  |<#C8E6C9> Migration Phase |
+  |<#FFE0B2> Scale Phase |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
 
 === When to Choose Option 4
 
@@ -669,7 +2128,34 @@ Per mentor guidance, costs are estimated using **developer-price × time**, not 
 === CAPEX Summary
 
 .Cost Comparison Chart
-image::../diagrams/cost-comparison.png[Cost Comparison, align="center"]
+[cols="2,1,1,1,1", options="header"]
+|===
+|Option |CAPEX |OPEX/mo |Timeline |Team
+
+|**1: MVP**
+|$240,000
+|$835
+|4 months
+|4 devs
+
+|**2: Progressive** ⭐
+|$531,600
+|$2,630
+|7 months
+|4→6 devs
+
+|**3: All Features**
+|$1,653,600
+|$6,550
+|10 months
+|8→10 devs
+
+|**4: Klook Scale**
+|$3,528,000
+|$74,800
+|12 months
+|15 devs
+|===
 
 
 
@@ -716,25 +2202,25 @@ image::../diagrams/cost-comparison.png[Cost Comparison, align="center"]
 
 == Appendix: Artifact Inventory
 
-=== Architecture Diagrams (4 options)
+=== Architecture Diagrams (4 options — inline PlantUML via Kroki)
 
-* `option-1-mvp.png` — Modular monolith, US only
-* `option-2-progressive.png` — Progressive build, US + China (RECOMMENDED)
-* `option-3-all-features.png` — Full microservices, US + China + EU
-* `option-4-scale-klook.png` — Kubernetes scale, 5 global regions
+* Option 1 — Modular monolith, US only
+* Option 2 — Progressive build, US + China (RECOMMENDED)
+* Option 3 — Full microservices, US + China + EU
+* Option 4 — Kubernetes scale, 5 global regions
 
-=== Timeline Gantt Charts (4 options)
+=== Timeline Gantt Charts (4 options — inline Mermaid via Kroki)
 
-* `timeline-option-1-mvp.png` — 4 months, 4 devs, 2 streams
-* `timeline-option-2-progressive.png` — 7 months, 4→6 devs, 3 streams
-* `timeline-option-3-all-features.png` — 10 months, 8→10 devs, 4 streams
-* `timeline-option-4-scale.png` — 12 months, 15 devs, 5 streams
+* Option 1 — 4 months, 4 devs, 2 streams
+* Option 2 — 7 months, 4→6 devs, 3 streams
+* Option 3 — 10 months, 8→10 devs, 4 streams
+* Option 4 — 12 months, 15 devs, 5 streams
 
-=== Cost Analysis (9 charts)
+=== Cost Analysis (inline AsciiDoc tables)
 
-* `capex-option-{1,2,3,4}.png` — CAPEX breakdown per phase
-* `opex-option-{1,2,3,4}.png` — Monthly OPEX line items
-* `cost-comparison.png` — All 4 options side-by-side
+* CAPEX breakdown per phase (4 options)
+* Monthly OPEX line items (4 options)
+* Cost comparison summary table
 
 === Related Documents
 

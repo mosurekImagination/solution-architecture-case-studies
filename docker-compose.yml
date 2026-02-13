@@ -1,11 +1,21 @@
 services:
-  diagrams:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      # Mount the current directory so we can access Python scripts and diagrams
-      - .:/app
-    working_dir: /app
-    # Command will be overridden by the generate-diagrams.sh script
-    command: echo "Please use ./generate-diagrams.sh to generate diagrams"
+  kroki:
+    image: yuzutech/kroki
+    ports:
+      - "8000:8000"
+    environment:
+      - KROKI_PLANTUML_HOST=plantuml
+      - KROKI_MERMAID_HOST=mermaid
+    depends_on:
+      - plantuml
+      - mermaid
+
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    expose:
+      - "8080"
+
+  mermaid:
+    image: yuzutech/kroki-mermaid
+    expose:
+      - "8002"

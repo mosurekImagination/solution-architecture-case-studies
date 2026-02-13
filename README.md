@@ -1,6 +1,6 @@
 # Solution Architecture Case Studies
 
-This repository contains architecture diagrams created using [Diagrams](https://diagrams.mingrammer.com/) - a Python library for drawing cloud system architecture diagrams as code.
+This repository contains solution architecture case studies with diagrams rendered using [Kroki](https://kroki.io/) — a unified API for diagram-as-code tools. Architecture diagrams are written in **PlantUML**, timelines in **Mermaid**, and cost tables as native **AsciiDoc tables** — all inline in the `.adoc` documents.
 
 ## Project Structure
 
@@ -9,16 +9,11 @@ Each case study is organized in its own numbered directory:
 ```
 .
 ├── 01/              # Case Study 01
-│   ├── *.py         # Python diagram scripts
-│   ├── diagrams/    # Generated diagrams for this case study
-│   └── README.md    # Case study documentation
-├── 02/              # Case Study 02
-│   ├── *.py
-│   ├── diagrams/    # Generated diagrams for this case study
-│   └── README.md
-├── generate-diagrams.sh
-├── docker-compose.yml
-└── Dockerfile
+│   ├── assignment/  # Assignment brief and notes
+│   ├── docs/        # Solution design (AsciiDoc with inline diagrams)
+│   └── questionnaire/
+├── docker-compose.yml   # Kroki server (PlantUML + Mermaid)
+└── README.md
 ```
 
 ## Quick Start
@@ -26,36 +21,39 @@ Each case study is organized in its own numbered directory:
 **Prerequisites:** Docker and Docker Compose installed
 - [Install Docker Desktop](https://www.docker.com/products/docker-desktop) (includes Docker Compose)
 
-**Generate diagrams:**
+**Start Kroki server:**
 ```bash
-./generate-diagrams.sh
+docker-compose up -d
 ```
 
-That's it! The script uses Docker Compose to:
-- Build the Docker image with all dependencies (first time only)
-- Find all Python files in the case study directory
-- Generate diagrams for each Python file
-- Save them to `<case_study_number>/diagrams/`
-- Automatically clean up when done
+Kroki will be available at `http://localhost:8000`.
 
-## Usage
+**Render the AsciiDoc document:**
 
-**Generate diagrams for the latest case study (default):**
+Install Asciidoctor with the Kroki extension:
 ```bash
-./generate-diagrams.sh
+gem install asciidoctor-kroki
 ```
 
-**Generate diagrams for a specific case study:**
+Generate HTML:
 ```bash
-./generate-diagrams.sh 01
-./generate-diagrams.sh 02
+asciidoctor -r asciidoctor-kroki 01/docs/solution-design.adoc
 ```
 
-**Generate diagrams for all case studies:**
+Or use the VS Code [AsciiDoc extension](https://marketplace.visualstudio.com/items?itemName=asciidoctor.asciidoctor-vscode) with Kroki support for live preview.
+
+## Diagram Tools
+
+| Diagram Type | Tool | Format |
+|---|---|---|
+| Architecture diagrams | PlantUML (via Kroki) | Inline in `.adoc` |
+| Timeline / Gantt charts | Mermaid (via Kroki) | Inline in `.adoc` |
+| Cost tables (CAPEX/OPEX) | Native AsciiDoc tables | Inline in `.adoc` |
+
+All diagrams are defined as code directly in the AsciiDoc source files — no separate diagram files or generation scripts needed.
+
+## Stop Kroki
+
 ```bash
-./generate-diagrams.sh all
+docker-compose down
 ```
-
-Diagrams are saved in each case study's `diagrams/` directory (e.g., `01/diagrams/`, `02/diagrams/`).
-
-**Note:** The first run will take a bit longer as it builds the Docker image. Subsequent runs will be faster.

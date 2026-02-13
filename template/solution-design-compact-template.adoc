@@ -1,0 +1,665 @@
+= [Project Name] — Solution Design (Compact)
+:author: [Author Name]
+:revdate: [YYYY-MM-DD]
+:status: Draft
+:toc: left
+:toclevels: 2
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+// ============================================================================
+// COMPACT SOLUTION DESIGN — ~15 minute client meeting format
+// ============================================================================
+//
+// PURPOSE: Decision-oriented document for stakeholder meetings.
+//   Covers WHAT we recommend, WHY, HOW MUCH, and WHEN.
+//   Omits deep technical sections (security, API, observability, etc.)
+//   that belong in the full solution-design-template.adoc.
+//
+// MEETING TIPS:
+//   - Start with the recommendation, not the problem. Executives want the
+//     answer first, then the justification. Lead with §1, deep-dive only if asked.
+//   - Print/share this doc BEFORE the meeting. Never surprise stakeholders
+//     with costs or timelines they haven't had time to digest.
+//   - Keep one slide per section — the "one-screen test". If a section
+//     doesn't fit on one screen, it's too detailed for this format.
+//   - Reserve 5 min for questions — the real meeting happens there.
+//
+// SECTIONS (8 total):
+//   §1  Executive Summary ......... 2 min — context + recommendation
+//   §2  Problem & Vision .......... 2 min — pain points + target state
+//   §3  Solution Overview ......... 2 min — C4 context + architecture
+//   §4  Options Comparison ........ 3 min — side-by-side + cost chart
+//   §5  Recommended Option ........ 2 min — detail on the winner
+//   §6  Risks & Assumptions ....... 2 min — what could go wrong
+//   §7  Timeline .................. 1 min — Gantt
+//   §8  Next Steps & Decisions .... 1 min — actions needed from client
+//
+// DIAGRAMS (4 total — all via Kroki):
+//   1× Structurizr  — C4 System Context
+//   1× Vega-Lite    — Cost comparison chart
+//   1× PlantUML     — Timeline Gantt
+//   1× D2           — Component architecture (recommended option)
+//
+// COMPANION: For technical deep-dives, refer to the full
+//   solution-design-template.adoc (25 sections, 16 diagrams).
+//
+// STEPS:
+//   1. Replace all [bracketed placeholders] with your project details
+//   2. Render: npx asciidoctor -r asciidoctor-kroki solution-design-compact.adoc
+//   3. Requires: docker-compose up -d (Kroki + PlantUML server)
+//
+// ============================================================================
+
+== Executive Summary
+
+=== Context
+
+_One paragraph: what is the project, who is it for, and why is it needed now._
+
+=== Recommendation at a Glance
+
+[cols="1,3"]
+|===
+|Aspect |Summary
+
+|**Recommended Option**
+|[Option N — Name]
+
+|**Estimated CAPEX**
+|$[low]–$[high] (incl. [N]% contingency)
+
+|**Estimated OPEX**
+|$[low]–$[high]/month
+
+|**Timeline**
+|[N]–[N] months
+
+|**Team Size**
+|[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])
+
+|**Go-Live Target**
+|[Date]
+|===
+
+=== Key Decisions Required
+
+[cols="1,3,2"]
+|===
+|# |Decision |Needed By
+
+|1
+|[e.g., Approve recommended option and budget]
+|[Date]
+
+|2
+|[e.g., Confirm cloud provider (AWS preferred)]
+|[Date]
+
+|3
+|[e.g., Allocate team for POC sprint]
+|[Date]
+|===
+
+== Problem & Vision
+
+=== Current Pain Points
+
+[cols="1,3,2"]
+|===
+|# |Problem |Business Impact
+
+|1
+|[e.g., Manual data entry across 3 disconnected systems]
+|[e.g., 40 hrs/week wasted, error rate ~15%]
+
+|2
+|[e.g., No real-time visibility into operations]
+|[e.g., Delayed decisions, missed SLAs]
+
+|3
+|[e.g., Cannot scale to new regions]
+|[e.g., Blocked revenue growth]
+|===
+
+=== Target State
+
+_2-3 sentences describing what the world looks like after this solution is delivered. Focus on business outcomes, not technology._
+
+== Solution Overview
+
+=== System Context
+
+Who uses the system and what does it connect to.
+
+.System Context — [Project Name]
+[structurizr,compact-c4-context,format=svg,view-key=ctx]
+....
+workspace {
+
+  model {
+    user = person "End User" "Primary user of the application"
+    admin = person "Administrator" "Manages configuration and operations"
+
+    system = softwareSystem "[System Name]" "Delivers [core value proposition]" {
+      webapp = container "Web / Mobile App" "User interface" "React / React Native"
+      api = container "API Server" "Business logic" "Node.js / Spring Boot"
+      db = container "Database" "Persistent storage" "PostgreSQL" "database"
+    }
+
+    extAuth = softwareSystem "Auth Provider" "Identity & SSO" "Existing System"
+    extPayment = softwareSystem "Payment Provider" "Payment processing" "Existing System"
+    extMonitoring = softwareSystem "Monitoring" "Observability platform" "Existing System"
+
+    user -> system "Uses" "HTTPS"
+    admin -> system "Manages" "HTTPS"
+    system -> extAuth "Authenticates" "OAuth2"
+    system -> extPayment "Processes payments" "REST"
+    system -> extMonitoring "Sends telemetry" "OTLP"
+
+    user -> webapp "Browses" "HTTPS"
+    webapp -> api "API calls" "REST"
+    api -> db "Reads/Writes" "SQL"
+    api -> extAuth "Validates tokens" "OAuth2"
+  }
+
+  views {
+    systemContext system "ctx" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+=== High-Level Architecture
+
+.Architecture — Recommended Option
+[d2,compact-architecture,format=svg,layout=elk]
+....
+direction: right
+
+clients: Clients {
+  style.fill: "#E3F2FD"
+  mobile: Mobile App
+  web: Web App
+}
+
+platform: Platform {
+  style.fill: "#E8F5E9"
+  gw: API Gateway
+  auth: Auth Service
+
+  services: Core Services {
+    style.fill: "#FFF3E0"
+    svcA: Service A
+    svcB: Service B
+  }
+}
+
+data: Data Stores {
+  style.fill: "#F3E5F5"
+  db: PostgreSQL {
+    shape: cylinder
+  }
+  cache: Redis {
+    shape: cylinder
+  }
+  storage: Object Storage {
+    shape: cylinder
+  }
+}
+
+external: External {
+  style.fill: "#ECEFF1"
+  thirdParty: 3rd Party APIs
+}
+
+clients.mobile -> platform.gw: HTTPS
+clients.web -> platform.gw: HTTPS
+platform.gw -> platform.auth: Validate
+platform.gw -> platform.services.svcA: Route
+platform.gw -> platform.services.svcB: Route
+platform.services.svcA -> data.db: SQL
+platform.services.svcA -> data.cache: Read/Write
+platform.services.svcB -> data.storage: Files
+platform.services.svcB -> external.thirdParty: REST
+....
+
+== Options Comparison
+
+// OPTIONS FRAMING: Always present 3 options. The middle one is your
+// recommendation. Option 3 (premium) exists to make Option 2 feel reasonable.
+// See life-lessons.md §7 for the decoy effect rationale.
+
+=== Side-by-Side
+
+[cols="2,1,1,1"]
+|===
+|Aspect |Option 1: MVP |Option 2: Full |Option 3: Scale
+
+|**Scope**
+|Core features only
+|All features
+|All + multi-region
+
+|**Team**
+|4 devs (2 BE + 1 FE + 1 QA)
+|8 devs (3 BE + 2 FE + 2 QA + 1 SA)
+|15 devs (multi-team)
+
+|**Timeline**
+|4 months
+|8 months
+|12 months
+
+|**CAPEX (incl. contingency)**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
+
+|**OPEX / month**
+|$[low]–$[high]
+|$[low]–$[high]
+|$[low]–$[high]
+
+|**Risk**
+|Low
+|Medium
+|High
+|===
+
+=== Weighted Scoring
+
+[cols="3,1,1,1,1"]
+|===
+|Criteria |Weight |Opt 1 |Opt 2 |Opt 3
+
+|Time to Market
+|3
+|5
+|3
+|1
+
+|Total Cost
+|2
+|5
+|3
+|2
+
+|Scalability
+|4
+|2
+|4
+|5
+
+|Feature Completeness
+|2
+|2
+|5
+|5
+
+|Operational Risk
+|3
+|5
+|3
+|2
+
+|*Weighted Total*
+|
+|*50*
+|*50*
+|*44*
+|===
+
+_Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Option [N]**._
+
+=== Cost Comparison
+
+.Monthly OPEX by Option
+[vegalite,compact-cost-comparison,format=svg]
+....
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Monthly OPEX Comparison",
+  "width": 400,
+  "height": 250,
+  "data": {
+    "values": [
+      {"option": "Option 1: MVP", "category": "Compute", "cost": 500},
+      {"option": "Option 1: MVP", "category": "Database", "cost": 300},
+      {"option": "Option 1: MVP", "category": "Storage", "cost": 100},
+      {"option": "Option 1: MVP", "category": "Other", "cost": 100},
+      {"option": "Option 2: Full", "category": "Compute", "cost": 1200},
+      {"option": "Option 2: Full", "category": "Database", "cost": 600},
+      {"option": "Option 2: Full", "category": "Storage", "cost": 300},
+      {"option": "Option 2: Full", "category": "Other", "cost": 400},
+      {"option": "Option 3: Scale", "category": "Compute", "cost": 3000},
+      {"option": "Option 3: Scale", "category": "Database", "cost": 1500},
+      {"option": "Option 3: Scale", "category": "Storage", "cost": 800},
+      {"option": "Option 3: Scale", "category": "Other", "cost": 700}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": 0}},
+    "y": {"field": "cost", "type": "quantitative", "title": "Monthly Cost ($)", "stack": true},
+    "color": {"field": "category", "type": "nominal", "title": "Cost Category",
+      "scale": {"range": ["#1976D2", "#388E3C", "#E65100", "#7B1FA2"]}
+    }
+  }
+}
+....
+
+== Recommended Option: [Option Name]
+
+=== What It Delivers
+
+* [Key deliverable 1 — e.g., Mobile app with AI-powered recommendations]
+* [Key deliverable 2 — e.g., Admin portal for content management]
+* [Key deliverable 3 — e.g., Analytics dashboard]
+
+=== Business Value
+
+// Frame cost as investment, not expense. Answer: "What do we GET for this money?"
+
+[cols="2,2,2"]
+|===
+|Value Driver |Current Cost / Pain |Expected Improvement
+
+|[e.g., Manual processes]
+|[e.g., 40 hrs/week wasted]
+|[e.g., 90% automation → $X/year saved]
+
+|[e.g., Customer churn]
+|[e.g., X% monthly]
+|[e.g., Target < Y% with improved UX]
+|===
+
+**Estimated payback period:** [e.g., ~N months]
+
+=== Cost Summary
+
+// Principle: Cost = capacity × time. Show rate × duration so the client
+// sees they’re buying engineering hours, not opaque line items.
+// Always include contingency and pair cost with deliverables.
+
+==== Development Investment (CAPEX)
+
+[cols="2,1,1,1,2,1"]
+|===
+|Role / Item |Count |Rate |Duration |Deliverable |Cost
+
+|Backend Developer
+|2
+|$[rate]/mo
+|[N] months
+|[e.g., Core API, integrations]
+|$[low]–$[high]
+
+|Frontend / Mobile
+|2
+|$[rate]/mo
+|[N] months
+|[e.g., Mobile app, admin portal]
+|$[low]–$[high]
+
+|Cloud Setup
+|—
+|—
+|—
+|[e.g., Infra, CI/CD, environments]
+|$[low]–$[high]
+
+|*Subtotal*
+|
+|
+|
+|
+|*$[subtotal]*
+
+|*Contingency ([N]%)*
+|—
+|—
+|—
+|_Integration unknowns, vendor delays_
+|*$[contingency]*
+
+|*TOTAL CAPEX*
+|
+|
+|
+|
+|*$[low]–$[high]*
+|===
+
+==== Operational Costs (OPEX)
+
+[cols="2,1,1"]
+|===
+|Service |Spec |Monthly Cost
+
+|Cloud Infrastructure
+|[spec]
+|$[cost]
+
+|Third-Party Licenses
+|[spec]
+|$[cost]
+
+|Contingency / headroom (10%)
+|_Spike traffic, extra environments_
+|$[cost]
+
+|*TOTAL OPEX*
+|
+|*$[low]–$[high]/mo*
+|===
+
+=== Pros & Cons
+
+[cols="1,1"]
+|===
+|Pros |Cons
+
+|[Pro 1]
+|[Con 1]
+
+|[Pro 2]
+|[Con 2]
+
+|[Pro 3]
+|[Con 3]
+|===
+
+== Risks & Assumptions
+
+=== Key Risks
+
+[cols="2,1,1,3"]
+|===
+|Risk |Likelihood |Impact |Mitigation
+
+|[e.g., Third-party API changes]
+|Medium
+|High
+|[Abstraction layer, contract tests]
+
+|[e.g., Team ramp-up delay]
+|Low
+|Medium
+|[Pair programming, documentation]
+
+|[e.g., Scope creep]
+|High
+|Medium
+|[Fixed scope per phase, change request process]
+|===
+
+=== Key Assumptions
+
+* [Assumption 1 — e.g., Cloud account provisioned before kickoff]
+* [Assumption 2 — e.g., Product backlog prioritized by Sprint 1]
+* [Assumption 3 — e.g., Client provides test data within 2 weeks]
+
+=== Key Dependencies
+
+[cols="2,2,2"]
+|===
+|Dependency |Owner |Needed By
+
+|[e.g., SSO credentials & config]
+|[Client IT team]
+|[Date]
+
+|[e.g., Payment gateway sandbox]
+|[Client Finance]
+|[Date]
+|===
+
+== Timeline
+
+.Project Timeline — [Option Name]
+[plantuml,compact-timeline,format=svg]
+....
+@startgantt
+title [Project Name] — [N] months, [N] devs
+printscale weekly zoom 2
+project starts 2026-03-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 11
+  }
+  milestone {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 12
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Phase 1: Foundation --
+[Infrastructure & CI/CD] starts 2026-03-01 and ends 2026-03-15
+[Infrastructure & CI/CD] is colored in #BBDEFB/#1976D2
+[Auth & Core API] starts 2026-03-10 and ends 2026-04-01
+[Auth & Core API] is colored in #BBDEFB/#1976D2
+
+-- Phase 2: Core --
+[Backend Services] starts 2026-04-01 and ends 2026-05-01
+[Backend Services] is colored in #C8E6C9/#388E3C
+[Frontend / Mobile] starts 2026-04-01 and ends 2026-05-15
+[Frontend / Mobile] is colored in #C8E6C9/#388E3C
+[Integration & Testing] starts 2026-05-01 and ends 2026-05-25
+[Integration & Testing] is colored in #C8E6C9/#388E3C
+
+-- Phase 3: Launch --
+[UAT & Fixes] starts 2026-05-25 and ends 2026-06-10
+[UAT & Fixes] is colored in #FFE0B2/#E65100
+[Go-Live Prep] starts 2026-06-05 and ends 2026-06-15
+[Go-Live Prep] is colored in #FFE0B2/#E65100
+
+-- Milestones --
+[POC Demo] happens 2026-03-25
+[MVP Ready] happens 2026-05-25
+[Go-Live] happens 2026-06-15
+
+legend right
+  |<#BBDEFB> Foundation |
+  |<#C8E6C9> Core Build |
+  |<#FFE0B2> Launch |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
+
+=== Phase Cost Summary
+
+[cols="2,1,1,1"]
+|===
+|Phase |Duration |Team |Cost
+
+|Foundation
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Core Build
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Launch
+|[N] weeks
+|[N] devs
+|$[cost]
+
+|Contingency ([N]%)
+|—
+|—
+|$[cost]
+
+|*TOTAL*
+|*[N] months*
+|
+|*$[total]*
+|===
+
+== Next Steps & Decisions Needed
+
+=== Immediate Actions
+
+[cols="1,3,2,2"]
+|===
+|# |Action |Owner |Target Date
+
+|1
+|[e.g., Approve option and budget at steering committee]
+|[Client Sponsor]
+|[Date]
+
+|2
+|[e.g., Sign off on team composition and start date]
+|[Client PM + Vendor PM]
+|[Date]
+
+|3
+|[e.g., Provide SSO / API credentials for development]
+|[Client IT]
+|[Date]
+
+|4
+|[e.g., Schedule kick-off and Sprint 0 planning]
+|[Vendor PM]
+|[Date]
+
+|5
+|[e.g., Confirm environments and access provisioning]
+|[Client DevOps]
+|[Date]
+|===
+
+=== What Happens After Approval
+
+. **Week 1-2** — Kick-off, environment setup, Sprint 0
+. **Week 3-4** — POC delivery, first client demo
+. **Month 2-3** — Core build sprints with bi-weekly demos
+. **Month 3-4** — UAT, bug fixes, go-live preparation
+. **Go-Live** — Production deployment + hypercare (2 weeks)
+
+---
+
+[.text-center]
+_For technical deep-dive see the full link:solution-design-template.adoc[Solution Design Document] (25 sections, 16 diagrams)._
