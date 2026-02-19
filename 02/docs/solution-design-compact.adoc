@@ -1,7 +1,7 @@
 = Data-Driven Customer Engagement Platform — Solution Design (Compact)
 :author: Solution Architect
-:revdate: 2026-02-13
-:status: Draft
+:revdate: 2026-02-19
+:status: Draft (updated with client answers)
 :toc: left
 :toclevels: 2
 :numbered:
@@ -27,7 +27,7 @@
 
 === Context
 
-An established European international webshop chain (15 years on the market, ~1M daily customers) selling groceries and commodity goods wants to increase turnover by 20%. The client operates a WordPress-based e-commerce platform and a separate outsourced mobile application, with customer data scattered across isolated systems ("islands of information"). They seek to become "AI enabled and data enabled" by building a unified data pipeline that consolidates customer, product, and wholesaler data to power a personalized product suggestion mechanism — initially delivered via email, with mobile push notifications as a secondary channel.
+An established European international webshop chain (15 years on the market, ~1M daily customers, 2M mobile app installs) selling groceries and commodity goods wants to increase turnover by 20%. The client operates a WordPress-based e-commerce platform (900GB heavily-customized MySQL, hosted on-prem) and a separate outsourced mobile application (external vendor with APIs and own database), with customer data scattered across isolated systems ("islands of information"). They seek to become "AI enabled and data enabled" by building a unified data pipeline that consolidates customer, product, and wholesaler data to power a personalized product suggestion mechanism — delivered via email (AWS SES) and mobile push notifications. The client has no data team, no plans to hire, and no existing expertise — the solution must be simple enough to learn and eventually own.
 
 === Recommendation at a Glance
 
@@ -39,19 +39,19 @@ An established European international webshop chain (15 years on the market, ~1M
 |Option 2 — Snowflake Data Platform with Managed ETL
 
 |**Estimated CAPEX**
-|❓ $300K–$600K (pending budget discovery, incl. 30% contingency)
+|$300K–$500K (within $500K budget; incl. 30% contingency)
 
 |**Estimated OPEX**
-|❓ $8K–$20K/month (Snowflake + ESP + infrastructure)
+|$6K–$15K/month (Snowflake + AWS SES + infrastructure)
 
 |**Timeline**
-|6–10 months (phased delivery)
+|7–10 months (phased delivery)
 
 |**Team Size**
 |4–6 engineers (2 Data Engineers + 1 Backend + 1 ML/Data Scientist + 1 QA + 0.5 SA)
 
 |**Go-Live Target**
-|❓ TBD — depends on project start date
+|April 2027 (next fiscal year), with proved results before 2028
 |===
 
 === Key Decisions Required
@@ -65,16 +65,16 @@ An established European international webshop chain (15 years on the market, ~1M
 |Before Phase 1 kickoff
 
 |2
-|Confirm cloud provider (AWS assumed — impacts Snowflake deployment)
+|~~Confirm cloud provider~~ → **RESOLVED:** AWS confirmed (hybrid with on-prem hosting); VPN/Direct Connect required
 |Week 1
 
 |3
-|Initiate data access negotiation with mobile app vendor
+|Initiate API access negotiation with mobile app vendor (APIs confirmed; need docs, auth, rate limits)
 |Immediately (critical path)
 
 |4
-|Confirm GDPR consent status for email marketing
-|Before email campaign launch
+|~~Confirm GDPR consent status~~ → **RESOLVED:** GDPR consent confirmed (yes)
+|~~Before email campaign launch~~
 
 |5
 |Identify internal team members for knowledge transfer and ownership
@@ -98,8 +98,8 @@ An established European international webshop chain (15 years on the market, ~1M
 |~1M daily customers but no re-engagement; revenue limited to organic visits
 
 |3
-|Mobile app data locked behind external vendor (email-gated access)
-|Mobile customer behavior invisible; cannot target app users with offers
+|Mobile app data accessible via vendor APIs (DB also available on request), but 2M installs = primary channel data missing from analytics
+|Mobile customer behavior invisible; cannot target 2M app users with personalized offers
 
 |4
 |15 years of accumulated customer emails — many stale or invalid (10-minute mailboxes)
@@ -126,7 +126,7 @@ Who uses the system and what does it connect to.
 workspace {
 
   model {
-    customer = person "Customer" "Existing webshop customer (~1M daily)" "Person"
+    customer = person "Customer" "Existing webshop customer (~1M daily, 2M mobile installs)" "Person"
     marketing = person "Marketing Team" "Manages campaigns and reviews performance" "Person"
     dataAnalyst = person "Data Analyst" "Queries analytical data, builds reports" "Person"
 
@@ -140,14 +140,14 @@ workspace {
     }
 
     wordpress = softwareSystem "WordPress Webshop" "Existing e-commerce platform" "Existing System"
-    mobileApp = softwareSystem "Mobile App (Vendor)" "Outsourced mobile application" "Existing System"
-    wholesalers = softwareSystem "Wholesaler Systems" "Multiple wholesaler data feeds" "Existing System"
-    esp = softwareSystem "Email Service Provider" "Email deliverability infrastructure" "Existing System"
+    mobileApp = softwareSystem "Mobile App (Vendor)" "Outsourced mobile application (2M installs, APIs available)" "Existing System"
+    wholesalers = softwareSystem "Wholesaler Systems" "Multiple wholesaler data feeds (no standard format)" "Existing System"
+    esp = softwareSystem "AWS SES" "Email delivery service (already in use)" "Existing System"
     pushService = softwareSystem "Push Notification Service" "Mobile push delivery (APNs/FCM)" "Existing System"
 
-    platform -> wordpress "Replicates customer & order data" "DB Replication"
-    platform -> mobileApp "Extracts mobile user data" "Batch Export (via vendor)"
-    platform -> wholesalers "Ingests product & deal data" "API / File Transfer"
+    platform -> wordpress "Extracts customer & order data" "Direct SQL via VPN (ADR-002)"
+    platform -> mobileApp "Extracts mobile user data" "REST API + periodic DB export (ADR-002)"
+    platform -> wholesalers "Ingests product & deal data" "File Landing Zone (ADR-002)"
     platform -> esp "Sends personalized emails" "API"
     platform -> pushService "Sends push notifications" "API"
 
@@ -156,9 +156,9 @@ workspace {
     marketing -> platform "Manages campaigns, views dashboards" "HTTPS"
     dataAnalyst -> platform "Queries data, builds reports" "SQL / HTTPS"
 
-    ingestion -> wordpress "Replicates data" "MySQL Replication"
-    ingestion -> mobileApp "Batch import" "File / API"
-    ingestion -> wholesalers "Fetches data" "API / SFTP"
+    ingestion -> wordpress "Extracts data" "Direct SQL via VPN"
+    ingestion -> mobileApp "API + DB export" "REST API / File"
+    ingestion -> wholesalers "Receives files" "S3 Landing Zone"
     ingestion -> etlPipeline "Raw data" "Internal"
     etlPipeline -> dataStore "Loads transformed data" "SQL"
     dataStore -> suggestionEngine "Customer profiles + products" "SQL"
@@ -189,10 +189,10 @@ sources: Data Sources {
   wp: WordPress DB {
     shape: cylinder
   }
-  mobile: Mobile App Data {
+  mobile: Mobile App Data (2M installs) {
     shape: cylinder
   }
-  wholesale: Wholesaler Feeds {
+  wholesale: Wholesaler Feeds (no standard) {
     shape: page
   }
 }
@@ -201,9 +201,9 @@ pipeline: Data Pipeline {
   style.fill: "#E8F5E9"
 
   ingestion: Ingestion Layer {
-    replicator: DB Replicator
-    batchImport: Batch Importer
-    apiConnector: API Connector
+    sqlExtractor: WP SQL Extractor
+    apiImporter: Mobile API + Export
+    fileProcessor: Wholesaler File Processor
   }
 
   processing: Processing {
@@ -238,13 +238,13 @@ delivery: Delivery Channels {
   dashboard: Analytics Dashboard
 }
 
-sources.wp -> pipeline.ingestion.replicator: MySQL Replication
-sources.mobile -> pipeline.ingestion.batchImport: Batch Export
-sources.wholesale -> pipeline.ingestion.apiConnector: API / SFTP
+sources.wp -> pipeline.ingestion.sqlExtractor: Direct SQL via VPN
+sources.mobile -> pipeline.ingestion.apiImporter: REST API + DB Export
+sources.wholesale -> pipeline.ingestion.fileProcessor: File Drop (CSV/Excel/XML)
 
-pipeline.ingestion.replicator -> storage.staging
-pipeline.ingestion.batchImport -> storage.staging
-pipeline.ingestion.apiConnector -> storage.staging
+pipeline.ingestion.sqlExtractor -> storage.staging
+pipeline.ingestion.apiImporter -> storage.staging
+pipeline.ingestion.fileProcessor -> storage.staging
 
 storage.staging -> pipeline.processing.etl
 pipeline.processing.etl -> pipeline.processing.validation
@@ -277,7 +277,7 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 
 |**Data Sources**
 |WordPress DB only
-|WordPress + Mobile (batch) + Wholesalers
+|WordPress + Mobile (API) + Wholesalers
 |All sources + real-time event streams
 
 |**AI Capability**
@@ -296,14 +296,14 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |12+ months
 
 |**CAPEX (incl. contingency)**
-|❓ $80K–$150K
-|❓ $300K–$600K
-|❓ $800K–$1.5M
+|$80K–$150K
+|$300K–$500K (within $500K budget)
+|~~$800K–$1.5M~~ **ELIMINATED** (exceeds $500K budget)
 
 |**OPEX / month**
-|❓ $2K–$5K
-|❓ $8K–$20K
-|❓ $25K–$50K
+|$2K–$5K
+|$6K–$15K
+|~~$25K–$50K~~ **ELIMINATED**
 
 |**Risk**
 |Low (limited scope, fast delivery)
@@ -360,7 +360,7 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |*58*
 |===
 
-_Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Option 2** — best balance of capability, cost, and team fit. Option 1 scores higher on cost/speed but lacks the data consolidation and AI capabilities the client explicitly requested._
+_Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Option 2** — best balance of capability, cost, and team fit. Option 1 scores higher on cost/speed but lacks the data consolidation and AI capabilities the client explicitly requested. **Option 3 is eliminated** — exceeds confirmed $500K budget._
 
 === Cost Comparison
 
@@ -406,8 +406,8 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 * Unified analytical data store (Snowflake) consolidating WordPress, mobile, and wholesaler data
 * Automated ETL pipeline with data quality validation and email address verification
 * ML-based customer segmentation and personalized product recommendation engine
-* Personalized email campaign delivery via managed ESP integration
-* Mobile push notification capability (Phase 2, pending vendor cooperation)
+* Personalized email campaign delivery via **AWS SES** (already in use)
+* Mobile push notification capability (Phase 2 — 2M installs makes this a **primary channel**)
 * Self-service analytics dashboard for marketing team (campaign performance, KPIs)
 * GDPR-compliant data processing with consent management
 
@@ -505,7 +505,7 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 |
 |
 |
-|❓ *$300K–$600K*
+|❓ *$300K–$500K (within $500K budget)*
 |===
 
 ==== Operational Costs (OPEX)
@@ -523,20 +523,20 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 |❓ $1K–$3K
 
 |Email Service Provider
-|❓ ~1M+ emails/month
-|❓ $1K–$4K
+|AWS SES (already in use)
+|$100–$500
 
 |Monitoring / Observability
 |❓ Datadog or CloudWatch
-|❓ $500–$1K
+|$500–$1K
 
 |Contingency / headroom (15%)
 |_Spike compute, data growth, extra environments_
-|❓ $1K–$2K
+|$1K–$2K
 
 |*TOTAL OPEX*
 |
-|❓ *$8K–$20K/mo*
+|*$6K–$15K/mo*
 |===
 
 === Pros & Cons
@@ -570,19 +570,19 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 |Risk |Likelihood |Impact |Mitigation
 
 |Mobile vendor refuses or delays data access
-|Medium
+|Low
 |High
-|Start vendor negotiation immediately; design Phase 1 without mobile data; prepare contractual fallback (data export clause)
+|**Risk reduced:** APIs confirmed; DB available on request. ADR-002 recommends hybrid approach (API for ongoing + periodic DB export for backfill). If vendor refuses export, fall back to API-only. Negotiate terms via questions-002 Q4-Q5.
 
 |Customer email data quality is worse than expected (>50% invalid)
 |Medium
 |High
-|Run email validation early (Phase 1, Week 2); adjust channel strategy if email reach is too low; prioritize mobile channel earlier
+|Run email validation early (Phase 1, Week 2); adjust channel strategy if email reach is too low; mobile push is a viable fallback (2M installs)
 
-|GDPR consent gaps — insufficient marketing consent for email campaigns
-|Medium
-|High
-|Audit consent records in WordPress DB during discovery; build consent collection flow if needed (delays email launch)
+|~~GDPR consent gaps~~
+|~~Medium~~
+|~~High~~
+|**RESOLVED:** GDPR consent confirmed (yes). No consent collection flow needed.
 
 |Snowflake costs exceed estimates at production data volumes
 |Low
@@ -590,9 +590,19 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 |Set usage alerts and budgets; optimize query patterns; consider Snowflake auto-suspend for non-peak hours
 
 |Wholesaler data not available or inconsistent formats
+|High
 |Medium
-|Medium
-|Design pipeline to work without wholesaler data initially; add wholesaler connectors incrementally
+|Client confirmed "everything, no standard" — high format variability. ADR-002 recommends S3 file landing zone with Snowflake schema-on-read (VARIANT columns) + per-supplier dbt models. Start with 1-2 wholesalers. See questions-002 Q6.
+
+|WordPress 900GB heavily-customized schema — ETL requires custom extraction logic
+|High
+|High
+|**NEW RISK:** No off-the-shelf CDC connectors work. ADR-002 recommends direct SQL extraction via VPN (extracting only the analytical subset ~10-30% of tables). Schema reverse-engineering via table inventory (questions-002 Q1). If >80% of tables needed, ADR-002 provides upgrade path to MySQL→RDS replication.
+
+|No internal team to take ownership — capability building with no recipient
+|High
+|High
+|**NEW RISK:** No data team, no plans, no expertise. Knowledge transfer has no recipient. Must build capability from scratch alongside platform delivery. Factor training into every phase.
 
 |Scope creep — client wants WordPress migration or full platform rebuild
 |Medium
@@ -602,12 +612,12 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 
 === Key Assumptions
 
-* WordPress DB uses MySQL/MariaDB with standard WooCommerce-compatible schema
-* Client will provision cloud account (AWS) before Phase 1 kickoff
-* GDPR consent exists for at least a portion of the customer base for marketing emails
+* WordPress DB is MySQL, **900GB, heavily customized** (not standard WooCommerce) — requires custom SQL extraction (ADR-002)
+* Client uses **AWS for some services**; WordPress hosted **on-prem** — VPN/Direct Connect required
+* **GDPR consent confirmed (yes)** — email campaigns can launch without consent collection
 * The 20% turnover increase target is realistic with personalization (needs market research validation)
-* Client will assign at least 1-2 internal team members for knowledge transfer and eventual ownership
-* Mobile vendor will cooperate with data export within 2-3 months (contractual negotiation)
+* **No data team, no plans, no expertise** — "be the change"; solution must include capability building
+* Mobile vendor has **APIs and DB available on request** — API access terms need negotiation (questions-002)
 
 === Key Dependencies
 
@@ -615,29 +625,33 @@ _Score: 1 (worst) to 5 (best). Total = Σ(weight × score). **Recommendation: Op
 |===
 |Dependency |Owner |Needed By
 
-|AWS account provisioned with admin access
+|AWS account — partially in use; VPN/Direct Connect setup needed for on-prem → AWS
 |Client IT
 |Phase 1 kickoff
 
-|WordPress DB access credentials (read replica)
+|WordPress DB read access (read replica recommended — see ADR-002, questions-002 Q1, Q3)
 |Client IT / DBA
 |Phase 1 Week 1
 
-|Mobile vendor data access negotiation initiated
+|Mobile vendor API documentation, auth method, rate limits + periodic DB export agreement
 |Client (contract owner)
-|Immediately
+|Phase 1 Week 2 (see ADR-002, questions-002 Q4-Q5)
 
-|GDPR consent audit results
-|Client Legal / DPO
-|Phase 1 Week 2
+|~~GDPR consent audit results~~
+|~~Client Legal / DPO~~
+|**RESOLVED** — consent confirmed
 
-|Wholesaler data sharing agreement (at least 1 wholesaler)
+|VPN/Direct Connect between on-prem data center and AWS VPC
+|Client IT + AWS
+|Phase 1 Week 2 (critical path for WordPress ingestion)
+
+|Wholesaler data sharing agreement + sample files from 2-3 suppliers (see questions-002 Q6)
 |Client (wholesaler relationship manager)
 |Phase 2 start
 
 |Internal team members identified for knowledge transfer
 |Client leadership
-|Phase 1 kickoff
+|Phase 1 kickoff — **critical: no data team exists**
 |===
 
 == Timeline
@@ -674,8 +688,8 @@ ganttDiagram {
 [Discovery & Data Audit] is colored in #BBDEFB/#1976D2
 [Snowflake Setup & Infra] starts 2026-04-08 and ends 2026-04-30
 [Snowflake Setup & Infra] is colored in #BBDEFB/#1976D2
-[WordPress DB Replication] starts 2026-04-15 and ends 2026-05-15
-[WordPress DB Replication] is colored in #BBDEFB/#1976D2
+[WordPress DB Extraction Pipeline] starts 2026-04-15 and ends 2026-05-15
+[WordPress DB Extraction Pipeline] is colored in #BBDEFB/#1976D2
 [ETL Pipeline (WordPress)] starts 2026-05-01 and ends 2026-06-01
 [ETL Pipeline (WordPress)] is colored in #BBDEFB/#1976D2
 [Email Validation Engine] starts 2026-05-15 and ends 2026-06-15
@@ -745,7 +759,7 @@ end legend
 |*TOTAL*
 |*~7 months*
 |
-|❓ *$340K–$650K*
+|❓ *$340K–$500K (capped at $500K budget)*
 |===
 
 == Next Steps & Decisions Needed
@@ -757,53 +771,54 @@ end legend
 |# |Action |Owner |Target Date
 
 |1
-|Confirm budget envelope and approve option for detailed estimation
+|Confirm budget envelope and approve option for detailed estimation — **$500K confirmed; Option 2 approved in principle**
 |Client Sponsor
-|❓ [Date]
+|✅ Confirmed 2026-02-19
 
 |2
-|Initiate mobile app vendor negotiation for data access (critical path — longest lead time)
+|Negotiate mobile vendor API access + periodic DB export (see ADR-002, questions-002 Q4-Q5)
 |Client Contract Owner
 |Immediately
 
 |3
-|Provide WordPress DB access credentials and schema documentation
+|Provide WordPress DB read access for schema inventory (see ADR-002, questions-002 Q1)
 |Client IT / DBA
 |❓ Week 1
 
 |4
-|Confirm cloud provider preference and provision AWS account
+|Set up VPN/Direct Connect between on-prem and AWS VPC
 |Client IT
-|❓ Week 1
+|❓ Week 1-2
 
 |5
-|Conduct GDPR consent audit on customer email database
-|Client Legal / DPO
-|❓ Week 2
+|~~Conduct GDPR consent audit~~ → **RESOLVED** (consent confirmed)
+|~~Client Legal / DPO~~
+|✅ Confirmed 2026-02-19
 
 |6
-|Identify 1-2 internal team members for knowledge transfer
+|Identify 1-2 internal team members for knowledge transfer (**critical — no data team exists**)
 |Client Leadership
 |❓ Before kickoff
 
 |7
-|Schedule discovery workshop (detailed requirements, background jobs, wholesaler landscape)
+|Schedule discovery workshop (detailed requirements, WordPress schema deep-dive, wholesaler landscape)
 |Solution Architect
 |❓ Week 1
 |===
 
 === What Happens After Approval
 
-. **Week 1-2** — Discovery workshop, data audit, Snowflake account setup, WordPress DB access
-. **Week 3-6** — WordPress replication pipeline live, initial data quality assessment
-. **Week 7-10** — ETL pipeline operational, email validation running, staging data available
-. **Month 3-4** — Customer segmentation model, recommendation engine prototype, first test campaign
+. **Week 1-2** — Discovery workshop, WordPress schema deep-dive, VPN/Direct Connect setup, Snowflake account setup
+. **Week 3-6** — WordPress extraction pipeline live (direct SQL via VPN, ADR-002), initial data quality assessment
+. **Week 7-10** — ETL pipeline operational, email validation running, staging data available in Snowflake
+. **Month 3-4** — Customer segmentation model, recommendation engine prototype, first test campaign via AWS SES
 . **Month 5** — First production email campaign sent (Phase 2 milestone)
-. **Month 6-7** — Mobile and wholesaler data integration, full platform optimization
-. **Month 7** — Full platform go-live + hypercare (2 weeks)
+. **Month 6-7** — Mobile vendor API + DB export integration (ADR-002), wholesaler file landing zone (1-2 initial wholesalers)
+. **Month 7-10** — Full platform optimization, mobile push notifications, UAT
+. **April 2027** — Full platform go-live + hypercare (2 weeks) — within fiscal year deadline
 
 ---
 
 [.text-center]
 _For technical deep-dive see the full link:solution-design.adoc[Solution Design Document]._
-_For architecture decisions see link:../docs/adr/adr-001-data-platform-choice.adoc[ADR-001: Data Platform Choice]._
+_For architecture decisions see link:adr-001-data-platform-choice.adoc[ADR-001: Data Platform Choice] and link:adr-002-data-ingestion-strategy.adoc[ADR-002: Data Ingestion Strategy]._

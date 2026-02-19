@@ -1,0 +1,392 @@
+= ADR-002: Data Ingestion Strategy
+:author: Solution Architect
+:revdate: 2026-02-19
+:status: Proposed
+:deciders: Solution Architect, Client Technical Lead, Client Sponsor
+:reversibility: Hard
+:validated-by: Not yet validated
+:toc:
+:icons: font
+
+// ============================================================================
+// ARCHITECTURE DECISION RECORD — Case Study 02
+// ============================================================================
+//
+// Decision on how to ingest data from ALL identified sources into the
+// Snowflake analytical platform chosen in ADR-001.
+//
+// Sources covered:
+//   1. WordPress DB (900GB, heavily customized MySQL, on-prem)
+//   2. Mobile App (2M installs, external vendor, APIs + DB available on request)
+//   3. Wholesaler Data (multiple suppliers, no standard format)
+//   4. Customer Emails (subset of WordPress DB — not a separate ingestion)
+//
+// Key design driver: the team has no data engineering experience.
+// Every option is evaluated against operational simplicity first.
+//
+// ============================================================================
+
+== Context
+
+With Snowflake selected as the analytical platform (ADR-001), we must decide **how** data flows from all identified sources into the data warehouse. This ADR covers ingestion strategy for every source — not just the two primary databases, but also wholesaler feeds and email data.
+
+=== Source 1 — WordPress Database
+
+The client's WordPress e-commerce platform is the primary web channel, serving ~1M daily customers. Discovery confirmed:
+
+* **900GB MySQL database** — heavily customized schema, not standard WooCommerce
+* **Hosted on-prem** — not in AWS; requires network connectivity (VPN or Direct Connect)
+* **Free access** — no contractual barriers to reading or replicating the database
+* **Live production database** — must not impact transactional performance
+
+The non-standard schema rules out off-the-shelf CDC connectors (Fivetran, Airbyte WooCommerce connector) that expect standard WooCommerce table structures. Custom extraction or transformation logic is required regardless of approach.
+
+**Key access fact:** Client confirmed free, unrestricted access to the database — both direct read and replication are technically possible.
+
+=== Source 2 — Mobile Application
+
+The mobile app is a **primary channel** with 2M installs (not a secondary channel as initially assumed). Discovery confirmed:
+
+* **External vendor** manages the app (5 years: 2 years dev, 3 years maintenance)
+* **Own database on vendor backend** — **available on request** (client's words)
+* **APIs exist** for working with the backend
+* **Vendor relationship:** outsourced, in maintenance phase for 3 years
+
+**Key access fact:** Both API access and database access are available paths. "Available on request" means we can negotiate either or both. The vendor has been in a 3-year maintenance contractual relationship — they are unlikely to refuse reasonable data access requests, but are also unlikely to invest in new development (e.g., webhooks, custom endpoints).
+
+=== Source 3 — Wholesaler Data
+
+Multiple wholesaler systems provide product, pricing, and deal data:
+
+* **Multiple sources** — plurality of suppliers confirmed
+* **"Everything, no standard"** — client's own description of the format diversity
+* **Data types:** amounts, discounts, deals, product catalogs
+* **No APIs confirmed** — likely file-based (CSV, Excel, XML, email attachments)
+
+=== Source 4 — Customer Emails
+
+* **15 years of accumulated email data** within WordPress DB
+* **Data quality issues** — some are disposable/expired "10-minute mailboxes"
+* **GDPR consent confirmed**
+* **Not a separate ingestion source** — emails are extracted as part of Source 1 (WordPress DB). Data quality handling (validation, deduplication, bounce detection) belongs in the dbt transformation layer, not in the ingestion layer.
+
+=== Architectural Environment
+
+* **Hybrid infrastructure** — on-prem hosting + AWS for some services
+* **Target platform** — Snowflake on AWS EU region (ADR-001)
+* **Orchestration** — Apache Airflow (ADR-001)
+* **Transformation** — dbt (ADR-001)
+* **No data team** — no team, no plans, no expertise; solution must be operationally simple
+* **Budget** — $500K total; ingestion is a subset of overall spend
+* **GDPR** — consent confirmed; data residency in EU required
+
+=== Professional Assumptions
+
+The following assumptions are made based on standard e-commerce database patterns and enterprise norms. They replace questions that a professional solution architect should not need to ask the client. Each will be **verified during PoC** — not treated as blockers.
+
+[cols="1,3,2"]
+|===
+|# |Assumption |Fallback if Wrong
+
+|A1
+|WordPress MySQL has `updated_at` / `modified_date` timestamp columns on key transactional tables (orders, products, customers). This is standard practice for any e-commerce platform in active use for 15 years.
+|Use checksum-based delta detection or `AUTO_INCREMENT` ID range queries. Initial full-scan with hash comparison can identify rows without timestamps.
+
+|A2
+|MySQL read replica is feasible. Standard MySQL replication capability; client has on-prem infrastructure team capable of basic MySQL administration.
+|Proceed with read-only user on production database + query governor (limit concurrent connections, statement timeout). Schedule extraction in off-peak hours only.
+
+|A3
+|WordPress schema is stable. A 15-year-old heavily-customized system implies mature, infrequently-changing schema. Major schema changes would be risky for their production platform.
+|dbt staging tests + Airflow sensor checks detect schema drift. Manual query update process estimated at <1 day per change.
+
+|A4
+|Mobile vendor API uses standard authentication (OAuth2 or API key). Industry standard for REST APIs.
+|Any auth mechanism is implementable in Airflow. Not an architectural concern.
+
+|A5
+|Mobile vendor API rate limits are manageable for daily batch ingestion. 2M users ÷ API pagination (1000 records/page) = ~2000 API calls — well within typical rate limits.
+|Request rate limit increase in vendor contract. Or switch to DB dump approach (see Mobile Option B).
+
+|A6
+|No existing VPN/Direct Connect between on-prem and AWS. Assumed based on the hybrid setup description — if it exists, it saves 2-4 weeks of setup time.
+|If VPN exists, skip setup phase. Budget allocation is unaffected.
+|===
+
+**Related sections in Solution Design:**
+
+* § Data Architecture — data flow from sources through ETL to Snowflake
+* § System Context — shows where ingestion components fit
+* ADR-001 — Snowflake platform choice
+
+== Decision
+
+**We will use source-specific ingestion strategies, matched to each source's access model and constraints. All paths converge on a unified S3 staging area → Snowflake landing zone → dbt transformation pipeline.**
+
+=== Source 1: WordPress — Direct Database Read (Scheduled SQL via VPN)
+
+**We will read from the WordPress MySQL database directly using scheduled SQL queries over a secure VPN/Direct Connect connection, extracting delta changes based on timestamp columns.**
+
+Implementation:
+
+* Establish **AWS Direct Connect or site-to-site VPN** between on-prem data center and AWS VPC
+* Create a **read-only MySQL replica** (recommended) or read-only user on production database
+* Build **custom SQL extraction queries** in Airflow DAGs that pull delta changes (`WHERE updated_at > last_run`)
+* Land raw data as Parquet files in an **S3 staging area** (partitioned by extraction date), then load into Snowflake via `COPY INTO`
+* Transform in Snowflake using **dbt** models (staging → intermediate → mart layers)
+* Schedule: **nightly incremental batch** + **weekly full refresh** for reconciliation
+
+Rationale: The 900GB heavily-customized schema requires custom extraction regardless of tool. Direct SQL read over VPN is the simplest path — no additional middleware, no CDC infrastructure, no replica management in AWS. A local read replica (on-prem) fully isolates production. We extract **only the analytical subset** (estimated 10-30% of tables), not the full 900GB. This is the decisive advantage over full replication approaches: we avoid paying for storage and transfer of WordPress core tables, plugin metadata, and media references that have no analytical value.
+
+NOTE: If discovery reveals we need 80%+ of the schema, we should revisit **Option B (MySQL → RDS Replica)** which becomes more cost-effective at high table coverage.
+
+=== Source 2: Mobile App — API Integration + Periodic DB Export (Hybrid)
+
+**We will use the vendor's existing APIs as the primary ongoing ingestion path, supplemented by periodic database exports for initial bulk load and for data the API does not expose.**
+
+Implementation — API path (primary, ongoing):
+
+* Negotiate **API access agreement** with mobile vendor (scope, rate limits, authentication)
+* Build **Airflow DAGs** with HTTP operators to call vendor APIs on schedule
+* Extract customer profiles, transactions, and engagement data via paginated API calls
+* Land JSON responses in **S3 staging area**, then load into Snowflake via `COPY INTO`
+* Transform and normalize in Snowflake using **dbt** models
+* Schedule: **daily batch** (aligned with WordPress refresh for consistent analytics)
+
+Implementation — DB export path (complementary):
+
+* Request vendor to provide a **periodic database export** (SQL dump, CSV, or Parquet) — weekly or on-demand
+* Vendor drops export files into a **shared S3 bucket** (or SFTP → S3 via Airflow)
+* Use for: **initial historical backfill**, **data validation** (reconcile API data vs. full DB), **access to data the API doesn't expose** (e.g., raw session logs, internal user attributes)
+* Schedule: **weekly** or on-demand (not real-time — this is a reconciliation and gap-filling mechanism)
+
+Rationale: APIs are the vendor's intended integration surface — sustainable, contractually enforceable, resilient to backend schema changes. However, APIs typically expose only a curated subset of data. For a recommendation engine, we likely need transaction-level detail, user behavior data, and session data that many APIs don't expose. The DB export path fills this gap without requiring the vendor to build new API endpoints (which is unlikely given their 3-year maintenance posture). This **API + export hybrid** is a common enterprise pattern: API for steady-state incremental data, bulk export for backfill and reconciliation.
+
+NOTE: The DB export path is **contractually dependent** — we must confirm the vendor's willingness. If refused, we proceed API-only and accept the data coverage limitation (see Question Q2 in discovery questions).
+
+=== Source 3: Wholesaler Data — File Landing Zone (S3 + Schema-on-Read)
+
+**We will establish an S3-based file landing zone where wholesaler data files are received, validated, and loaded into Snowflake using schema-on-read (VARIANT columns) to handle format diversity.**
+
+Implementation:
+
+* Create a **structured S3 landing zone** with per-supplier prefixes: `s3://landing/wholesalers/{supplier_id}/{date}/`
+* Accept files in **any format** the supplier provides: CSV, Excel (.xlsx), XML, JSON — convert to a common intermediate format (CSV or Parquet) via lightweight Airflow preprocessing DAGs
+* Load into Snowflake **VARIANT columns** (semi-structured data) in a raw staging schema — this allows schema-on-read, meaning each supplier's different format is preserved without upfront schema normalization
+* Build **supplier-specific dbt models** that extract structured columns from the VARIANT data — one model per supplier (or supplier group if formats match)
+* Add **file validation** in Airflow: check file presence, minimum row count, expected columns, data type checks — alert on anomalies before loading
+* Schedule: **triggered by file arrival** (S3 event notification → Airflow sensor) or **daily scan** of landing zone
+
+Rationale: "No standard format" is the defining constraint. Trying to force suppliers into a standard format or API is not realistic — they are external entities with their own systems. Schema-on-read is the proven pattern for heterogeneous source data: accept what you get, validate it, transform it supplier-by-supplier in dbt. Snowflake VARIANT columns are designed exactly for this use case. This approach scales to any number of suppliers with any format — adding a new supplier means adding one dbt model, not changing the ingestion infrastructure.
+
+=== Source 4: Customer Emails — No Separate Ingestion
+
+**Customer email data does NOT require a separate ingestion strategy.** Emails are stored within the WordPress MySQL database and will be extracted as part of Source 1 (WordPress ingestion).
+
+Data quality handling for email addresses belongs in the **dbt transformation layer**:
+
+* **Deduplication** — identify and merge duplicate customer records sharing email addresses
+* **Validation** — regex format validation, disposable email domain detection (10-minute mailboxes)
+* **Bounce tracking** — integrate AWS SES bounce/complaint notifications back into Snowflake to mark invalid addresses
+* **GDPR consent flag** — propagate consent status from WordPress into analytical models
+
+This is a **transformation concern, not an ingestion concern**. The ingestion pipeline extracts raw email data as-is; dbt models clean and enrich it.
+
+== Alternatives Considered
+
+=== WordPress Ingestion Alternatives
+
+[cols="2,3,3,3"]
+|===
+|Alternative |Pros |Cons |Why Not Chosen
+
+|**Option A: Direct SQL Read via VPN** ✓ CHOSEN
+|Simplest architecture — SQL queries over network connection. Full control over what data is extracted (`SELECT` exactly what's needed). No additional middleware or AWS infrastructure beyond VPN. Familiar technology (SQL + Airflow). Works with any schema, customized or not. Read replica (on-prem) isolates production. Extracts only analytical subset — avoids replicating 900GB. Lowest ongoing cost.
+|Requires VPN/Direct Connect setup. Tightly coupled to MySQL schema — schema changes require query updates. No real-time capability (batch only). Must manage delta detection manually (timestamp-based). Network dependency during extraction windows.
+|**CHOSEN** — simplest path with full control. Extracts only what we need (~10-30% of tables). Custom schema requires custom queries regardless of approach. Read replica eliminates production impact.
+
+|**Option B: MySQL Native Replication → RDS → Snowflake**
+|Complete data copy — no missed data, no delta management. Read replica lives in AWS — extraction queries run locally (fast, no VPN dependency during ETL). Binlog-based replication is near-real-time. Production fully isolated. Standard MySQL replication is well-documented and reliable. **Strongest candidate if we need >80% of the schema.**
+|Replicates all 900GB including irrelevant data (WordPress core tables, plugin metadata, media references). RDS storage cost: ~$600-800/mo for 900GB gp3. Initial replication of 900GB over VPN may take days. Schema changes propagate automatically — can break downstream ETL without warning. Still requires custom transformation (dbt) regardless. VPN/Direct Connect still required for replication link.
+|Cost-effective only if we need most of the schema. For analytical use we estimate 10-30% of tables are relevant — replicating 100% wastes $600-800/mo on storage and adds risk from uncontrolled schema propagation. **Revisit if table inventory (Q1) reveals >80% coverage needed.**
+
+|**Option C: AWS DMS (Database Migration Service)**
+|Managed service — no custom replication setup. Supports MySQL → S3 or MySQL → RDS in both full-load and CDC (ongoing replication) modes. Built-in table mapping and filtering. AWS-native — integrates with VPC, CloudWatch, IAM. Handles initial bulk load + ongoing changes in a single configuration.
+|Heavily-customized MySQL schemas are a known risk factor for DMS — LOB columns, triggers, stored procedures, and non-standard character sets can cause mapping failures. DMS has operational quirks (task restarts, memory tuning, table mapping debugging). DMS CDC mode requires binlog access — same prerequisite as native replication. Ongoing DMS instance cost: ~$200-400/mo (dms.r5.large). Less community knowledge than direct SQL or native replication — harder to troubleshoot.
+|DMS excels at standard schema migrations, not ongoing extraction from heavily-customized databases. The customized WordPress schema (confirmed as non-standard WooCommerce) is exactly the scenario where DMS mapping issues are most likely. Direct SQL gives us more control with less risk. **Would reconsider if schema were standard WooCommerce.**
+
+|**Option D: Batch Dump + Ship (mysqldump / XtraBackup)**
+|Conceptually simplest — run `mysqldump`, compress, upload to S3. No replication infrastructure. Works with any schema. Can extract specific databases/tables. Proven, battle-tested tool (mysqldump has existed for 20+ years). Good for one-time initial bulk load.
+|Prohibitively slow for ongoing use at 900GB scale — full dump takes 4-8 hours, compression and network transfer add more. Locks tables during dump (MyISAM) or requires consistent snapshot (InnoDB — `--single-transaction`). Network transfer of compressed 900GB (~200-300GB) takes hours over VPN. No incremental capability (full dump every time, unless splitting by table). Impractical for nightly batch.
+|Viable **only for one-time initial bulk load** — not for ongoing ingestion. For nightly delta extraction, direct SQL with timestamp-based queries is faster by orders of magnitude (extracting only changed rows vs. dumping the entire database). **We may use mysqldump for the initial historical load, then switch to Option A for ongoing extraction.**
+
+|**Option E: CDC with Debezium (binlog → Kafka → Snowflake)**
+|Near-real-time change capture. Captures all change types including deletes (direct SQL misses deletes without soft-delete columns). No dependency on `updated_at` columns. Industry-standard CDC pattern. Decouples source from consumers via Kafka topics — multiple consumers can subscribe.
+|Requires Apache Kafka (AWS MSK: ~$8K-12K/mo for production cluster). Requires Debezium connector setup and management. Team has zero Kafka or streaming expertise — steep learning curve. Operational complexity is an order of magnitude higher than SQL + Airflow. Production MySQL must have binlog enabled and configured for row-based replication. MSK + Debezium alone may consume 15-20% of the $500K budget in first-year OPEX. Customized schema still requires custom transformation downstream.
+|Massively over-engineered for batch analytics needs. Real-time was not requested by the client. The team cannot operate Kafka — it would become a single point of failure with no internal expertise. Budget impact ($8-12K/mo OPEX) is prohibitive. **Only justified if future requirements demand sub-minute data freshness — revisit if/when real-time use cases emerge.**
+|===
+
+=== Mobile App Ingestion Alternatives
+
+[cols="2,3,3,3"]
+|===
+|Alternative |Pros |Cons |Why Not Chosen
+
+|**Option A: API Integration + Periodic DB Export (Hybrid)** ✓ CHOSEN
+|Best of both worlds: API for ongoing incremental data (standard, vendor-supported, resilient to backend changes) + DB export for initial backfill and data the API doesn't expose. Common enterprise integration pattern. API can be included in vendor SLA. DB export requires minimal vendor effort (one script, periodic run). Maximizes data coverage without requiring vendor to build new features.
+|Two integration paths to maintain (API + file processing). API rate limits may throttle bulk extraction. DB export format/schema may change without notice. Requires vendor agreement for both API access and export provision. More complex than single-path approach.
+|**CHOSEN** — maximizes data access from the primary channel (2M installs). API is sustainable for ongoing data; export fills the gaps the API doesn't cover. Vendor is in maintenance mode (3 years) — requesting a nightly export script is more realistic than requesting new API endpoints.
+
+|**Option B: API-Only Integration (Scheduled REST Calls)**
+|Single integration path — simpler to maintain. APIs already exist (confirmed). Standard, vendor-supported pattern. Resilient to backend schema changes. Vendor maintains API contract. Can be included in vendor SLA. Cleaner data contract.
+|Data access is **limited to what the API exposes** — for a recommendation engine, we need transaction-level detail, user behavior, and session data that many APIs don't provide. Initial historical data backfill may be very slow through API pagination. If the API doesn't expose a data point, we simply cannot access it — no fallback. Rate limits may constrain extraction volume.
+|Viable but potentially insufficient. If the vendor API exposes all data we need for the recommendation engine, this is the simpler approach. But we cannot verify API data coverage until we have the API documentation (Q2). The hybrid approach (Option A) de-risks this by providing a DB export fallback.
+
+|**Option C: DB Dump / Replication Only (No API)**
+|Complete data access — every table, every column. No API limitations, no rate limits. Full database dump is conceptually simple. Could use DB replication for near-real-time sync if vendor's DB is MySQL/PostgreSQL. Fastest for bulk historical load.
+|Tightly couples us to vendor's internal database schema — which is unknown, undocumented, and can change without notice. Vendor is external — they have no obligation to keep their schema stable for our consumption. Requires ongoing coordination with vendor for schema changes. No SLA on database structure or availability. If vendor changes DB engine or refactors schema, our entire pipeline breaks. Fundamentally fragile for a vendor-controlled system.
+|Too fragile for long-term reliance on an external vendor. The vendor has been in maintenance for 3 years — schema changes may happen during their own maintenance without notification. API provides a stable contract; raw DB access does not. **Use DB export as a complement (Option A), not as the sole integration path.**
+
+|**Option D: Webhook / Event-Driven Push (Vendor → Our Endpoint)**
+|Near-real-time data delivery. Vendor controls push cadence. No polling overhead — data arrives when events happen. Clean event-driven architecture. Could feed both Snowflake and real-time systems.
+|Requires vendor to **build webhook infrastructure** — new development work. Vendor has been in maintenance mode for 3 years — unlikely to invest in new features. Changes vendor contract scope and cost. We must build and maintain a webhook receiver (API Gateway → Lambda → S3). Not suitable for historical data backfill. Event schema must be designed and agreed upon.
+|Vendor is in maintenance mode — requesting new feature development (webhook infrastructure) is unrealistic without significant contract changes and budget. This is the ideal long-term pattern but not viable in the current vendor engagement model. **Consider if vendor contract is renegotiated in the future.**
+|===
+
+=== Wholesaler Data Ingestion Alternatives
+
+[cols="2,3,3,3"]
+|===
+|Alternative |Pros |Cons |Why Not Chosen
+
+|**Option A: File Landing Zone (S3 + Schema-on-Read)** ✓ CHOSEN
+|Handles any format — CSV, Excel, XML, JSON. No requirements imposed on suppliers. Snowflake VARIANT columns provide native semi-structured data support. Adding a new supplier = adding one dbt model, not changing infrastructure. Airflow file validation catches data quality issues before loading. S3 event triggers enable near-real-time processing when files arrive. Low operational overhead — standard Airflow + S3 + Snowflake stack.
+|Requires per-supplier dbt models — each new supplier needs custom transformation logic. Manual effort to onboard each new supplier format. No real-time sync — batch processing based on file arrival. File delivery depends on supplier reliability (they must actually send files). No automatic schema validation against a standard — each supplier's format is accepted as-is.
+|**CHOSEN** — only viable pattern when source formats are explicitly "no standard". Schema-on-read accepts reality rather than fighting it. Scales to any number of suppliers.
+
+|**Option B: Supplier API Integration**
+|Clean, programmatic data access. Could enable near-real-time pricing/deal updates. Standard REST/GraphQL patterns. Automatic, scheduled pulls.
+|No APIs confirmed from any wholesaler. Grocery supply chain wholesalers typically use file-based data exchange, not APIs. Integrating even one supplier API requires custom connector development. Each supplier would need a separate API integration — no economies of scale. Maintaining multiple API integrations with external parties is operationally expensive.
+|No evidence that wholesaler APIs exist. "No standard format" description strongly implies file-based data exchange. Building API integrations that don't exist yet is speculative engineering.
+
+|**Option C: EDI (Electronic Data Interchange)**
+|Industry standard for supply chain data exchange. Structured format (EDIFACT, X12). Widely used in retail/grocery. Could integrate with existing procurement systems.
+|EDI integration is expensive ($50K-100K+ for setup + $5K-10K/mo for EDI VAN provider). Requires EDI mapping and translation layer. Overkill for analytical use case — we need pricing/deal data for recommendations, not operational supply chain transactions. EDI is designed for purchase orders, invoices, and logistics — not for feeding a recommendation engine.
+|EDI solves the supply chain operations problem, not the analytics problem. We need wholesaler data (amounts, discounts, deals) as input to product recommendations — not EDI transaction processing. Cost is prohibitive relative to the value for analytics.
+
+|**Option D: Unified Supplier Portal (Build Data Upload UI)**
+|Standardizes data format — suppliers input data through a web form or structured upload. Validation at the point of entry. Eliminates format diversity problem at the source.
+|Requires building and maintaining a web application — significant development effort outside core scope. Suppliers must adopt a new tool — change management challenge with external parties. Delays data availability until portal is built and adopted. Scope creep risk — portal features tend to expand. Some suppliers may refuse or ignore the portal.
+|Over-engineered for the current need. We need to ingest existing data, not build a supplier-facing platform. The file landing zone handles the format diversity problem at lower cost and without requiring supplier behavior change.
+|===
+
+== Consequences
+
+=== Positive
+
+* **Complete data coverage** — all four source types have defined ingestion paths, eliminating the "islands of information" problem the client described
+* **Source-matched strategies** — each source uses the ingestion pattern that fits its access model, avoiding one-size-fits-all over-engineering
+* **Operationally simple** — SQL queries, REST API calls, and file processing are familiar technologies; no CDC frameworks, no streaming infrastructure, no Kafka
+* **Controlled extraction (WordPress)** — direct SQL allows extracting only the analytical subset (~10-30% of tables), avoiding the cost and complexity of replicating the full 900GB
+* **Maximized mobile data access** — hybrid API + export approach provides both ongoing incremental data and access to data the API doesn't expose, critical for a recommendation engine that needs behavioral data from the primary channel
+* **Format-agnostic wholesaler ingestion** — schema-on-read via Snowflake VARIANT accepts any supplier format without imposing standards on external parties
+* **Unified landing zone** — all sources converge on S3 → Snowflake, maintaining consistent downstream architecture (dbt models, data quality tests, monitoring)
+* **Budget-friendly** — no additional licensed tools (Fivetran, Debezium, MSK, DMS, etc.); runs entirely on Airflow + SQL + REST + S3 — all within the existing ADR-001 stack
+* **Clear upgrade path** — if real-time requirements emerge, WordPress ingestion can upgrade to CDC (Option E) and mobile can upgrade to webhooks (Option D) without changing the downstream Snowflake + dbt architecture
+
+=== Negative
+
+* **VPN/Direct Connect dependency** — WordPress ingestion fails if the network connection drops; requires monitoring, alerting, and manual catchup procedures
+* **Schema coupling (WordPress)** — direct SQL queries break if the schema changes; mitigated by dbt staging tests and the assumption that a 15-year-old schema is stable (A3)
+* **No real-time capability** — all sources use batch ingestion (nightly/daily); real-time use cases would require significant architectural additions (Kafka, Debezium, webhooks)
+* **Dual mobile integration paths** — maintaining both API and DB export processing adds complexity compared to a single-path approach; mitigated by Airflow DAG isolation (separate DAGs)
+* **Manual delta management (WordPress)** — timestamp-based delta detection requires reliable `updated_at` columns; assumed to exist (A1) with fallback strategies defined
+* **Per-supplier transformation (Wholesalers)** — each new wholesaler requires custom dbt model work; estimated 1-2 days per supplier for initial model + testing
+* **Vendor dependency (Mobile)** — DB export path depends on vendor willingness to provide periodic exports; if refused, we fall back to API-only with reduced data coverage
+
+=== Dependency & Hiring Impact
+
+* **Dependency accumulation risk:** Adds VPN/Direct Connect as a network dependency for WordPress. Mobile pipeline depends on vendor API + export willingness. Wholesaler pipeline depends on suppliers delivering files. All are recoverable — if any fails, the pipeline pauses but no data is lost (retry on next schedule). No single dependency is catastrophic.
+* **Hiring impact:** SQL + Airflow + REST API + file processing are widely available skills. No specialized CDC, streaming, or Kafka expertise required. **Widens** hiring pool compared to Debezium/Kafka alternatives. The only semi-specialized skill is dbt — which is rapidly becoming standard in the data engineering market.
+* **Operational burden:** Moderate. Need to monitor: VPN health, API availability, S3 file arrivals, delta extraction completeness, and dbt test results. Airflow provides built-in retry, alerting, and DAG monitoring for all paths. No new operational paradigms — the same Airflow + dbt + Snowflake stack handles all sources.
+
+=== Neutral
+
+* Requires AWS Direct Connect or VPN setup — one-time infrastructure work (estimated 2-4 weeks including vendor coordination)
+* S3 staging bucket configuration with lifecycle policies (raw → processed → archive → delete)
+* Airflow DAGs need CI/CD pipeline for deployment (same as ADR-001 dbt deployment)
+* API authentication credentials management (AWS Secrets Manager)
+* Shared S3 bucket or SFTP endpoint for mobile vendor export delivery
+* Wholesaler file landing zone folder structure design (per-supplier prefixes)
+
+== Quality Attribute Impact
+
+[cols="2,1,3"]
+|===
+|Quality Attribute |Impact |Explanation
+
+|Performance
+|=
+|Batch extraction does not impact Snowflake query performance. WordPress read replica isolates production. API calls and file processing are scheduled off-peak. Snowflake VARIANT columns handle semi-structured wholesaler data with near-native query performance.
+
+|Security
+|+
+|VPN/Direct Connect provides encrypted tunnel for WordPress data transit. API authentication via vendor's auth mechanism. S3 buckets encrypted at rest (SSE-S3 or SSE-KMS). All data lands in AWS EU region — GDPR-compliant. Wholesaler files scanned for malware before processing. Secrets Manager for credential rotation.
+
+|Maintainability
+|=
+|SQL extraction queries and API DAGs are readable and version-controlled. Per-supplier dbt models are isolated — changing one supplier doesn't affect others. Trade-off: WordPress schema changes require query updates (mitigated by dbt tests + assumption A3). Adding a new wholesaler is a well-defined, repeatable process.
+
+|Scalability
+|=
+|Batch approach scales linearly with data volume. WordPress growth → longer extraction runtime but same queries. API pagination handles mobile data growth. File landing zone handles any number of suppliers. For real-time needs, would require architectural change (flagged in upgrade path).
+
+|Testability
+|+
+|dbt staging tests validate data quality at every ingestion boundary. Airflow DAGs can be tested locally. S3 staging area provides inspection point before Snowflake load. Delta extraction is idempotent — can be re-run safely. File validation DAGs can be tested with synthetic sample files.
+
+|Reliability
+|−
+|Network dependencies (VPN for WordPress, internet for vendor API, supplier file delivery) introduce failure points. Mitigated by Airflow retry policies (3 retries with exponential backoff), alerting (Slack/email on DAG failure), and manual catch-up procedures. Weekly WordPress full refresh provides reconciliation safety net.
+|===
+
+_Impact: + improves, − degrades, = neutral_
+
+== Follow-Up Actions
+
+=== Before Implementation
+
+* [ ] **Obtain WordPress table inventory** — connect to MySQL, list tables with row counts and `updated_at` column presence; determines scope of extraction and validates assumption A1
+* [ ] **Request mobile vendor API documentation** — endpoints, authentication, rate limits, data model; required to design mobile API DAGs
+* [ ] **Negotiate mobile DB export agreement** — determine if vendor will provide periodic exports, format, and delivery mechanism
+* [ ] **Collect wholesaler sample files** — obtain 2-3 sample files from different suppliers to design landing zone schema and dbt models
+
+=== During Implementation (Phase 1)
+
+* [ ] Set up AWS Direct Connect or site-to-site VPN between on-prem data center and AWS VPC
+* [ ] Set up WordPress read replica (preferred) or read-only production user with query governor
+* [ ] Design S3 staging bucket structure: `raw/{source}/{entity}/{date}/`, `processed/`, `archive/`
+* [ ] Build PoC: WordPress → one entity (e.g., orders) → S3 → Snowflake → dbt staging model (validates end-to-end path)
+* [ ] Build PoC: Mobile API → one entity (e.g., user profiles) → S3 → Snowflake → dbt staging model
+* [ ] Build file validation DAG for wholesaler data — format detection, column checks, row count thresholds
+
+=== After First PoC
+
+* [ ] Evaluate PoC results — if WordPress extraction needs >80% of tables, revisit Option B (RDS replica)
+* [ ] Evaluate mobile API data coverage — if insufficient for recommendation engine, activate DB export path
+* [ ] Define monitoring and alerting: VPN health, API availability, file arrival, DAG success/failure, dbt test results
+* [ ] Onboard first 2-3 wholesaler suppliers with per-supplier dbt models
+* [ ] Update solution design § Data Architecture with confirmed ingestion paths and data flow diagrams
+
+== References
+
+* ADR-001: Choose Data Platform for Recommendation Engine — Snowflake selection
+* https://docs.snowflake.com/en/user-guide/data-load-s3[Snowflake: Loading Data from S3]
+* https://docs.snowflake.com/en/sql-reference/data-types-semistructured[Snowflake: Semi-Structured Data (VARIANT)]
+* https://airflow.apache.org/docs/apache-airflow-providers-mysql/stable/operators/mysql.html[Airflow MySQL Operator]
+* https://airflow.apache.org/docs/apache-airflow-providers-http/stable/operators/http.html[Airflow HTTP Operator]
+* https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/operators/s3.html[Airflow S3 Sensor / Operator]
+* https://aws.amazon.com/directconnect/[AWS Direct Connect]
+* https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html[AWS Site-to-Site VPN]
+* https://aws.amazon.com/dms/[AWS Database Migration Service — evaluated in Option C]
+* https://debezium.io/[Debezium CDC — evaluated in Option E]

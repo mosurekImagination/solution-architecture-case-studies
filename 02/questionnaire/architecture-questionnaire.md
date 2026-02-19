@@ -22,8 +22,8 @@
 - **Business Domain:** E-commerce / Groceries & Commodity Goods Retail
 - **Primary Business Objective:** Increase daily customer turnover by 20% (~1M → ~1.2M customers/day) through personalized product suggestions powered by data analytics and AI
 - **Project Sponsor:** ❓ TBD — enterprise leadership (needs identification)
-- **Target Start Date:** ❓ TBD
-- **Target Go-Live Date:** ❓ TBD
+- **Target Start Date:** ❓ TBD — must be scoped to hit April 2027 deadline
+- **Target Go-Live Date:** April 2027 (next fiscal year), with proved results before 2028
 
 ### 1.2 Stakeholder Register
 
@@ -31,15 +31,15 @@
 |-------------|-------------|--------------|---------------------|
 | Enterprise Leadership / Sponsor | Client (International Webshop) | ROI on 20% turnover increase, budget approval | Executive summaries, cost projections |
 | Internal Technical Team | Client | Data pipeline feasibility, integration with WordPress | Technical workshops, architecture reviews |
-| Mobile App Vendor | External (outsourced) | Data access requests, API exposure, contract scope | Email-based communication (formal requests) |
+| Mobile App Vendor | External (outsourced) | Data access requests, API exposure, contract scope | APIs available for BE integration; DB available on request |
 | Wholesalers (multiple) | External partners | Data sharing agreements, discount/deal visibility | ❓ TBD — likely formal data exchange agreements |
 | ❓ Data Privacy Officer | Client | GDPR compliance, customer data processing across EU | Compliance reviews, DPA documentation |
 | ❓ Marketing Team | Client | Campaign management, email content, customer segmentation | Regular syncs on suggestion strategy |
 
 > 💡 **Hidden Stakeholder Check:**
 > - ❓ **Legal/Compliance team** — GDPR is critical given 15 years of EU customer data
-> - ❓ **DBA/Ops team** — who manages WordPress DB today? Who would manage replications?
-> - ❓ **Mobile app vendor contract owner** — who negotiates data access with the vendor?
+  - ❓ **DBA/Ops team** — who manages WordPress DB today? 900GB heavily-customized MySQL needs someone to set up read replica
+  - ❓ **Mobile app vendor contract owner** — who negotiates API access terms and SLA with the vendor?
 > - ❓ **Wholesaler relationship managers** — who can broker data sharing agreements?
 
 ### 1.3 Business Drivers
@@ -66,12 +66,12 @@
 - **How many teams will work on the solution?** ❓ TBD — at minimum: consulting team (us) + client internal team + mobile vendor (external)
 - **Are teams cross-functional or siloed?** Client internal team is not deeply technical. Mobile vendor is fully separate (outsourced). Likely siloed.
 - **Communication between teams:** Distributed — mobile vendor communication is email-only (no direct access)
-- **Existing team expertise:** ❓ TBD — client team heard about "data pipelines" but depth unknown. WordPress/PHP likely. No confirmed data engineering skills.
+- **Existing team expertise:** No data team, no plans to hire, no expertise — "be the change." WordPress/PHP likely. No data engineering skills confirmed.
 - **Knowledge concentration risk:** 🔴 Mobile app — external vendor is the only entity understanding the mobile architecture and data model
 - **Organizational boundaries that affect architecture:**
   - WordPress webshop ↔ Mobile app = hard boundary (separate vendor, separate codebase, separate data)
   - Client ↔ Wholesalers = external boundary (multiple partners, varying data formats likely)
-  - Client ↔ Mobile vendor = contractual boundary (email-gated, no direct DB access)
+  - Client ↔ Mobile vendor = contractual boundary (APIs exist for BE; DB available on request)
 
 > 💡 **Conway's Law reminder:** The mobile app being a separate vendor creates a natural service boundary.
 > The data pipeline must be designed to tolerate this boundary — async, batch-oriented data exchange
@@ -91,8 +91,8 @@
   - Client Representative explicitly named Snowflake and Databricks as technology hints — suggests familiarity or preference at the organizational level
 
 - **Observed workflows vs. documented workflows:**
-  - ❓ Not yet observed — need to request access to current email marketing workflows (if any)
-  - ❓ Background jobs mentioned but details withheld — likely manual or semi-automated processes
+  - Confirmed: emails, basic reporting, ad-hoc campaigns — run as background jobs (tooling TBD: WordPress plugins vs. custom scripts vs. external)
+  - Email delivery via AWS SES — already operational
 
 - **Team morale / change appetite observations:**
   - Client appears eager to modernize ("AI enabled, data enabled")
@@ -108,8 +108,8 @@ Based on the meeting, the following principles are assumed:
 
 - [x] **Data as an Asset** — data quality, lineage, governance are first-class _(explicitly emphasized: "your AI is only as good as your data")_
 - [x] **Cost-Optimized** — enterprise will scrutinize spend; must justify ROI
-- [ ] API-First — ❓ depends on mobile vendor integration approach
-- [ ] Cloud-Native — ❓ current WordPress hosting model unknown (could be on-prem)
+- [ ] API-First — mobile vendor has APIs; internal pipeline is SQL/batch-oriented, not API-first
+- [x] **Cloud-Native (Hybrid)** — AWS for some services, hosting on-prem; new platform on AWS, WordPress stays on-prem
 - [x] **Security by Design** — 15 years of EU customer data implies GDPR obligations
 - [ ] Observability by Default — ❓ no discussion yet
 - [ ] Vendor-Neutral — ❓ Snowflake/Databricks hints suggest cloud-native preference but potential lock-in
@@ -128,14 +128,14 @@ Based on the meeting, the following principles are assumed:
 | # | Feature | MoSCoW | Notes |
 |---|---------|--------|-------|
 | 1 | Data ingestion from WordPress DB (replication) | Must | Free access confirmed; replication preferred over copy |
-| 2 | Data ingestion from mobile app (via vendor) | Must | Restricted access — must negotiate with vendor via email |
-| 3 | Data ingestion from wholesaler feeds | Should | Multiple wholesalers; availability and format TBD |
+| 2 | Data ingestion from mobile app (via vendor) | Must | APIs exist for BE; own DB available on request; 2M installs — primary channel |
+| 3 | Data ingestion from wholesaler feeds | Should | Multiple wholesalers; "everything, no standard" — high format variability |
 | 4 | ETL pipeline (Extract, Transform, Load) | Must | Core data processing layer; transform into analytical format |
 | 5 | Analytical data store (OLAP) | Must | Snowflake or Databricks — centralized analytical database |
 | 6 | Customer segmentation / profiling engine | Must | Understand what each customer wants / will buy |
 | 7 | Personalized product suggestion algorithm | Must | Match customer profiles with available products/deals |
 | 8 | Email suggestion delivery channel | Must | Primary channel; send personalized emails to customers |
-| 9 | Mobile app push notification channel | Should | Secondary channel; depends on mobile vendor cooperation |
+| 9 | Mobile app push notification channel | Must | **Elevated from Should** — 2M installs makes mobile a primary channel, not secondary |
 | 10 | Email deliverability / validation layer | Should | Many emails are stale (10-minute mailboxes); need validation |
 | 11 | Customer consent management | Must | GDPR requirement for EU customer base |
 | 12 | Suggestion performance analytics / dashboards | Should | Measure KPIs: open rate, CTR, conversion |
@@ -166,11 +166,11 @@ Based on the meeting, the following principles are assumed:
   4. Marketing team reviews campaign performance via dashboards (manual, periodic)
 
 - **Are there any batch processing requirements?**
-  - Yes — ETL pipeline will run on a schedule (❓ frequency TBD: daily? hourly?)
-  - WordPress DB replication (continuous or scheduled)
-  - Mobile data sync (batch, depending on vendor agreement)
-  - Wholesaler data ingestion (❓ batch frequency depends on wholesaler data refresh rate)
-  - Email campaigns (batch send with rate limiting)
+  - Yes — ETL pipeline will run on a weekly schedule for recommendations (client confirmed weekly is fine; "should not be limited by it")
+  - WordPress DB extraction: nightly batch delta + weekly full refresh (see ADR-002)
+  - Mobile data sync: daily batch via vendor APIs (see ADR-002)
+  - Wholesaler data ingestion: batch, frequency depends on wholesaler data refresh rate
+  - Email campaigns: batch send via AWS SES with rate limiting
 
 
 ## 4. Non-Functional Requirements
@@ -231,9 +231,9 @@ Based on the meeting, the following principles are assumed:
 
 - **Data volume:**
   - Current: 15 years × ~1M daily customers = potentially billions of transaction records
-  - ❓ WordPress DB size unknown
-  - ❓ Mobile app data volume unknown
-  - ❓ Wholesaler data volume unknown
+  - WordPress DB: **900GB, heavily customized MySQL** (not standard WooCommerce)
+  - Mobile app: **2M installs**; own DB on vendor backend (size unknown — see questions-002)
+  - Wholesaler data: volume unknown; format is non-standard ("everything, no standard")
   - Projected: +20% growth in Year 1
 
 - **Data retention policies:** ❓ TBD — GDPR requires purpose limitation and data minimization; 15-year-old records may need to be purged
@@ -253,34 +253,34 @@ Based on the meeting, the following principles are assumed:
 - **Programming languages:** ❓ TBD — existing: PHP (WordPress). Data pipeline: Python likely (common for ETL/ML)
 - **Frameworks:** ❓ TBD
 - **Database preferences:**
-  - Existing: MySQL/MariaDB (WordPress standard)
-  - Analytical: Snowflake (Data Lake) or Databricks (Data Lakehouse) — Client Representative mentioned both
-  - ❓ Mobile app DB unknown
-- **Cloud provider preference:** ❓ TBD — Snowflake popularity on AWS was mentioned; implies AWS may be preferred
+  - Existing: MySQL 900GB heavily customized (WordPress webshop)
+  - Analytical: Snowflake on AWS (chosen — ADR-001)
+  - Mobile app: own DB on vendor backend (type/schema unknown — see questions-002)
+- **Cloud provider preference:** AWS for new services (confirmed); WordPress hosting on-prem (hybrid architecture)
 - **Containerization:** ❓ TBD
 
 ### 5.2 Integration Requirements
 
 | System | Protocol | Purpose | Direction |
 |--------|----------|---------|-----------|
-| WordPress DB (MySQL/MariaDB) | DB replication / SQL | Customer data, orders, products | In (extract) |
-| Mobile App (external vendor) | ❓ TBD (email request) | Mobile customer behavior data | In (extract) |
-| Wholesaler Systems (multiple) | ❓ TBD | Product amounts, discounts, deals | In (extract) |
-| Email Service Provider | ❓ TBD (SMTP/API) | Send personalized suggestions | Out (deliver) |
+| WordPress DB (MySQL) | Direct SQL read via VPN (ADR-002) | Customer data, orders, products | In (extract) |
+| Mobile App (external vendor) | REST API (vendor has APIs for BE) | Mobile customer behavior data | In (extract) |
+| Wholesaler Systems (multiple) | ❓ TBD — "everything, no standard" | Product amounts, discounts, deals | In (extract) |
+| Email Service Provider | AWS SES (API) | Send personalized suggestions | Out (deliver) |
 | Mobile Push Service | ❓ TBD (APNs/FCM) | Push notifications to app users | Out (deliver) |
 
-- **Third-party services/APIs:** ❓ TBD — email delivery service (SendGrid, SES, Mailchimp?), push notification service
+- **Third-party services/APIs:** AWS SES (confirmed — already in use for email), push notification service (TBD)
 
 - **API Verification Checklist:**
 
   | System | Sandbox Available? | Auth Method | Rate Limits | SLA | Documentation Quality |
   |--------|--------------------|-------------|-------------|-----|----------------------|
   | WordPress DB | N/A (direct replication) | DB credentials | N/A | N/A | WordPress schema docs |
-  | Mobile App Vendor | Unknown | Unknown | Unknown | Unknown | None (email-gated) |
+  | Mobile App Vendor | ❓ (see questions-002) | ❓ (see questions-002) | ❓ (see questions-002) | ❓ (see questions-002) | APIs confirmed; docs needed |
   | Wholesaler APIs | Unknown | Unknown | Unknown | Unknown | Unknown |
 
-  > ⚠️ **Mobile vendor integration is highest risk.** No visibility into data model, access method, or cooperation level.
-  > Budget 3× initial estimate for this integration.
+  > ⚠️ **Mobile vendor integration risk reduced.** APIs confirmed; DB available on request. Details (auth, rate limits, docs) in questions-002-data-ingestion.
+  > Budget still 2× initial estimate for this integration due to unknown API specifics.
 
 - **Message queue/event streaming requirements:** ❓ TBD — may need event streaming for real-time data ingestion (Kafka, Kinesis) or batch processing may suffice
 
@@ -357,7 +357,7 @@ Based on the meeting, the following principles are assumed:
 > → Maps to: **§16 Deployment & Infrastructure**, **§6.3 Deployment Diagram**
 
 ### 7.1 Deployment Model
-- **Deployment environment:** ❓ TBD — likely cloud (given Snowflake/Databricks are cloud-native); WordPress hosting model unknown
+- **Deployment environment:** Hybrid — WordPress on-prem, new data platform on AWS. VPN/Direct Connect required between on-prem and AWS VPC (see ADR-002).
 - **Deployment strategy:** ❓ TBD
 - **CI/CD requirements:** ❓ TBD
 - **Infrastructure as Code tool:** ❓ TBD
@@ -383,7 +383,7 @@ Based on the meeting, the following principles are assumed:
 - **Networking requirements:**
   - CDN needed: No (no customer-facing web UI)
   - Load balancer: ❓ TBD
-  - VPN requirements: ❓ May be needed for secure connection to WordPress DB and mobile vendor infrastructure
+  - VPN requirements: **Required** — secure connection from on-prem WordPress DB to AWS VPC for data extraction (see ADR-002)
 
 
 ## 8. Observability & Monitoring
@@ -455,10 +455,10 @@ Based on the meeting, the following principles are assumed:
 > → Maps to: **§12 Assumptions, Constraints & Quality**
 
 ### 12.1 Constraints
-- **Budget constraints:** ❓ 🔴 TBD — no budget discussed; need to ask for budget envelope or target range
+- **Budget constraints:** **$500K total budget** (confirmed 2026-02-19)
 - **Budget structure preference:** ❓ TBD (T&M / Fixed Price / Hybrid)
-- **Is there a budget envelope or target range?** ❓ 🔴 TBD — critical to scope options
-- **Time constraints:** ❓ TBD — no deadline mentioned
+- **Is there a budget envelope or target range?** **$500K** — eliminates Option 3 (Databricks, $800K–$1.5M)
+- **Time constraints:** **April 2027 go-live** (next fiscal year), with proved results before 2028
 - **Technical constraints:**
   - 🔴 WordPress must remain as-is (no migration)
   - 🔴 Mobile app data access requires vendor email communication (no direct access)
@@ -469,8 +469,8 @@ Based on the meeting, the following principles are assumed:
   - ❓ ePrivacy — country-specific email marketing regulations across Europe
 - **Team size / skill constraints:**
   - Client internal team is not deeply technical
-  - No confirmed data engineering expertise on client side
-  - Mobile vendor is external and communication-gated
+  - **No data team, no plans to hire, no expertise** — "be the change" (confirmed 2026-02-19)
+  - Mobile vendor is external; APIs exist for BE integration
 - **Organizational constraints:**
   - ❓ Procurement / approval lead times: Unknown
   - ❓ Change Advisory Board (CAB) requirements: Unknown
@@ -479,18 +479,18 @@ Based on the meeting, the following principles are assumed:
 
 ### 12.2 Assumptions
 - **Technical assumptions:**
-  - WordPress uses MySQL or MariaDB (WordPress standard)
-  - WordPress DB can be replicated without impacting live operations
+  - WordPress uses MySQL, **900GB, heavily customized schema** (not standard WooCommerce) — confirmed; requires custom SQL extraction (ADR-002)
+  - WordPress DB can be read without impacting live operations — **read replica recommended** (see questions-002 Q2)
   - Customer email addresses exist for all registered users
-  - Snowflake or Databricks can be deployed in an EU region for data residency
-  - An email service provider (ESP) will be used for deliverability (not raw SMTP)
+  - Snowflake deployed on AWS in EU region — AWS confirmed (hybrid with on-prem hosting)
+  - **AWS SES** is the email delivery platform (already in use) — confirmed
 
 - **Business assumptions:**
   - The 20% turnover increase is achievable through personalized suggestions (needs market research validation)
-  - Customer base is receptive to email marketing (opt-in rates TBD)
-  - Wholesalers will cooperate with data sharing (at least partially)
-  - Mobile vendor will negotiate data access (may require contract amendment)
-  - Budget exists for a data platform investment at enterprise scale
+  - Customer base is receptive to email marketing — **GDPR consent confirmed (yes)**
+  - Wholesalers will cooperate with data sharing — format is non-standard ("everything, no standard"); cooperation TBD
+  - Mobile vendor will provide API access — **APIs exist; DB available on request** (lower risk than assumed)
+  - ~~Budget exists for enterprise-scale investment~~ → **$500K confirmed** — fits Option 2 (Snowflake), eliminates Option 3 (Databricks)
 
 
 ## 13. Future Considerations
@@ -534,35 +534,39 @@ Based on the meeting, the following principles are assumed:
   - Option 3: **Custom ETL + Open Source** — self-managed pipeline (Airflow + dbt + PostgreSQL/BigQuery). Lower license cost, higher operational burden.
 
 - **What criteria matter most for option evaluation? (rank 1-5)**
-  - Time to market: ❓ TBD (assumed 4)
-  - Total cost: ❓ TBD (assumed 5 — enterprise will scrutinize)
+  - Time to market: 4 (confirmed: April 2027 deadline)
+  - Total cost: 5 — **$500K budget confirmed; Option 3 eliminated**
   - Scalability: 3 (already at scale, needs to handle growth)
   - Feature completeness: 4 (AI/data capabilities important)
   - Operational risk: 4 (client team is not deeply technical)
-  - Team expertise fit: 5 (client needs to eventually own this)
+  - Team expertise fit: 5 (no data team — must keep simple enough to learn)
 
 ---
 
-## 15. Unanswered Questions → Architectural Implications
+## 15. Unanswered Questions → Confirmed Answers & Impact
 
 > → Maps to: **§12 Assumptions**, **§10 Options Comparison**
+>
+> All 12 questions answered by client on 2026-02-19 (see questions-001-initial.md).
+> 5 assumptions were **wrong** — impacts noted below.
 
-| # | Unanswered Question | Assumed Answer | If Assumption Wrong → Impact | Decision Needed By |
-|---|---------------------|----------------|------------------------------|--------------------|
-| 1 | 🔴 What is the budget envelope? | Assume enterprise-scale ($200K-$1M+ range) | If budget is < $200K → must go minimal custom ETL, cannot use Snowflake/Databricks at scale | Before option presentation |
-| 2 | 🔴 What data does the mobile vendor store? Can they export it? In what format? | Assume batch CSV/JSON export is negotiable | If vendor refuses → lose mobile customer data entirely; suggestion engine covers only web customers | Before architecture finalization |
-| 3 | 🔴 Is there GDPR consent for email marketing from all customers? | Assume consent exists for transactional emails but not all marketing | If no consent → must build consent collection mechanism first; delays email channel launch by months | Before Phase 1 start |
-| 4 | 🔴 What is the WordPress DB size and schema? | Assume standard WooCommerce schema, < 1TB | If > 1TB or heavily customized → replication strategy changes, ETL complexity increases | During discovery phase |
-| 5 | 🟡 What cloud provider does the client use (if any)? | Assume AWS (Snowflake on AWS mentioned) | If Azure/GCP/on-prem → Snowflake option changes, Databricks deployment changes | Before technical design |
-| 6 | 🟡 How do wholesalers share data today? | Assume manual/email-based, no APIs | If APIs exist → pipeline is simpler; if no data sharing → wholesaler features blocked | During discovery phase |
-| 7 | 🟡 Does the client have an existing email marketing platform? | Assume no existing platform | If Mailchimp/HubSpot exists → integrate rather than build; changes architecture significantly | Before option presentation |
-| 8 | 🟡 What background jobs exist and what do they do? | Assume basic WordPress cron jobs (order processing, inventory sync) | If complex ETL already exists → can reuse; if tightly coupled → constraint on new pipeline | During discovery phase |
-| 9 | 🟡 How many customers have the mobile app installed? | Assume < 30% of total customer base | If > 50% → mobile channel becomes primary, not secondary | Before channel strategy decision |
-| 10 | 🟡 What is the desired frequency of suggestions? | Assume weekly batch emails | If daily/real-time → pipeline architecture shifts from batch to streaming | Before technical design |
-| 11 | 🟢 Is there a data analytics team or hire plan? | Assume no dedicated team; will need training | If team exists → can go more advanced (Databricks); if no hire plan → must keep simple | Before option ranking |
-| 12 | 🟢 Are there any existing data warehousing or BI tools? | Assume none | If tools exist → need integration; may influence data platform choice | During discovery phase |
+| # | Question | Assumed Answer | ✅ Confirmed Answer (2026-02-19) | Impact |
+|---|---------|----------------|----------------------------------|--------|
+| 1 | 🔴 What is the budget envelope? | $200K–$1M+ range | **$500K** | ✅ Assumption correct (within range). Option 2 (Snowflake, $300K–$600K) fits. **Option 3 eliminated** ($800K–$1.5M exceeds budget). |
+| 2 | 🔴 What data does the mobile vendor store? Can they export it? | Batch CSV/JSON export is negotiable | **Own DB on vendor BE, available on request; APIs exist for BE** | ⚠️ **Assumption was WRONG** — vendor is more accessible than assumed. APIs exist (not email-gated). Risk reduced. Integration strategy: REST API (ADR-002). |
+| 3 | 🔴 Is there GDPR consent for email marketing? | Consent for transactional only; partial opt-in | **Yes** | ✅ Assumption was conservative — full consent confirmed. GDPR risk **resolved**. Email campaigns can launch without consent collection flow. |
+| 4 | 🔴 What is the WordPress DB size and schema? | Standard WooCommerce schema, < 1TB | **900GB, heavily customized** | ⚠️ **Assumption was WRONG** — not standard WooCommerce. Off-the-shelf CDC connectors won't work. Custom SQL extraction required (ADR-002). ETL complexity increased. |
+| 5 | 🟡 What cloud provider does the client use? | AWS | **AWS for some services, hosting on-prem** | ⚠️ **Partially wrong** — hybrid architecture, not pure AWS. VPN/Direct Connect required between on-prem and AWS VPC. Infrastructure work added to critical path. |
+| 6 | 🟡 How do wholesalers share data today? | Manual/email-based, no APIs | **"Everything, there is no standard"** | ✅ Assumption roughly correct (no standard). High format variability confirmed — need flexible ingestion pipeline. Follow-up questions in questions-002. |
+| 7 | 🟡 Does the client have an existing email marketing platform? | No existing platform | **AWS SES** | ⚠️ **Assumption was WRONG** — AWS SES already in use. Positive: no need to procure ESP. OPEX estimate reduces significantly ($100–$500/mo vs. $1K–$4K). |
+| 8 | 🟡 What background jobs exist? | Basic WordPress cron jobs | **Emails, basic reporting, ad-hoc campaigns** | ✅ Assumption roughly correct. Background jobs are operational but not complex ETL. No reuse opportunity, no conflict risk. Tooling details needed (questions-002). |
+| 9 | 🟡 How many customers have the mobile app? | < 30% of total customer base | **2M installs** | ⚠️ **Assumption was WRONG** — 2M installs makes mobile a **primary channel**, not secondary. Mobile push elevated from Should to Must. Channel strategy revised. |
+| 10 | 🟡 What is the desired frequency of suggestions? | Weekly batch emails | **Weekly is fine; "should not be limited by it"** | ✅ Assumption correct. Batch architecture confirmed. Client open to higher frequency later — architecture should not preclude it. |
+| 11 | 🟢 Is there a data analytics team or hire plan? | No dedicated team; will need training | **No team, no plans, no expertise — "be the change"** | ✅ Assumption correct but **worse than expected**. No hire plan means consulting team must build capability, not just deliver platform. Knowledge transfer is critical path. |
+| 12 | 🟢 Are there any existing BI tools? | None | **No** | ✅ Assumption correct. Greenfield for analytics/BI — Snowflake + dbt + dashboard tool (Metabase/Preset) is the full stack. |
 
 > 💡 "A TBD in the questionnaire becomes a risk in the design and a surprise in the invoice."
+> ✅ **All 12 TBDs resolved.** 5 assumptions corrected. Key architectural shifts: mobile elevated to primary channel, hybrid on-prem/AWS, AWS SES confirmed, WordPress schema heavily customized.
 
 ---
 
@@ -577,5 +581,5 @@ Based on the meeting, the following principles are assumed:
 ---
 
 **Questionnaire completed by:** Solution Architect
-**Date:** 2026-02-13
-**Version:** 1.0 (pre-filled from initial meeting; pending client validation)
+**Date:** 2026-02-13 (initial), 2026-02-19 (updated with client answers)
+**Version:** 1.1 (updated with confirmed answers from questions-001-initial)

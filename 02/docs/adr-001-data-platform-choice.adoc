@@ -1,6 +1,6 @@
 = ADR-001: Choose Data Platform for Recommendation Engine
 :author: Solution Architect
-:revdate: 2026-02-13
+:revdate: 2026-02-19
 :status: Proposed
 :deciders: Solution Architect, Client Technical Lead, Client Sponsor
 :reversibility: Hard
@@ -41,11 +41,11 @@ The Client Representative explicitly mentioned **Snowflake** and **Databricks** 
 **Relevant constraints:**
 
 * Client team is not deeply technical — steep learning curves are risky
-* No confirmed data engineering expertise on client side
-* Must operate within EU for GDPR data residency compliance
-* WordPress must remain as-is — the platform is additive, not replacing existing systems
-* Mobile app data access is restricted (external vendor, email-gated) — ingestion complexity varies
-* Budget not yet confirmed — cost predictability matters for enterprise approval
+* **No data team, no plans to hire, no expertise** — "be the change" (confirmed 2026-02-19)
+* Must operate within EU for GDPR data residency compliance — GDPR consent confirmed
+* WordPress must remain as-is — 900GB heavily-customized MySQL, hosted on-prem
+* Mobile app has APIs and own DB on vendor backend (2M installs) — lower integration risk than initially assumed
+* **Budget: $500K** (confirmed) — fits Snowflake; eliminates Databricks full platform ($800K+)
 * The platform should be extensible to AI/ML workloads in the future
 
 **Related sections in Solution Design:**
@@ -151,15 +151,15 @@ _Impact: + improves, − degrades, = neutral_
 
 == Follow-Up Actions
 
-* [ ] Confirm AWS as cloud provider with client (Snowflake deployment depends on this)
+* [x] Confirm AWS as cloud provider with client — ✅ **AWS confirmed** (hybrid with on-prem hosting); Snowflake on AWS EU region
 * [ ] Provision Snowflake account in EU region (Frankfurt or Dublin)
-* [ ] Set up Snowflake cost monitoring and usage alerts from day one
+* [ ] Set up Snowflake cost monitoring and usage alerts from day one — $500K budget requires strict cost discipline
 * [ ] Evaluate dbt Cloud vs. dbt Core (managed vs. self-hosted) — separate mini-decision
 * [ ] Select Airflow hosting (MWAA on AWS vs. self-managed vs. Dagster alternative)
-* [ ] Run proof-of-concept: WordPress DB replication → Snowflake ingestion → basic segmentation query
+* [ ] Run proof-of-concept: WordPress DB direct SQL read via VPN → S3 → Snowflake ingestion → basic segmentation query (see ADR-002)
 * [ ] Define Snowflake warehouse sizing and auto-suspend policies
 * [ ] Create data quality testing framework in dbt for customer email validation
-* [ ] Schedule Snowflake + dbt training for client internal team (2-day workshop)
+* [ ] Schedule Snowflake + dbt training for client internal team — **critical: no data team exists, no hire plans**
 * [ ] Plan future ADR checkpoint: reassess Databricks need after Phase 2 (if ML requirements emerge)
 
 == References

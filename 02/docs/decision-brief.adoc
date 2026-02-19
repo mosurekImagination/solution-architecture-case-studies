@@ -1,0 +1,237 @@
+= Decision Brief — Data-Driven Customer Engagement Platform
+:author: Solution Architect
+:revdate: 2026-02-19
+:status: For Client Review
+:icons: font
+
+// ============================================================================
+// PURPOSE: A concise, client-facing summary of all key decisions, strategies,
+// open questions, and next steps. Designed to be read in 5–10 minutes.
+//
+// For full details and traceability:
+//   - Solution Design:  solution-design-compact.adoc
+//   - Platform Decision: adr-001-data-platform-choice.adoc
+//   - Ingestion Strategy: adr-002-data-ingestion-strategy.adoc
+//   - Open Questions:    ../questionnaire/questions-002-data-ingestion.md
+// ============================================================================
+
+== 1. What We're Building
+
+A unified data platform that consolidates customer data from all your systems into one analytical store, powering personalized product recommendations delivered via email and mobile push.
+
+**Goal:** Increase turnover by 20% through AI-driven personalization.
+
+[cols="1,2"]
+|===
+|Budget |$500K (confirmed)
+|Timeline |7–10 months, phased delivery
+|Go-Live |April 2027
+|Team |4–6 engineers
+|Monthly Cost (post-launch) |$6K–$15K
+|===
+
+== 2. Architecture Decisions Made
+
+=== ADR-001: Data Platform → Snowflake on AWS
+
+[cols="1,3"]
+|===
+|Decision |**Snowflake** on AWS EU region + dbt (transformation) + Apache Airflow (orchestration)
+|Why |Best balance of capability, simplicity, and cost for a team with no data engineering experience
+|Why not Databricks |Exceeds budget ($800K+); requires Spark expertise the team lacks
+|Why not custom/open-source |Operational burden contradicts non-technical team profile; slower time-to-value
+|Status |Proposed — awaiting approval
+|===
+
+=== ADR-002: Data Ingestion Strategy
+
+**Four data sources, four ingestion paths — all converging on S3 → Snowflake.**
+
+[cols="1,2,2,1"]
+|===
+|Source |Strategy |How It Works |Schedule
+
+|**WordPress DB** (900GB, on-prem)
+|Direct SQL via VPN
+|Airflow DAGs run custom SQL queries over VPN, extract only analytically relevant tables (~10-30%), land in S3 → Snowflake. Read replica isolates production.
+|Nightly + weekly full refresh
+
+|**Mobile App** (2M installs, external vendor)
+|API + periodic DB export (hybrid)
+|Vendor APIs for ongoing incremental data + periodic DB dump for backfill and data the API doesn't expose. Both land in S3 → Snowflake.
+|Daily (API) + weekly (export)
+
+|**Wholesalers** (multiple suppliers)
+|File landing zone
+|Suppliers provide files in any format (CSV, Excel, XML). Files land in S3, Snowflake loads as semi-structured data, dbt transforms per supplier.
+|On file arrival
+
+|**Customer Emails**
+|Part of WordPress extraction
+|Not a separate pipeline. Extracted with WordPress data. Email validation and cleanup handled in dbt.
+|With WordPress pipeline
+|===
+
+**Key alternatives evaluated and rejected:**
+
+[cols="2,3"]
+|===
+|Alternative |Why Not
+
+|Full MySQL → RDS replication (WordPress)
+|Replicates 900GB including irrelevant data. Cost: ~$600-800/mo. _Revisit if we need >80% of tables._
+
+|AWS DMS managed replication (WordPress)
+|Known issues with heavily-customized MySQL schemas. Direct SQL gives more control.
+
+|CDC with Debezium + Kafka (WordPress)
+|Team cannot operate Kafka. MSK costs ~$8-12K/mo. Real-time not requested.
+
+|API-only for mobile (no DB export)
+|Risk: API may not expose all data needed for recommendations. Hybrid de-risks this.
+
+|Direct DB access for mobile (no API)
+|Too fragile — vendor controls schema, can change without notice. No SLA.
+
+|EDI for wholesalers
+|$50-100K+ setup. Designed for supply chain operations, not analytics.
+|===
+
+== 3. What We Need From You
+
+**6 questions — 3 blockers, 3 important.** We've minimized questions by making professional assumptions where possible (documented in ADR-002).
+
+=== Blockers (must answer before implementation starts)
+
+[cols="1,4,3"]
+|===
+|# |Question |Why It Matters
+
+|Q1
+|Can we get **read-only MySQL access** to inventory WordPress tables? (Schema structure only — not the data itself.)
+|Determines whether we extract 10-30% of tables (direct SQL, our recommendation) or replicate everything (RDS, more expensive). This single answer shapes the pipeline architecture.
+
+|Q4
+|Can we get the **mobile vendor's API documentation**? (Endpoints, auth, rate limits, available data.)
+|Without this, we cannot design the mobile data pipeline. No assumption possible — vendor-specific.
+
+|Q6
+|**How many wholesalers** provide data, and can we get **2-3 sample files**?
+|Need to see real formats to build the file processing pipeline. Number of suppliers determines scaling.
+|===
+
+=== Important (we can proceed with assumptions, but answers improve accuracy)
+
+[cols="1,4,3"]
+|===
+|# |Question |Our Assumption If Unanswered
+
+|Q2
+|Is there an **existing VPN or Direct Connect** between on-prem and AWS?
+|No — we budget 2-4 weeks + $5-10K for setup.
+
+|Q3
+|Can your infra team set up a **MySQL read replica**?
+|Yes — standard MySQL feature. Fallback: read-only user on production with query limits.
+
+|Q5
+|Would the mobile vendor provide **periodic DB exports** (e.g., weekly CSV to S3)?
+|Yes — low-effort ask for a vendor in 3-year maintenance contract. Fallback: API-only.
+|===
+
+=== What We're NOT Asking (handled via professional assumptions)
+
+WordPress timestamp columns, schema change frequency, API auth method, API rate limits, schema documentation, background job tooling, AWS SES config — all assumed with standard defaults and verified during PoC.
+
+== 4. Risks & Mitigations
+
+[cols="2,1,1,3"]
+|===
+|Risk |Likelihood |Impact |Our Plan
+
+|WordPress custom schema breaks extraction
+|High
+|High
+|Direct SQL extraction + dbt tests detect breakage. Schema assumed stable (15-year system). If needed: fallback to RDS replication.
+
+|Mobile vendor limits data access
+|Low
+|High
+|Hybrid approach (API + export) maximizes coverage. APIs confirmed. DB "available on request." Fallback: API-only.
+
+|Wholesaler format chaos
+|High
+|Medium
+|Snowflake schema-on-read handles any format. Per-supplier dbt models. Start with 1-2 suppliers.
+
+|No internal team to own the platform
+|High
+|High
+|Knowledge transfer built into every phase. Solution designed for SQL-proficient team (not Kafka/Spark experts).
+
+|Email data quality (stale addresses)
+|Medium
+|High
+|Validate early (Phase 1). Mobile push (2M installs) is fallback channel.
+|===
+
+== 5. Cost at a Glance
+
+[cols="2,1,1"]
+|===
+|Component |One-Time |Monthly
+
+|Snowflake (compute + storage) |— |$3K–$8K
+|AWS infrastructure (VPN, S3, Airflow) |$5K–$10K |$1.5K–$3K
+|AWS SES (email delivery) |— |$500–$2K
+|Monitoring |— |$500–$1K
+|Development (team of 5, 7 months) |$300K–$420K |—
+|Contingency (30%) |$80K–$130K |—
+|*TOTAL* |*$385K–$500K* |*$6K–$15K*
+|===
+
+== 6. Timeline
+
+[cols="1,2,2"]
+|===
+|Phase |Duration |Key Deliverable
+
+|**Phase 1: Foundation**
+|10 weeks (Apr–Jun 2026)
+|WordPress extraction pipeline live, data in Snowflake, email validation running
+
+|**Phase 2: Intelligence**
+|8 weeks (Jun–Aug 2026)
+|Customer segmentation, recommendation engine, first email campaign sent
+
+|**Phase 3: Expansion**
+|10 weeks (Aug–Oct 2026)
+|Mobile vendor integration, wholesaler data, push notifications, full go-live
+|===
+
+== 7. Decisions We Need From You
+
+[cols="1,3,2"]
+|===
+|# |Decision |When
+
+|1
+|Approve Snowflake platform + $500K budget envelope
+|Before Phase 1
+
+|2
+|Answer 6 discovery questions above (especially blockers Q1, Q4, Q6)
+|Immediately
+
+|3
+|Initiate mobile vendor negotiation (API docs + export agreement)
+|Immediately (critical path)
+
+|4
+|Identify 1-2 internal people for knowledge transfer
+|Before Phase 1
+|===
+
+---
+
+_This brief summarizes decisions from the full solution design and architecture decision records. For detailed analysis, alternatives comparison, and traceability, see the linked documents._

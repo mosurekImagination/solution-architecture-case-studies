@@ -22,8 +22,8 @@
 
 - **Web platform:** WordPress with e-commerce plugin — has its own database
 - **Mobile app:** Separate application, developed by an external vendor ~5 years ago (2 years development, 3 years maintenance). Completely separate mobile experience / buyer experience
-- **Mobile vendor access:** Outsourced; to access mobile DB you must email the vendor — no direct/free access. Unknown whether mobile app uses same DB, separate DB, or API layer
-- **Background jobs:** Exist, but details not provided unless specifically requested
+- **Mobile vendor access:** Outsourced; vendor has own database on their backend (available on request) and APIs for working with the BE. 2M app installs confirmed.
+- **Background jobs:** Emails, basic reporting, ad-hoc campaigns (confirmed)
 - **Internal team:** Not deeply technical; aware of "data pipeline" concept but not solution details
 - **Data landscape:** "Islands of information" — isolated pieces of data about wholesalers, users, buyers, customers across multiple systems
 
@@ -31,11 +31,11 @@
 
 | # | Source | Access | Notes |
 |---|--------|--------|-------|
-| 1 | WordPress database | Free access, can replicate | Live database — replication preferred over copy |
-| 2 | Mobile app database | Restricted — must email external vendor | Unknown schema, unknown DB type, unknown API |
-| 3 | Wholesaler data | Multiple sources (plurality) | Amounts, discounts, deals — availability uncertain |
-| 4 | Customer emails | Available from WordPress DB | 15 years of data; some are disposable/expired "10-minute mailboxes" |
-| 5 | Mobile app install base | Unknown — data not currently tracked | Need to design a way to measure it |
+| 1 | WordPress database | Free access, can read directly | 900GB, heavily customized MySQL (not standard WooCommerce). Live database — read replica recommended (ADR-002) |
+| 2 | Mobile app database | Own DB on vendor BE, available on request; APIs exist | 2M installs. External vendor (5 years). REST API integration (ADR-002) |
+| 3 | Wholesaler data | Multiple sources (plurality) | Amounts, discounts, deals — "everything, no standard" format |
+| 4 | Customer emails | Available from WordPress DB | 15 years of data; some are disposable/expired "10-minute mailboxes". GDPR consent confirmed |
+| 5 | Mobile app install base | 2M installs confirmed | Primary channel (not secondary as initially assumed) |
 
 ## Technical Guidance from Meeting
 
@@ -70,12 +70,17 @@
 
 ## Key Constraints
 
+- ✅ **Budget: $500K** — confirmed; fits Option 2 (Snowflake)
+- ✅ **Timeline: April 2027** — next fiscal year, proved results before 2028
+- ✅ **GDPR consent: Yes** — confirmed
+- ✅ **Email platform: AWS SES** — already in use
 - ❌ **No WordPress migration** — proposing migration will be heavily scrutinized; better have a strong reason
-- ❌ **No direct mobile DB access** — gated by external vendor communication
+- ❌ **No data team** — no team, no plans, no expertise; "be the change"
+- ⚠️ **Hybrid infrastructure** — AWS for some services, WordPress hosting on-prem
 - ⚠️ **Generic business goal** — client provides "increase sales by 20%", not a technical specification. Architect must translate business → technical
 - ⚠️ **Enterprise dynamics** — large organization, may not know what to share, may not know what architect needs
 - ⚠️ **Stale customer data** — some emails are non-working 10-minute mailboxes
-- ⚠️ **Unknown mobile install base** — no visibility into how many users have the app installed
+- ⚠️ **Wholesaler data: no standard** — "everything, there is no standard" format
 
 ## Key Differences from Case Study 01
 
