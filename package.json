@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "asciidoctor": "^3.0.0",
-    "asciidoctor-kroki": "^0.18.0"
+    "asciidoctor-kroki": "^0.18.0",
+    "asciidoctor-pdf": "^1.0.0-alpha.16"
   }
 }
