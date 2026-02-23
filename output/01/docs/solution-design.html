@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.20">
+<meta name="generator" content="Asciidoctor 2.0.23">
 <title>Tourist Mobile Application — Solution Design</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -140,7 +140,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #content::before{content:none}
 #header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
 #header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
-#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header>h1:only-child{border-bottom:1px solid #dddddf;padding-bottom:8px}
 #header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
 #header .details span:first-child{margin-left:-.125em}
 #header .details span.email a{color:rgba(0,0,0,.85)}
@@ -162,6 +162,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media screen and (min-width:768px){#toctitle{font-size:1.375em}
 body.toc2{padding-left:15em;padding-right:0}
+body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
 #toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
 #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
 #toc.toc2>ul{font-size:.9em;margin-bottom:0}
@@ -327,7 +328,7 @@ a.image{text-decoration:none;display:inline-block}
 a.image object{pointer-events:none}
 sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
 sup.footnote a,sup.footnoteref a{text-decoration:none}
-sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+sup.footnote a:active,sup.footnoteref a:active,#footnotes .footnote a:first-of-type:active{text-decoration:underline}
 #footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
 #footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
 #footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
@@ -465,7 +466,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_risk_assessment">4.7. Risk Assessment</a></li>
 </ul>
 </li>
-<li><a href="#_option_2_progressive_build_recommended">5. Option 2: Progressive Build — RECOMMENDED ⭐</a>
+<li><a href="#_option_2_validate_monetize_recommended">5. Option 2: Validate + Monetize — RECOMMENDED ⭐</a>
 <ul class="sectlevel2">
 <li><a href="#_overview_2">5.1. Overview</a></li>
 <li><a href="#_what_it_delivers_beyond_option_1">5.2. What It Delivers (Beyond Option 1)</a></li>
@@ -488,14 +489,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_risk_assessment_3">6.7. Risk Assessment</a></li>
 </ul>
 </li>
-<li><a href="#_option_4_klookviator_scale">7. Option 4: Klook/Viator Scale</a>
+<li><a href="#_scaling_path_future">7. Scaling Path (Future)</a>
 <ul class="sectlevel2">
-<li><a href="#_overview_4">7.1. Overview</a></li>
-<li><a href="#_what_it_adds_beyond_option_3">7.2. What It Adds Beyond Option 3</a></li>
-<li><a href="#_architecture_4">7.3. Architecture</a></li>
-<li><a href="#_cost_breakdown_4">7.4. Cost Breakdown</a></li>
-<li><a href="#_timeline_4">7.5. Timeline</a></li>
-<li><a href="#_when_to_choose_option_4">7.6. When to Choose Option 4</a></li>
+<li><a href="#_trigger_conditions">7.1. Trigger Conditions</a></li>
 </ul>
 </li>
 <li><a href="#_technical_deep_dives">8. Technical Deep Dives</a>
@@ -516,15 +512,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_assumptions_constraints">10. Assumptions &amp; Constraints</a>
 <ul class="sectlevel2">
-<li><a href="#_assumptions_to_verify_with_client">10.1. Assumptions (To Verify with Client)</a></li>
+<li><a href="#_assumptions">10.1. Assumptions</a></li>
 <li><a href="#_constraints">10.2. Constraints</a></li>
 </ul>
 </li>
 <li><a href="#_recommended_next_steps">11. Recommended Next Steps</a></li>
 <li><a href="#_appendix_artifact_inventory">12. Appendix: Artifact Inventory</a>
 <ul class="sectlevel2">
-<li><a href="#_architecture_diagrams_4_options_inline_plantuml_via_kroki">12.1. Architecture Diagrams (4 options — inline PlantUML via Kroki)</a></li>
-<li><a href="#_timeline_gantt_charts_4_options_inline_mermaid_via_kroki">12.2. Timeline Gantt Charts (4 options — inline Mermaid via Kroki)</a></li>
+<li><a href="#_architecture_diagrams_3_options_inline_plantuml_via_kroki">12.1. Architecture Diagrams (3 options — inline PlantUML via Kroki)</a></li>
+<li><a href="#_timeline_gantt_charts_inline_plantuml_via_kroki">12.2. Timeline Gantt Charts (inline PlantUML via Kroki)</a></li>
 <li><a href="#_cost_analysis_inline_asciidoc_tables">12.3. Cost Analysis (inline AsciiDoc tables)</a></li>
 <li><a href="#_related_documents">12.4. Related Documents</a></li>
 </ul>
@@ -540,7 +536,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>A mobile tourist application that uses AI-powered photo recognition to identify attractions and provide descriptions via text and audio. The platform connects tourists with signed partner businesses for monetization through commissions, advertising, and loyalty programs.</p>
 </div>
 <div class="paragraph">
-<p>This document presents <strong>4 architecture options</strong> ranging from a lean MVP ($240k) to enterprise-scale platform ($3.53M), with a recommendation for <strong>Option 2: Progressive Build</strong> as the best balance of cost, risk, and market coverage.</p>
+<p>This document presents <strong>3 architecture options</strong> ranging from a lean MVP ($240k) to a full-featured platform ($1.65M), with a recommendation for <strong>Option 2: Progressive Build</strong> as the best balance of cost, risk, and feature delivery.</p>
 </div>
 <div class="sect2">
 <h3 id="_key_decision_why_option_2"><a class="anchor" href="#_key_decision_why_option_2"></a>1.1. Key Decision: Why Option 2</h3>
@@ -558,23 +554,23 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Cost-effective</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$532k CAPEX covers POC through full features — 3× less than Option 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$546k CAPEX covers POC through full features — 3× less than Option 3</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Progressive de-risking</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Validates core AI recognition in POC before committing to payments + multi-region</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Validates core AI recognition in POC before committing to payments and loyalty</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>US + China from Day 1</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Opens both major tourist markets; China adds only ~$100k vs Option 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Monetization-ready</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stripe payments + loyalty program create revenue streams from Month 5+</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Clear migration path</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Modular monolith boundaries enable future microservices extraction (Option 3/4)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modular monolith boundaries enable future microservices extraction and multi-region deployment when traffic demands it</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manageable team</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4→6 developers avoids coordination overhead of larger teams</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Stable team</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 developers throughout — no mid-project hiring, no single points of failure</p></td>
 </tr>
 </tbody>
 </table>
@@ -663,7 +659,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_architecture_options_overview"><a class="anchor" href="#_architecture_options_overview"></a>3. Architecture Options Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Four options are presented, each building on the previous:</p>
+<p>Three options are presented, each building on the previous:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -686,85 +682,28 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>1: MVP</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>1: Validate</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Core AI + partners, US only</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$240k</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$835</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">US</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>2: Progressive</strong> ⭐</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MVP → Payments + Loyalty + China</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$532k</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,630</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US + China</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>2: Validate + Monetize</strong> ⭐</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MVP → Payments + Loyalty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$546k</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$730</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~8 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">US (China: Terraform-ready)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3: All Features</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3: Full Platform</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Complete platform, Day 1</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$1.65M</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$6,550</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">10 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">US + China + EU</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>4: Klook Scale</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Migration to enterprise scale</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3.53M</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$74,800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Global (5 regions)</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Cost Comparison</caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6666%;">
-<col style="width: 16.6669%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Option</th>
-<th class="tableblock halign-left valign-top">CAPEX</th>
-<th class="tableblock halign-left valign-top">OPEX/mo</th>
-<th class="tableblock halign-left valign-top">Timeline</th>
-<th class="tableblock halign-left valign-top">Regions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>1: MVP</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$240,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$835</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>2: Progressive</strong> ⭐</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$532,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,630</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US + China</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3: All Features</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,654,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$6,550</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">10 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US + China + EU</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>4: Klook Scale</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,528,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$74,800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Global (5 regions)</p></td>
 </tr>
 </tbody>
 </table>
@@ -791,7 +730,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OPEX</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$835/month (Year 1, ~1k users)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$820/month (Year 1, ~1k users)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
@@ -859,7 +798,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_architecture"><a class="anchor" href="#_architecture"></a>4.4. Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/diag-c1a80cf4ebc748d8768b5fb5aee2149ab769a138.svg" alt="Option 1 Architecture Diagram">
+<img src="diagrams/diag-fd3111ec9794347ccd8abe10b1fe0b9bd3d4abb4.svg" alt="Option 1 Architecture Diagram">
 </div>
 <div class="title">Figure 1. Option 1 Architecture Diagram</div>
 </div>
@@ -892,7 +831,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_cost_breakdown"><a class="anchor" href="#_cost_breakdown"></a>4.5. Cost Breakdown</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. Option 1 CAPEX</caption>
+<caption class="title">Table 1. Option 1 CAPEX</caption>
 <colgroup>
 <col style="width: 14.2857%;">
 <col style="width: 14.2857%;">
@@ -939,7 +878,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Option 1 Monthly OPEX</caption>
+<caption class="title">Table 2. Option 1 Monthly OPEX</caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
@@ -1014,9 +953,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">Landmark detection, ~3k/mo</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SendGrid</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$15</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transactional emails, free tier</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SES</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Transactional emails, 62k/mo free from ECS</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Google Maps API</p></td>
@@ -1025,7 +964,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><p class="tableblock"><strong>Total Monthly OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$835</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$820</strong></p></td>
 </tr>
 </tbody>
 </table>
@@ -1098,7 +1037,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_option_2_progressive_build_recommended"><a class="anchor" href="#_option_2_progressive_build_recommended"></a>5. Option 2: Progressive Build — RECOMMENDED ⭐</h2>
+<h2 id="_option_2_validate_monetize_recommended"><a class="anchor" href="#_option_2_validate_monetize_recommended"></a>5. Option 2: Validate + Monetize — RECOMMENDED ⭐</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_overview_2"><a class="anchor" href="#_overview_2"></a>5.1. Overview</h3>
@@ -1110,30 +1049,42 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Timeline</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months (Mar–Sep 2026), MVP at Month 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~8 months (Mar–Oct 2026), MVP at Month 4</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CAPEX</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$532,000 (incl. 25-35% risk buffer)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$546,000 (incl. 25-35% risk buffer)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OPEX</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,630/month (Year 2, ~10k users)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$730/month (Year 1, ~1k users)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 developers (POC/MVP) → 6 developers (Full), 3 streams</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 developers, stable throughout — 2 backend, 1 iOS, 1 Android, 1 mobile lead</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Regions</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US (us-east-1) + China (cn-north-1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">US (us-east-1). China: Terraform-ready, deployable in &lt;1 day when needed</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Architecture</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Modular monolith + Lambda services + China mirror</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modular monolith (single deployable) + Lambda for AI recognition</p></td>
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Developer rates assume mid-senior nearshore developers (Eastern Europe / Latin America). US-based teams would increase CAPEX by 40-60%.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_what_it_delivers_beyond_option_1"><a class="anchor" href="#_what_it_delivers_beyond_option_1"></a>5.2. What It Delivers (Beyond Option 1)</h3>
@@ -1143,35 +1094,42 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>Multi-region architecture validated in POC</p>
-</li>
-<li>
-<p>US production deployment</p>
+<p>US production deployment validated in POC</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p><strong>Phase 2 — Full Features (Months 5-7):</strong></p>
+<p><strong>Phase 2 — Full Features (Months 5-8):</strong></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Stripe payment integration</strong> (PCI-DSS compliant) for ticket/tour purchases</p>
+<p><strong>Stripe payment integration</strong> for ticket/tour purchases</p>
 </li>
 <li>
 <p><strong>Loyalty points engine</strong> — earn/redeem points, QR-based partner discounts</p>
 </li>
 <li>
-<p><strong>China deployment</strong> — Alibaba CDN for Great Firewall, separate data residency</p>
-</li>
-<li>
-<p><strong>Cross-region replication</strong> — eventual consistency, RPO 15 min</p>
-</li>
-<li>
 <p><strong>Multi-language support</strong> — English, Chinese, Spanish</p>
 </li>
 <li>
-<p><strong>Offline mode enhanced</strong> — on-device ML model for basic recognition (70-80% accuracy)</p>
+<p><strong>Partner self-service portal</strong></p>
+</li>
+<li>
+<p><strong>Offline mode</strong> — cached content for previously visited attractions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Deferred (deploy when business triggers are met):</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>China region</strong> — Terraform template ready. Deploy when first 10 Chinese partner businesses are signed.</p>
+</li>
+<li>
+<p><strong>On-device ML model</strong> — Defer to Year 2+ when user base justifies the engineering investment. Offline cached content covers 90% of the use case.</p>
 </li>
 </ul>
 </div>
@@ -1181,19 +1139,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p><strong>Progressive de-risking</strong>: POC validates AI + architecture before investing in payments and China</p>
+<p><strong>Progressive de-risking</strong>: POC validates AI + architecture before investing in payments and loyalty</p>
 </li>
 <li>
-<p><strong>Cost-effective China expansion</strong>: Adding cn-north-1 costs ~$100k more than Option 1 but opens China&#8217;s massive tourist market</p>
+<p><strong>Monetization-ready</strong>: Stripe payments + loyalty program create revenue streams from Month 5+</p>
 </li>
 <li>
-<p><strong>Monetization-ready</strong>: Stripe payments + loyalty program create revenue streams from Month 4+ (MVP)</p>
+<p><strong>Architecture migration path</strong>: Modular monolith with clear boundaries enables future microservices extraction and multi-region deployment when traffic demands it</p>
 </li>
 <li>
-<p><strong>Architecture migration path</strong>: Modular monolith with clear boundaries enables extraction to microservices (Option 3/4) when traffic demands it</p>
+<p><strong>Stable team</strong>: 5 devs throughout avoids mid-project hiring and onboarding disruption</p>
 </li>
 <li>
-<p><strong>Manageable team scaling</strong>: 4→6 devs avoids the coordination overhead of Options 3/4</p>
+<p><strong>China-ready, not China-deployed</strong>: Terraform templates prepared during build, deployable in &lt;1 day — satisfies the requirement to be "prepared to spin up" without paying for idle infrastructure</p>
 </li>
 </ol>
 </div>
@@ -1202,32 +1160,54 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_architecture_2"><a class="anchor" href="#_architecture_2"></a>5.4. Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/diag-ac6148388084d7aaa05137e2b8419420a773014b.svg" alt="Option 2 Architecture Diagram">
+<img src="diagrams/diag-3b2d9aa2630ca118b23e5c720783adc85a649e49.svg" alt="Option 2 Architecture Diagram">
 </div>
 <div class="title">Figure 3. Option 2 Architecture Diagram</div>
 </div>
 <div class="paragraph">
-<p>Key components added vs Option 1:</p>
+<p>Key components:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Dual-region ECS</strong> (3 tasks × 2 regions)</p>
+<p><strong>1 ECS Fargate task</strong> — true modular monolith with internal module boundaries (Users, Partners, Recommendations, Payments, Loyalty) deployed as a single unit</p>
 </li>
 <li>
-<p><strong>Lambda payment + loyalty services</strong> — isolated for PCI compliance</p>
+<p><strong>1 Lambda function</strong> — AI photo recognition pipeline, decoupled via SQS for independent scaling</p>
 </li>
 <li>
-<p><strong>PostgreSQL per region</strong> (db.t4g.xlarge, 500GB) with US read replica</p>
+<p><strong>PostgreSQL</strong> (db.t4g.medium, Multi-AZ) with PostGIS for geolocation queries</p>
 </li>
 <li>
-<p><strong>Alibaba CDN</strong> for China content delivery behind Great Firewall</p>
+<p><strong>Redis</strong> (5GB) for session + hot data caching</p>
 </li>
 <li>
-<p><strong>EventBridge</strong> for event-driven cross-service communication</p>
+<p><strong>S3</strong> for photo storage</p>
 </li>
 <li>
-<p><strong>SNS</strong> for push notifications</p>
+<p><strong>CloudFront CDN</strong> for US distribution</p>
+</li>
+<li>
+<p><strong>SQS</strong> for async photo processing — the only messaging service needed at this scale</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Scaling triggers:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Add <strong>read replica</strong> when p95 query latency exceeds 200ms</p>
+</li>
+<li>
+<p>Add <strong>China region</strong> (from Terraform template) when first 10 Chinese partners are signed</p>
+</li>
+<li>
+<p>Add <strong>EventBridge/SNS</strong> when a single event needs to fan out to multiple consumers</p>
+</li>
+<li>
+<p>Extract modules to <strong>separate services</strong> when team grows beyond one team boundary</p>
 </li>
 </ul>
 </div>
@@ -1235,7 +1215,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_cost_breakdown_2"><a class="anchor" href="#_cost_breakdown_2"></a>5.5. Cost Breakdown</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. Option 2 CAPEX</caption>
+<caption class="title">Table 3. Option 2 CAPEX</caption>
 <colgroup>
 <col style="width: 14.2857%;">
 <col style="width: 14.2857%;">
@@ -1260,38 +1240,38 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">POC</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$600/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$96,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">25%</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$120,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">25%</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$150,000</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">MVP</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$600/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$96,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">25%</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$120,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">25%</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$150,000</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">6 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$600/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$216,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$180,000</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">35%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$291,600</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$243,000</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="6"><p class="tableblock"><strong>Total CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$531,600</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$543,000</strong></p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 5. Option 2 Monthly OPEX</caption>
+<caption class="title">Table 4. Option 2 Monthly OPEX</caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
@@ -1306,120 +1286,165 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS ECS (Fargate) US</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$250</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3 tasks, 1 vCPU / 2GB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS ECS (Fargate)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$150</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 task, 1 vCPU / 2GB (monolith)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS ECS (Fargate) CN</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$250</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3 tasks, China region</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS PostgreSQL US</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$350</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">db.t4g.xlarge, 500GB, Multi-AZ</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS PostgreSQL CN</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$350</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">db.t4g.xlarge, 500GB, China</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS Read Replica US</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RDS PostgreSQL</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Read replica, same tier</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">db.t4g.medium, 100GB, Multi-AZ</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ElastiCache Redis</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$150</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cache.t3.medium, 10GB, US+CN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cache.t3.micro, 5GB</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 Storage (US+CN)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~200GB total both regions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 Storage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Photos + static assets, ~100GB</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CloudFront CDN</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$80</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">US/Global distribution</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">US distribution, ~100GB/mo</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Alibaba CDN (China)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$100</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">China content delivery</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Route 53</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DNS, health checks</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda (AI) US+CN</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$60</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~10k invocations/mo combined</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda (AI)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Photo recognition, ~10k invocations/mo</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">EventBridge + SQS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$20</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Event-driven flows</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Recognition queue</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CloudWatch (US+CN)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$60</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Both regions monitoring</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CloudWatch</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$30</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Logs, metrics, alarms</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cognito</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~5,000 MAU</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Free tier covers up to 50k MAU</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OpenAI API</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$300</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$200</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">GPT-4V, ~8k requests/mo</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Google Vision API</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$60</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~8k requests/mo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~8k requests/mo (1k free)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Stripe Processing</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.9% + $0.30 per transaction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.9% + $0.30 per transaction (low initial volume)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SendGrid</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$20</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transactional + marketing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SES</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">62k emails/mo free when sent from ECS</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Google Maps API</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$30</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~5k requests/mo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$200/mo free credit covers ~5k requests/mo</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><p class="tableblock"><strong>Total Monthly OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$2,630</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$785</strong></p></td>
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+OPEX estimates reflect realistic Year 1 costs at ~1,000 users. Costs scale with usage — at 10k users (Year 2), expect ~$1,500-2,000/mo. Free tier credits excluded where they expire or usage exceeds thresholds.
+</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 5. Year 1 Total Cost of Ownership</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Category</th>
+<th class="tableblock halign-left valign-top">Cost</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CAPEX (development)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$543,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs × ~8 months, incl. risk buffer</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Infrastructure OPEX (12 months)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$9,400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$785/mo × 12</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team cost post-build (4 months maintenance)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$240,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs × $600/day × 20 days × 4 months (assuming team retained for iteration)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><p class="tableblock"><strong>Year 1 Total</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$792,000</strong></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Team cost post-build assumes the full team is retained for maintenance, iteration, and feature refinement after the 8-month build phase. If team is reduced, this cost decreases proportionally.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p><strong>Cost rationale:</strong></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>POC: 4 devs × 2 months × $600/day = $96,000 base + 25% risk = $120,000</p>
+<p>POC: 5 devs × 2 months × $600/day = $120,000 base + 25% risk = $150,000</p>
 </li>
 <li>
-<p>MVP: 4 devs × 2 months × $600/day = $96,000 base + 25% risk = $120,000</p>
+<p>MVP: 5 devs × 2 months × $600/day = $120,000 base + 25% risk = $150,000</p>
 </li>
 <li>
-<p>Full: 6 devs × 3 months × $600/day = $216,000 base + 35% risk = $291,600</p>
+<p>Full: 5 devs × 3 months × $600/day = $180,000 base + 35% risk = $243,000</p>
 </li>
 <li>
-<p><strong>Total: $531,600</strong></p>
+<p><strong>Total: $543,000</strong></p>
 </li>
 <li>
-<p>Higher risk buffer (35%) on Full phase due to: China data residency complexity, Stripe PCI compliance, cross-region replication</p>
+<p>Higher risk buffer (35%) on Full phase due to: Stripe integration complexity, loyalty program edge cases, multi-language content pipeline</p>
 </li>
 </ul>
 </div>
@@ -1428,7 +1453,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_timeline_2"><a class="anchor" href="#_timeline_2"></a>5.6. Timeline</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/diag-f82707727f1b24cd1ca1d3366fe1a990b3d59174.svg" alt="Option 2 Development Timeline">
+<img src="diagrams/diag-d9af2f00e9c6cd6a0abced90872e1574477680b7.svg" alt="Option 2 Development Timeline">
 </div>
 <div class="title">Figure 4. Option 2 Development Timeline</div>
 </div>
@@ -1455,19 +1480,25 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">Backend</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">POC→Full</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DB schema + PostGIS, core APIs, photo pipeline, AI Lambda, payment integration, loyalty engine</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DB schema + PostGIS, core APIs, photo pipeline, AI Lambda, payment integration, loyalty engine, partner portal</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile (Native)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">iOS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">POC→Full</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">iOS (Swift) + Android (Kotlin), camera, partner UI, payments, offline mode, multi-language</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 dev</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Swift: camera, partner UI, payments, offline cache, loyalty dashboard</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">China Infra</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Full</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 devs (new)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cn-north-1 setup, Alibaba CDN, data residency, cross-region replication</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Android</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POC→Full</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 dev</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Kotlin: camera, partner UI, payments, offline cache, loyalty dashboard</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile Lead</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POC→Full</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 dev (shared)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cross-platform architecture, API contracts, code reviews for both platforms, multi-language, China Terraform templates, QA coordination</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DevOps</p></td>
@@ -1477,6 +1508,18 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The mobile lead eliminates single points of failure on each platform by providing code review capability and fill-in capacity. This role also handles cross-cutting concerns (multi-language, App Store submissions) that don&#8217;t belong to a single platform.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_key_milestones"><a class="anchor" href="#_key_milestones"></a>5.7. Key Milestones</h3>
@@ -1501,13 +1544,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>MVP Launch (US)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Jun 30, 2026</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Jul 15, 2026</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">App Store submission, partner ecosystem with ≥10 partners, QR discounts functional</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Full Release</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sep 20, 2026</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Payments live, loyalty program active, China region operational, multi-language support</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Oct 20, 2026</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Payments live, loyalty program active, multi-language support, App Store approved</p></td>
 </tr>
 </tbody>
 </table>
@@ -1520,23 +1563,23 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>POC/MVP: Same stack as Option 1 + single region → 25%</p>
+<p>POC/MVP: Well-known AWS stack (ECS, PostgreSQL, S3), single region, clear scope → 25%</p>
 </li>
 <li>
 <p>Full phase 35% because:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>China data residency laws require careful legal + technical compliance</p>
+<p>Stripe integration has edge cases in payment flows, refunds, and webhook reliability</p>
 </li>
 <li>
-<p>Stripe PCI-DSS certification process can take 2-4 weeks</p>
+<p>Loyalty points engine requires careful reconciliation logic</p>
 </li>
 <li>
-<p>Cross-region DB replication requires extensive testing for consistency</p>
+<p>Multi-language content pipeline needs TTS in multiple languages</p>
 </li>
 <li>
-<p>Team scaling from 4→6 devs has onboarding overhead</p>
+<p>App Store review process can require multiple submission cycles</p>
 </li>
 </ul>
 </div>
@@ -1620,11 +1663,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="sect2">
 <h3 id="_architecture_3"><a class="anchor" href="#_architecture_3"></a>6.3. Architecture</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/diag-71c2227ccd69c5ee4628e0a5c6179d2abb32a2a6.svg" alt="Option 3 Architecture Diagram">
-</div>
-<div class="title">Figure 5. Option 3 Architecture Diagram</div>
+<div class="paragraph">
+<p>Option 3 extends Option 2&#8217;s architecture with microservices decomposition (3 separate ECS tasks), active China + EU regions, OpenSearch, Kinesis analytics pipeline, and EventBridge event mesh. Detailed architecture diagram available on request.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1786,7 +1826,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">POI + translation, ~20k/mo</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SendGrid + SNS Push</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SES + SNS Push</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$50</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Email + push notifications</p></td>
 </tr>
@@ -1799,11 +1839,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="sect2">
 <h3 id="_timeline_3"><a class="anchor" href="#_timeline_3"></a>6.5. Timeline</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/diag-2d4223dc08b8264690ecd003274ff0e9d1bf33b5.svg" alt="Option 3 Development Timeline">
-</div>
-<div class="title">Figure 6. Option 3 Development Timeline</div>
+<div class="paragraph">
+<p>10 months with 8→10 devs across 4 streams (Backend Core, Mobile, DevOps, Multi-Region). Detailed Gantt chart available on request.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1870,298 +1907,59 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_option_4_klookviator_scale"><a class="anchor" href="#_option_4_klookviator_scale"></a>7. Option 4: Klook/Viator Scale</h2>
+<h2 id="_scaling_path_future"><a class="anchor" href="#_scaling_path_future"></a>7. Scaling Path (Future)</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_overview_4"><a class="anchor" href="#_overview_4"></a>7.1. Overview</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 75%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Timeline</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months migration (assumes Option 2 or 3 running)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CAPEX</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,528,000 (incl. 35-45% risk buffer)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OPEX</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$74,800/month (Year 3+, 5M+ users)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 developers, 5 streams</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Regions</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Global: US×2, China, EU, APAC (5 active regions)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Architecture</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Kubernetes (EKS) + Istio service mesh + Aurora Global DB</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_what_it_adds_beyond_option_3"><a class="anchor" href="#_what_it_adds_beyond_option_3"></a>7.2. What It Adds Beyond Option 3</h3>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>EKS + Istio</strong> service mesh — 30+ microservices, canary deployments</p>
-</li>
-<li>
-<p><strong>Aurora Global DB</strong> — 10+ shards, 50+ read replicas, 5 regions</p>
-</li>
-<li>
-<p><strong>SageMaker + GPU</strong> workers for custom ML model training and serving</p>
-</li>
-<li>
-<p><strong>Kafka</strong> for high-throughput event streaming (replacing SQS for scale)</p>
-</li>
-<li>
-<p><strong>DataDog APM</strong> — distributed tracing, profiling across 50+ hosts</p>
-</li>
-<li>
-<p><strong>AWS Shield Advanced</strong> — enterprise DDoS protection ($3k/mo base)</p>
-</li>
-<li>
-<p><strong>Active-active 5-region</strong> deployment — US-East, US-West, China, EU, APAC</p>
-</li>
-<li>
-<p><strong>PayPal</strong> as payment fallback alongside Stripe</p>
-</li>
-<li>
-<p><strong>Twilio</strong> for global SMS notifications</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_architecture_4"><a class="anchor" href="#_architecture_4"></a>7.3. Architecture</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/diag-ac5034ed7238b16f52a4e251201cd811617be4e5.svg" alt="Option 4 Architecture Diagram">
-</div>
-<div class="title">Figure 7. Option 4 Architecture Diagram</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cost_breakdown_4"><a class="anchor" href="#_cost_breakdown_4"></a>7.4. Cost Breakdown</h3>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Option 4 CAPEX</caption>
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2858%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Phase</th>
-<th class="tableblock halign-left valign-top">Duration</th>
-<th class="tableblock halign-left valign-top">Team</th>
-<th class="tableblock halign-left valign-top">Rate</th>
-<th class="tableblock halign-left valign-top">Base Cost</th>
-<th class="tableblock halign-left valign-top">Risk</th>
-<th class="tableblock halign-left valign-top">Total</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">POC</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$700/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$840,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">35%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,134,000</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MVP</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$700/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$840,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">40%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,176,000</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Full</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$700/day</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$840,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">45%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,218,000</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="6"><p class="tableblock"><strong>Total CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$3,528,000</strong></p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Option 4 Monthly OPEX</caption>
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 16.6666%;">
-<col style="width: 50.0001%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Service</th>
-<th class="tableblock halign-left valign-top">Monthly Cost</th>
-<th class="tableblock halign-left valign-top">Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">EKS Clusters (5 regions)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$8,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">30+ microservices, auto-scaling pods</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Global DB (Sharded)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$12,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">10+ shards, 50+ read replicas, 5 regions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Redis Cluster (Sharded)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">100GB+, sharded across regions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DynamoDB Global Tables</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AR logs, high-throughput, global</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OpenSearch (Sharded Cluster)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-node, geo search, full-text</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 Multi-tier Storage</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5TB+, Standard→IA→Glacier lifecycle</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CloudFront + Regional CDNs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500+ edge locations, global</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ALB/NLB (5 regions)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Ultra-high throughput, 10k+ QPS</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Kinesis + Kafka</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Real-time streams, partitioned</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Redshift</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Peta-scale analytics warehouse</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SageMaker ML Endpoints</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$4,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">GPU workers, model serving</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DataDog APM + Monitoring</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$5,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Distributed tracing, 50+ hosts</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Shield Advanced + WAF</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DDoS protection, $3k/mo base</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cognito + Secrets Manager</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MFA, rotation, 5M+ MAU</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OpenAI API (Token Pooling)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$5,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bulk pricing, ~500k requests/mo</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Google Vision + Gemini</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-model, high volume</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Stripe + PayPal</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$15,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">High-volume global payments</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Twilio + SendGrid</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Global SMS + email marketing</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Google Maps Advanced</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$1,500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">POI, routing, ~200k/mo</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Neural Translation API</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Real-time translation, 20+ languages</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><p class="tableblock"><strong>Total Monthly OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$74,800</strong></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_timeline_4"><a class="anchor" href="#_timeline_4"></a>7.5. Timeline</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/diag-c105e3fff2bca66dc69673ca745b3bbb68172749.svg" alt="Option 4 Development Timeline">
-</div>
-<div class="title">Figure 8. Option 4 Development Timeline</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_when_to_choose_option_4"><a class="anchor" href="#_when_to_choose_option_4"></a>7.6. When to Choose Option 4</h3>
 <div class="paragraph">
-<p>This is <strong>not a starting point</strong> — it&#8217;s a migration target.  Trigger conditions:</p>
+<p>This section is <strong>not an option to choose now</strong> — it describes the migration path if the product outgrows Options 2 or 3.</p>
+</div>
+<div class="paragraph">
+<p>When the modular monolith reaches its limits, the architecture evolves toward:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Active users exceed 100k+ and growing</p>
+<p><strong>EKS + Istio</strong> service mesh — decompose modules into independent services</p>
 </li>
 <li>
-<p>Database queries hitting performance limits despite indexing</p>
+<p><strong>Aurora Global DB</strong> — sharding, cross-region replication</p>
 </li>
 <li>
-<p>Monthly revenue justifies $74,800/mo infrastructure spend</p>
+<p><strong>Kafka</strong> for high-throughput event streaming (replacing SQS at scale)</p>
 </li>
 <li>
-<p>Team has grown to 15+ and needs microservices team boundaries</p>
+<p><strong>Multi-region active-active</strong> deployment (US, China, EU)</p>
 </li>
 <li>
-<p>Business requires ≥5-region active-active presence</p>
+<p><strong>SageMaker</strong> for custom ML model training</p>
 </li>
 </ul>
+</div>
+<div class="sect2">
+<h3 id="_trigger_conditions"><a class="anchor" href="#_trigger_conditions"></a>7.1. Trigger Conditions</h3>
+<div class="paragraph">
+<p>This migration makes sense only when:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Active users exceed <strong>100k+</strong> and growing</p>
+</li>
+<li>
+<p>Database queries hit performance limits despite indexing and read replicas</p>
+</li>
+<li>
+<p>Monthly revenue justifies <strong>$50k+/mo</strong> infrastructure spend</p>
+</li>
+<li>
+<p>Team has grown to <strong>15+</strong> and needs microservices team boundaries</p>
+</li>
+<li>
+<p>Business requires multi-region active-active presence</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Detailed architecture and cost breakdown available on request once trigger conditions are met.</p>
 </div>
 </div>
 </div>
@@ -2436,7 +2234,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>DDoS protection</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CloudFront + WAF</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">WAF in Option 3, Shield Advanced in Option 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WAF in Option 3, Shield Advanced available as scaling path upgrade</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Payment security</strong></p></td>
@@ -2454,12 +2252,12 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <div class="sect2">
 <h3 id="_approach"><a class="anchor" href="#_approach"></a>9.1. Approach</h3>
 <div class="paragraph">
-<p>Per mentor guidance, costs are estimated using <strong>developer-price × time</strong>, not per-module:</p>
+<p>Costs are estimated using <strong>developer-price × time</strong>, not per-module:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Rate:</strong> $600/day for mid-level developers, $700/day blended for senior-heavy teams (Option 4)</p>
+<p><strong>Rate:</strong> $600/day for mid-level developers</p>
 </li>
 <li>
 <p><strong>Working days:</strong> 20 per month</p>
@@ -2500,17 +2298,12 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Option 2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">25-35%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">POC/MVP same as Option 1 (25%). Full phase adds China data residency, Stripe PCI, cross-region replication (35%)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POC/MVP same as Option 1 (25%). Full phase adds Stripe PCI, partner integrations (35%)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Option 3</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">30-40%</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full microservices from Day 1, 3 simultaneous regions, 10-person team coordination, multiple vendor integrations</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Option 4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">35-45%</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Live system migration, Kubernetes learning curve, database sharding, unknown load patterns at 50M+ users</p></td>
 </tr>
 </tbody>
 </table>
@@ -2518,7 +2311,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <div class="sect2">
 <h3 id="_capex_summary"><a class="anchor" href="#_capex_summary"></a>9.3. CAPEX Summary</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 10. Cost Comparison Chart</caption>
+<caption class="title">Table 8. Cost Comparison Chart</caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
@@ -2537,32 +2330,25 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>1: MVP</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>1: Validate</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$240,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$835</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$820</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4 devs</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>2: Progressive</strong> ⭐</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$531,600</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$2,630</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4→6 devs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>2: Validate + Monetize</strong> ⭐</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$543,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$785</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~8 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 devs</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3: All Features</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3: Full Platform</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$1,653,600</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$6,550</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">10 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">8→10 devs</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>4: Klook Scale</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$3,528,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$74,800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs</p></td>
 </tr>
 </tbody>
 </table>
@@ -2573,26 +2359,32 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <h2 id="_assumptions_constraints"><a class="anchor" href="#_assumptions_constraints"></a>10. Assumptions &amp; Constraints</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_assumptions_to_verify_with_client"><a class="anchor" href="#_assumptions_to_verify_with_client"></a>10.1. Assumptions (To Verify with Client)</h3>
+<h3 id="_assumptions"><a class="anchor" href="#_assumptions"></a>10.1. Assumptions</h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p><strong>I assume the application will be popular</strong> — therefore we need to prepare an architecture that can scale. The progressive approach (Option 2) allows us to validate before investing in scale infrastructure. <em>Is that correct?</em></p>
+<p><strong>Budget was not discussed</strong> — we assume a Year 1 investment capacity of <strong>$500k–$600k</strong> (CAPEX + team + OPEX). Option 2 fits within this range at ~$792k TCO including team costs. <em>If the actual budget is materially different, prioritization may change.</em></p>
 </li>
 <li>
-<p><strong>I assume offline mode is essential for tourists</strong> — areas like mountain vineyards may have poor connectivity. We plan an on-device ML model (70-80% accuracy) for basic recognition offline. <em>Is that acceptable, or must offline accuracy match online (95%)?</em></p>
+<p><strong>The application will be popular</strong> — therefore we need an architecture that can scale. The progressive approach (Option 2) validates before investing in scale infrastructure.</p>
 </li>
 <li>
-<p><strong>I assume US and China are the priority markets</strong> — therefore we deploy to these regions first (Option 2). EU and APAC can follow in Year 2-3 when traffic justifies the cost. <em>Are there other priority regions?</em></p>
+<p><strong>Offline mode is essential for tourists</strong> — areas like mountain vineyards may have poor connectivity. On-device ML is deferred to the Full phase to reduce initial complexity. Basic offline caching of previously viewed content is included in MVP.</p>
 </li>
 <li>
-<p><strong>I assume partner onboarding is a manual process initially</strong> — the client team will sign partners and enter their information. A self-service partner portal comes in Phase 2 (Full). <em>Is that acceptable for launch?</em></p>
+<p><strong>US is the priority market</strong> — we deploy to US only. China infrastructure is Terraform-ready but not deployed until business triggers justify it (first Chinese attraction partner signed).</p>
 </li>
 <li>
-<p><strong>I assume the app won&#8217;t need real-time AR overlays</strong> — the flow is: take photo → get description. Not: point camera → see live overlays. This significantly reduces mobile complexity. <em>Is that correct?</em></p>
+<p><strong>Partner onboarding is manual initially</strong> — the client team signs partners and enters their information. A self-service partner portal comes in Phase 2 (Full).</p>
 </li>
 <li>
-<p><strong>I assume a 20-50% risk buffer is acceptable</strong> — based on the complexity of AI integration and multi-region deployment. <em>Does the client have internal engineering estimates to compare?</em></p>
+<p><strong>No real-time AR overlays</strong> — the flow is: take photo → get description. Not: point camera → see live overlays. This significantly reduces mobile complexity.</p>
+</li>
+<li>
+<p><strong>Team of 5 developers</strong> — stable throughout the project. No mid-project scaling. See <a href="#Team Structure">[Team Structure]</a> for role breakdown.</p>
+</li>
+<li>
+<p><strong>Risk buffer of 20-50%</strong> — applied per phase based on complexity. AI integration and dual-platform native mobile carry the highest uncertainty.</p>
 </li>
 </ol>
 </div>
@@ -2602,7 +2394,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>China data residency:</strong> Personal data of Chinese users must remain in mainland China (Cybersecurity Law)</p>
+<p><strong>China data residency:</strong> When China is deployed, personal data of Chinese users must remain in mainland China (Cybersecurity Law). Infrastructure is Terraform-ready.</p>
 </li>
 <li>
 <p><strong>PCI-DSS compliance:</strong> Payment card data must be tokenized through Stripe — never stored in our systems</p>
@@ -2614,7 +2406,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <p><strong>AI API availability:</strong> OpenAI may be blocked or restricted in China — Gemini serves as primary provider there</p>
 </li>
 <li>
-<p><strong>App Store approval:</strong> Both Apple App Store and Google Play require review cycles (1-2 weeks each)</p>
+<p><strong>App Store approval:</strong> Both Apple App Store and Google Play require review cycles (1-2 weeks each). Timeline includes a 2-week review block.</p>
 </li>
 </ul>
 </div>
@@ -2627,16 +2419,16 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p><strong>Approve Option 2</strong> as the implementation approach</p>
+<p><strong>Approve Option 2</strong> as the implementation approach (~$543k CAPEX, ~$785/mo OPEX)</p>
 </li>
 <li>
 <p><strong>Confirm technology stack</strong> — FastAPI (Python) backend, Swift (iOS) + Kotlin (Android) native</p>
 </li>
 <li>
-<p><strong>Confirm team structure</strong> — 4 developers for POC/MVP, scale to 6 for Full phase</p>
+<p><strong>Confirm team structure</strong> — 5 developers, stable throughout the project (2 Backend, 1 iOS, 1 Android, 1 Mobile Lead)</p>
 </li>
 <li>
-<p><strong>Verify assumptions</strong> — especially market priority regions and offline accuracy requirements</p>
+<p><strong>Confirm budget range</strong> — Year 1 TCO ~$792k (CAPEX + team + OPEX)</p>
 </li>
 <li>
 <p><strong>Week 1:</strong> Requirements refinement + design sprints</p>
@@ -2648,13 +2440,13 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <p><strong>Week 3:</strong> Sprint 1 begins (Backend APIs + Mobile shell)</p>
 </li>
 <li>
-<p><strong>POC Demo:</strong> April 30, 2026</p>
+<p><strong>POC Demo:</strong> May 15, 2026</p>
 </li>
 <li>
-<p><strong>MVP Launch:</strong> June 30, 2026</p>
+<p><strong>MVP Launch:</strong> July 15, 2026 (after App Store review)</p>
 </li>
 <li>
-<p><strong>Full Release:</strong> September 20, 2026</p>
+<p><strong>Full Release:</strong> October 20, 2026</p>
 </li>
 </ol>
 </div>
@@ -2664,39 +2456,36 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <h2 id="_appendix_artifact_inventory"><a class="anchor" href="#_appendix_artifact_inventory"></a>12. Appendix: Artifact Inventory</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_architecture_diagrams_4_options_inline_plantuml_via_kroki"><a class="anchor" href="#_architecture_diagrams_4_options_inline_plantuml_via_kroki"></a>12.1. Architecture Diagrams (4 options — inline PlantUML via Kroki)</h3>
+<h3 id="_architecture_diagrams_3_options_inline_plantuml_via_kroki"><a class="anchor" href="#_architecture_diagrams_3_options_inline_plantuml_via_kroki"></a>12.1. Architecture Diagrams (3 options — inline PlantUML via Kroki)</h3>
 <div class="ulist">
 <ul>
 <li>
 <p>Option 1 — Modular monolith, US only</p>
 </li>
 <li>
-<p>Option 2 — Progressive build, US + China (RECOMMENDED)</p>
+<p>Option 2 — Progressive build, US only, China Terraform-ready (RECOMMENDED)</p>
 </li>
 <li>
-<p>Option 3 — Full microservices, US + China + EU</p>
+<p>Option 3 — Full platform, US + China + EU</p>
 </li>
 <li>
-<p>Option 4 — Kubernetes scale, 5 global regions</p>
+<p>Scaling Path — migration triggers for future growth</p>
 </li>
 </ul>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_timeline_gantt_charts_4_options_inline_mermaid_via_kroki"><a class="anchor" href="#_timeline_gantt_charts_4_options_inline_mermaid_via_kroki"></a>12.2. Timeline Gantt Charts (4 options — inline Mermaid via Kroki)</h3>
+<h3 id="_timeline_gantt_charts_inline_plantuml_via_kroki"><a class="anchor" href="#_timeline_gantt_charts_inline_plantuml_via_kroki"></a>12.2. Timeline Gantt Charts (inline PlantUML via Kroki)</h3>
 <div class="ulist">
 <ul>
 <li>
 <p>Option 1 — 4 months, 4 devs, 2 streams</p>
 </li>
 <li>
-<p>Option 2 — 7 months, 4→6 devs, 3 streams</p>
+<p>Option 2 — ~8 months, 5 devs, 3 streams (iOS, Android, Backend)</p>
 </li>
 <li>
-<p>Option 3 — 10 months, 8→10 devs, 4 streams</p>
-</li>
-<li>
-<p>Option 4 — 12 months, 15 devs, 5 streams</p>
+<p>Option 3 — overview only (10 months, 8→10 devs)</p>
 </li>
 </ul>
 </div>
@@ -2706,10 +2495,13 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <div class="ulist">
 <ul>
 <li>
-<p>CAPEX breakdown per phase (4 options)</p>
+<p>CAPEX breakdown per phase (3 options)</p>
 </li>
 <li>
-<p>Monthly OPEX line items (4 options)</p>
+<p>Monthly OPEX line items (3 options)</p>
+</li>
+<li>
+<p>Year 1 TCO summary (Option 2)</p>
 </li>
 <li>
 <p>Cost comparison summary table</p>
@@ -2731,13 +2523,13 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 <p><code>docs/user-stories.adoc</code> — Epic-based user stories with acceptance criteria</p>
 </li>
 <li>
-<p><code>assignment/meeting-1.adoc</code> — Assignment brief and mentor requirements</p>
+<p><code>assignment/meeting-1.adoc</code> — Assignment brief and requirements</p>
 </li>
 <li>
 <p><code>assignment/key-informations.md</code> — Client requirements notes</p>
 </li>
 <li>
-<p><code>assignment/notes</code> — Mentor feedback</p>
+<p><code>assignment/notes</code> — Internal feedback</p>
 </li>
 </ul>
 </div>
@@ -2747,7 +2539,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-13 10:27:41 +0100
+Last updated 2026-02-23 15:03:29 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
