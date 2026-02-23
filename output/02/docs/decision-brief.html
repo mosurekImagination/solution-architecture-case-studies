@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
-<meta name="author" content="[Author Name]">
-<title>[Project Name] — Solution Design (Compact)</title>
+<meta name="author" content="Solution Architect">
+<title>Decision Brief — Data-Driven Customer Engagement Platform</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,557 +438,194 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>[Project Name] — Solution Design (Compact)</h1>
+<h1>Decision Brief — Data-Driven Customer Engagement Platform</h1>
 <div class="details">
-<span id="author" class="author">[Author Name]</span><br>
-<span id="revdate">[YYYY-MM-DD]</span>
+<span id="author" class="author">Solution Architect</span><br>
+<span id="revdate">2026-02-19</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_executive_summary">1. Executive Summary</a>
+<li><a href="#_1_what_were_building">1. What We&#8217;re Building</a></li>
+<li><a href="#_2_architecture_decisions_made">2. Architecture Decisions Made</a>
 <ul class="sectlevel2">
-<li><a href="#_context">1.1. Context</a></li>
-<li><a href="#_recommendation_at_a_glance">1.2. Recommendation at a Glance</a></li>
-<li><a href="#_key_decisions_required">1.3. Key Decisions Required</a></li>
+<li><a href="#_adr_001_data_platform_snowflake_on_aws">ADR-001: Data Platform → Snowflake on AWS</a></li>
+<li><a href="#_adr_002_data_ingestion_strategy">ADR-002: Data Ingestion Strategy</a></li>
 </ul>
 </li>
-<li><a href="#_problem_vision">2. Problem &amp; Vision</a>
+<li><a href="#_3_what_we_need_from_you">3. What We Need From You</a>
 <ul class="sectlevel2">
-<li><a href="#_current_pain_points">2.1. Current Pain Points</a></li>
-<li><a href="#_target_state">2.2. Target State</a></li>
+<li><a href="#_blockers_must_answer_before_implementation_starts">Blockers (must answer before implementation starts)</a></li>
+<li><a href="#_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy">Important (we can proceed with assumptions, but answers improve accuracy)</a></li>
+<li><a href="#_what_were_not_asking_handled_via_professional_assumptions">What We&#8217;re NOT Asking (handled via professional assumptions)</a></li>
 </ul>
 </li>
-<li><a href="#_solution_overview">3. Solution Overview</a>
-<ul class="sectlevel2">
-<li><a href="#_system_context">3.1. System Context</a></li>
-<li><a href="#_high_level_architecture">3.2. High-Level Architecture</a></li>
-</ul>
-</li>
-<li><a href="#_options_comparison">4. Options Comparison</a>
-<ul class="sectlevel2">
-<li><a href="#_side_by_side">4.1. Side-by-Side</a></li>
-<li><a href="#_weighted_scoring">4.2. Weighted Scoring</a></li>
-<li><a href="#_cost_comparison">4.3. Cost Comparison</a></li>
-</ul>
-</li>
-<li><a href="#_recommended_option_option_name">5. Recommended Option: [Option Name]</a>
-<ul class="sectlevel2">
-<li><a href="#_what_it_delivers">5.1. What It Delivers</a></li>
-<li><a href="#_business_value">5.2. Business Value</a></li>
-<li><a href="#_cost_summary">5.3. Cost Summary</a></li>
-<li><a href="#_pros_cons">5.4. Pros &amp; Cons</a></li>
-</ul>
-</li>
-<li><a href="#_risks_assumptions">6. Risks &amp; Assumptions</a>
-<ul class="sectlevel2">
-<li><a href="#_key_risks">6.1. Key Risks</a></li>
-<li><a href="#_key_assumptions">6.2. Key Assumptions</a></li>
-<li><a href="#_key_dependencies">6.3. Key Dependencies</a></li>
-</ul>
-</li>
-<li><a href="#_timeline">7. Timeline</a>
-<ul class="sectlevel2">
-<li><a href="#_phase_cost_summary">7.1. Phase Cost Summary</a></li>
-</ul>
-</li>
-<li><a href="#_next_steps_decisions_needed">8. Next Steps &amp; Decisions Needed</a>
-<ul class="sectlevel2">
-<li><a href="#_immediate_actions">8.1. Immediate Actions</a></li>
-<li><a href="#_what_happens_after_approval">8.2. What Happens After Approval</a></li>
-</ul>
-</li>
+<li><a href="#_4_risks_mitigations">4. Risks &amp; Mitigations</a></li>
+<li><a href="#_5_cost_at_a_glance">5. Cost at a Glance</a></li>
+<li><a href="#_6_timeline">6. Timeline</a></li>
+<li><a href="#_7_decisions_we_need_from_you">7. Decisions We Need From You</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_executive_summary"><a class="anchor" href="#_executive_summary"></a>1. Executive Summary</h2>
+<h2 id="_1_what_were_building"><a class="anchor" href="#_1_what_were_building"></a>1. What We&#8217;re Building</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A unified data platform that consolidates customer data from all your systems into one analytical store, powering personalized product recommendations delivered via email and mobile push.</p>
+</div>
+<div class="paragraph">
+<p><strong>Goal:</strong> Increase turnover by 20% through AI-driven personalization.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Budget</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500K (confirmed)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Timeline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7–10 months, phased delivery</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Go-Live</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">April 2027</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4–6 engineers</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Monthly Cost (post-launch)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$6K–$15K</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_2_architecture_decisions_made"><a class="anchor" href="#_2_architecture_decisions_made"></a>2. Architecture Decisions Made</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_context"><a class="anchor" href="#_context"></a>1.1. Context</h3>
-<div class="paragraph">
-<p><em>One paragraph: what is the project, who is it for, and why is it needed now.</em></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_recommendation_at_a_glance"><a class="anchor" href="#_recommendation_at_a_glance"></a>1.2. Recommendation at a Glance</h3>
+<h3 id="_adr_001_data_platform_snowflake_on_aws"><a class="anchor" href="#_adr_001_data_platform_snowflake_on_aws"></a>ADR-001: Data Platform → Snowflake on AWS</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 75%;">
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Aspect</th>
-<th class="tableblock halign-left valign-top">Summary</th>
-</tr>
-</thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Recommended Option</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Option N — Name]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Decision</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Snowflake</strong> on AWS EU region + dbt (transformation) + Apache Airflow (orchestration)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high] (incl. [N]% contingency)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Best balance of capability, simplicity, and cost for a team with no data engineering experience</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]/month</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why not Databricks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Exceeds budget ($800K+); requires Spark expertise the team lacks</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N]–[N] months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why not custom/open-source</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operational burden contradicts non-technical team profile; slower time-to-value</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team Size</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] developers ([composition, e.g., 2 BE + 1 FE + 1 QA])</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Go-Live Target</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Status</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Proposed — awaiting approval</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_key_decisions_required"><a class="anchor" href="#_key_decisions_required"></a>1.3. Key Decisions Required</h3>
+<h3 id="_adr_002_data_ingestion_strategy"><a class="anchor" href="#_adr_002_data_ingestion_strategy"></a>ADR-002: Data Ingestion Strategy</h3>
+<div class="paragraph">
+<p><strong>Four data sources, four ingestion paths — all converging on S3 → Snowflake.</strong></p>
+</div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 16.6666%;">
-<col style="width: 50%;">
-<col style="width: 33.3334%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 16.6668%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Decision</th>
-<th class="tableblock halign-left valign-top">Needed By</th>
+<th class="tableblock halign-left valign-top">Source</th>
+<th class="tableblock halign-left valign-top">Strategy</th>
+<th class="tableblock halign-left valign-top">How It Works</th>
+<th class="tableblock halign-left valign-top">Schedule</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Approve recommended option and budget]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>WordPress DB</strong> (900GB, on-prem)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct SQL via VPN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Airflow DAGs run custom SQL queries over VPN, extract only analytically relevant tables (~10-30%), land in S3 → Snowflake. Read replica isolates production.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Nightly + weekly full refresh</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Confirm cloud provider (AWS preferred)]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Mobile App</strong> (2M installs, external vendor)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API + periodic DB export (hybrid)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vendor APIs for ongoing incremental data + periodic DB dump for backfill and data the API doesn&#8217;t expose. Both land in S3 → Snowflake.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Daily (API) + weekly (export)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Allocate team for POC sprint]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Wholesalers</strong> (multiple suppliers)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File landing zone</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Suppliers provide files in any format (CSV, Excel, XML). Files land in S3, Snowflake loads as semi-structured data, dbt transforms per supplier.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">On file arrival</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Customer Emails</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Part of WordPress extraction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not a separate pipeline. Extracted with WordPress data. Email validation and cleanup handled in dbt.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">With WordPress pipeline</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_problem_vision"><a class="anchor" href="#_problem_vision"></a>2. Problem &amp; Vision</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_current_pain_points"><a class="anchor" href="#_current_pain_points"></a>2.1. Current Pain Points</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 16.6666%;">
-<col style="width: 50%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Problem</th>
-<th class="tableblock halign-left valign-top">Business Impact</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Manual data entry across 3 disconnected systems]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 40 hrs/week wasted, error rate ~15%]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., No real-time visibility into operations]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Delayed decisions, missed SLAs]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Cannot scale to new regions]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Blocked revenue growth]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_target_state"><a class="anchor" href="#_target_state"></a>2.2. Target State</h3>
 <div class="paragraph">
-<p><em>2-3 sentences describing what the world looks like after this solution is delivered. Focus on business outcomes, not technology.</em></p>
+<p><strong>Key alternatives evaluated and rejected:</strong></p>
 </div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_solution_overview"><a class="anchor" href="#_solution_overview"></a>3. Solution Overview</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_system_context"><a class="anchor" href="#_system_context"></a>3.1. System Context</h3>
-<div class="paragraph">
-<p>Who uses the system and what does it connect to.</p>
-</div>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-c4-context-c0ac139f99178f3157f8ca8d4a6fc079b86a3aae.svg" alt="System Context — [Project Name]">
-</div>
-<div class="title">Figure 1. System Context — [Project Name]</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>3.2. High-Level Architecture</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-architecture-15f7feac6d0bbae473f1401dd2c5f2f83089a069.svg" alt="Architecture — Recommended Option">
-</div>
-<div class="title">Figure 2. Architecture — Recommended Option</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options_comparison"><a class="anchor" href="#_options_comparison"></a>4. Options Comparison</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_side_by_side"><a class="anchor" href="#_side_by_side"></a>4.1. Side-by-Side</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
+<col style="width: 60%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Aspect</th>
-<th class="tableblock halign-left valign-top">Option 1: MVP</th>
-<th class="tableblock halign-left valign-top">Option 2: Full</th>
-<th class="tableblock halign-left valign-top">Option 3: Scale</th>
+<th class="tableblock halign-left valign-top">Alternative</th>
+<th class="tableblock halign-left valign-top">Why Not</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Core features only</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All features</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">All + multi-region</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full MySQL → RDS replication (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replicates 900GB including irrelevant data. Cost: ~$600-800/mo. <em>Revisit if we need &gt;80% of tables.</em></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 devs (2 BE + 1 FE + 1 QA)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 devs (3 BE + 2 FE + 2 QA + 1 SA)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">15 devs (multi-team)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS DMS managed replication (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Known issues with heavily-customized MySQL schemas. Direct SQL gives more control.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CDC with Debezium + Kafka (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team cannot operate Kafka. MSK costs ~$8-12K/mo. Real-time not requested.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX (incl. contingency)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API-only for mobile (no DB export)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Risk: API may not expose all data needed for recommendations. Hybrid de-risks this.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct DB access for mobile (no API)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Too fragile — vendor controls schema, can change without notice. No SLA.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_weighted_scoring"><a class="anchor" href="#_weighted_scoring"></a>4.2. Weighted Scoring</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 42.8571%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2858%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Criteria</th>
-<th class="tableblock halign-left valign-top">Weight</th>
-<th class="tableblock halign-left valign-top">Opt 1</th>
-<th class="tableblock halign-left valign-top">Opt 2</th>
-<th class="tableblock halign-left valign-top">Opt 3</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Time to Market</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Total Cost</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Feature Completeness</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Operational Risk</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Weighted Total</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>50</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>44</strong></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><em>Score: 1 (worst) to 5 (best). Total = Σ(weight × score). <strong>Recommendation: Option [N]</strong>.</em></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>4.3. Cost Comparison</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-cost-comparison-d46abe0af3bbb86f4aa3dc10b70fb44b542786c0.svg" alt="Monthly OPEX by Option">
-</div>
-<div class="title">Figure 3. Monthly OPEX by Option</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_recommended_option_option_name"><a class="anchor" href="#_recommended_option_option_name"></a>5. Recommended Option: [Option Name]</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_what_it_delivers"><a class="anchor" href="#_what_it_delivers"></a>5.1. What It Delivers</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>[Key deliverable 1 — e.g., Mobile app with AI-powered recommendations]</p>
-</li>
-<li>
-<p>[Key deliverable 2 — e.g., Admin portal for content management]</p>
-</li>
-<li>
-<p>[Key deliverable 3 — e.g., Analytics dashboard]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_business_value"><a class="anchor" href="#_business_value"></a>5.2. Business Value</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Value Driver</th>
-<th class="tableblock halign-left valign-top">Current Cost / Pain</th>
-<th class="tableblock halign-left valign-top">Expected Improvement</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Manual processes]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 40 hrs/week wasted]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., 90% automation → $X/year saved]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Customer churn]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., X% monthly]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Target &lt; Y% with improved UX]</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Estimated payback period:</strong> [e.g., ~N months]</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cost_summary"><a class="anchor" href="#_cost_summary"></a>5.3. Cost Summary</h3>
-<div class="sect3">
-<h4 id="_development_investment_capex"><a class="anchor" href="#_development_investment_capex"></a>5.3.1. Development Investment (CAPEX)</h4>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 25%;">
-<col style="width: 12.5%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Role / Item</th>
-<th class="tableblock halign-left valign-top">Count</th>
-<th class="tableblock halign-left valign-top">Rate</th>
-<th class="tableblock halign-left valign-top">Duration</th>
-<th class="tableblock halign-left valign-top">Deliverable</th>
-<th class="tableblock halign-left valign-top">Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Backend Developer</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Core API, integrations]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Frontend / Mobile</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[rate]/mo</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Mobile app, admin portal]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cloud Setup</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Infra, CI/CD, environments]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[low]–$[high]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Subtotal</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[subtotal]</strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Contingency ([N]%)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Integration unknowns, vendor delays</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[contingency]</strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[low]–$[high]</strong></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="_operational_costs_opex"><a class="anchor" href="#_operational_costs_opex"></a>5.3.2. Operational Costs (OPEX)</h4>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Service</th>
-<th class="tableblock halign-left valign-top">Spec</th>
-<th class="tableblock halign-left valign-top">Monthly Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cloud Infrastructure</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Third-Party Licenses</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[spec]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency / headroom (10%)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Spike traffic, extra environments</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[low]–$[high]/mo</strong></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_pros_cons"><a class="anchor" href="#_pros_cons"></a>5.4. Pros &amp; Cons</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Pros</th>
-<th class="tableblock halign-left valign-top">Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 2]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 3]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 3]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EDI for wholesalers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$50-100K+ setup. Designed for supply chain operations, not analytics.</p></td>
 </tr>
 </tbody>
 </table>
@@ -996,10 +633,90 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_risks_assumptions"><a class="anchor" href="#_risks_assumptions"></a>6. Risks &amp; Assumptions</h2>
+<h2 id="_3_what_we_need_from_you"><a class="anchor" href="#_3_what_we_need_from_you"></a>3. What We Need From You</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p><strong>6 questions — 3 blockers, 3 important.</strong> We&#8217;ve minimized questions by making professional assumptions where possible (documented in ADR-002).</p>
+</div>
 <div class="sect2">
-<h3 id="_key_risks"><a class="anchor" href="#_key_risks"></a>6.1. Key Risks</h3>
+<h3 id="_blockers_must_answer_before_implementation_starts"><a class="anchor" href="#_blockers_must_answer_before_implementation_starts"></a>Blockers (must answer before implementation starts)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Question</th>
+<th class="tableblock halign-left valign-top">Why It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can we get <strong>read-only MySQL access</strong> to inventory WordPress tables? (Schema structure only — not the data itself.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Determines whether we extract 10-30% of tables (direct SQL, our recommendation) or replicate everything (RDS, more expensive). This single answer shapes the pipeline architecture.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can we get the <strong>mobile vendor&#8217;s API documentation</strong>? (Endpoints, auth, rate limits, available data.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Without this, we cannot design the mobile data pipeline. No assumption possible — vendor-specific.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>How many wholesalers</strong> provide data, and can we get <strong>2-3 sample files</strong>?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Need to see real formats to build the file processing pipeline. Number of suppliers determines scaling.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy"><a class="anchor" href="#_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy"></a>Important (we can proceed with assumptions, but answers improve accuracy)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Question</th>
+<th class="tableblock halign-left valign-top">Our Assumption If Unanswered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Is there an <strong>existing VPN or Direct Connect</strong> between on-prem and AWS?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No — we budget 2-4 weeks + $5-10K for setup.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can your infra team set up a <strong>MySQL read replica</strong>?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes — standard MySQL feature. Fallback: read-only user on production with query limits.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Would the mobile vendor provide <strong>periodic DB exports</strong> (e.g., weekly CSV to S3)?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes — low-effort ask for a vendor in 3-year maintenance contract. Fallback: API-only.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_what_were_not_asking_handled_via_professional_assumptions"><a class="anchor" href="#_what_were_not_asking_handled_via_professional_assumptions"></a>What We&#8217;re NOT Asking (handled via professional assumptions)</h3>
+<div class="paragraph">
+<p>WordPress timestamp columns, schema change frequency, API auth method, API rate limits, schema documentation, background job tooling, AWS SES config — all assumed with standard defaults and verified during PoC.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_4_risks_mitigations"><a class="anchor" href="#_4_risks_mitigations"></a>4. Risks &amp; Mitigations</h2>
+<div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 28.5714%;">
@@ -1012,226 +729,185 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <th class="tableblock halign-left valign-top">Risk</th>
 <th class="tableblock halign-left valign-top">Likelihood</th>
 <th class="tableblock halign-left valign-top">Impact</th>
-<th class="tableblock halign-left valign-top">Mitigation</th>
+<th class="tableblock halign-left valign-top">Our Plan</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Third-party API changes]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WordPress custom schema breaks extraction</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Abstraction layer, contract tests]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct SQL extraction + dbt tests detect breakage. Schema assumed stable (15-year system). If needed: fallback to RDS replication.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Team ramp-up delay]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile vendor limits data access</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pair programming, documentation]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hybrid approach (API + export) maximizes coverage. APIs confirmed. DB "available on request." Fallback: API-only.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Scope creep]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Wholesaler format chaos</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Fixed scope per phase, change request process]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake schema-on-read handles any format. Per-supplier dbt models. Start with 1-2 suppliers.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No internal team to own the platform</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Knowledge transfer built into every phase. Solution designed for SQL-proficient team (not Kafka/Spark experts).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Email data quality (stale addresses)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Validate early (Phase 1). Mobile push (2M installs) is fallback channel.</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_key_assumptions"><a class="anchor" href="#_key_assumptions"></a>6.2. Key Assumptions</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>[Assumption 1 — e.g., Cloud account provisioned before kickoff]</p>
-</li>
-<li>
-<p>[Assumption 2 — e.g., Product backlog prioritized by Sprint 1]</p>
-</li>
-<li>
-<p>[Assumption 3 — e.g., Client provides test data within 2 weeks]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_key_dependencies"><a class="anchor" href="#_key_dependencies"></a>6.3. Key Dependencies</h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Dependency</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Needed By</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., SSO credentials &amp; config]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client IT team]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Payment gateway sandbox]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client Finance]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-</tbody>
-</table>
-</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_timeline"><a class="anchor" href="#_timeline"></a>7. Timeline</h2>
+<h2 id="_5_cost_at_a_glance"><a class="anchor" href="#_5_cost_at_a_glance"></a>5. Cost at a Glance</h2>
 <div class="sectionbody">
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/compact-timeline-e34e38fa37f12d22d64f3507e66d1dd93ac6d227.svg" alt="Project Timeline — [Option Name]">
-</div>
-<div class="title">Figure 4. Project Timeline — [Option Name]</div>
-</div>
-<div class="sect2">
-<h3 id="_phase_cost_summary"><a class="anchor" href="#_phase_cost_summary"></a>7.1. Phase Cost Summary</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
+<col style="width: 50%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Component</th>
+<th class="tableblock halign-left valign-top">One-Time</th>
+<th class="tableblock halign-left valign-top">Monthly</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake (compute + storage)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$3K–$8K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS infrastructure (VPN, S3, Airflow)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$5K–$10K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$1.5K–$3K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS SES (email delivery)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500–$2K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Monitoring</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500–$1K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Development (team of 5, 7 months)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$300K–$420K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency (30%)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$80K–$130K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$385K–$500K</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$6K–$15K</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_6_timeline"><a class="anchor" href="#_6_timeline"></a>6. Timeline</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
 <col style="width: 40%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
+<col style="width: 40%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Phase</th>
 <th class="tableblock halign-left valign-top">Duration</th>
-<th class="tableblock halign-left valign-top">Team</th>
-<th class="tableblock halign-left valign-top">Cost</th>
+<th class="tableblock halign-left valign-top">Key Deliverable</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Foundation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 1: Foundation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 weeks (Apr–Jun 2026)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WordPress extraction pipeline live, data in Snowflake, email validation running</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Core Build</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 2: Intelligence</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8 weeks (Jun–Aug 2026)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Customer segmentation, recommendation engine, first email campaign sent</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Launch</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] weeks</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[N] devs</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency ([N]%)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$[cost]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[N] months</strong></p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$[total]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 3: Expansion</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 weeks (Aug–Oct 2026)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile vendor integration, wholesaler data, push notifications, full go-live</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-</div>
 <div class="sect1">
-<h2 id="_next_steps_decisions_needed"><a class="anchor" href="#_next_steps_decisions_needed"></a>8. Next Steps &amp; Decisions Needed</h2>
+<h2 id="_7_decisions_we_need_from_you"><a class="anchor" href="#_7_decisions_we_need_from_you"></a>7. Decisions We Need From You</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_immediate_actions"><a class="anchor" href="#_immediate_actions"></a>8.1. Immediate Actions</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 37.5%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
+<col style="width: 16.6666%;">
+<col style="width: 50%;">
+<col style="width: 33.3334%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Target Date</th>
+<th class="tableblock halign-left valign-top">Decision</th>
+<th class="tableblock halign-left valign-top">When</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Approve option and budget at steering committee]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client Sponsor]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Approve Snowflake platform + $500K budget envelope</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before Phase 1</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Sign off on team composition and start date]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client PM + Vendor PM]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Answer 6 discovery questions above (especially blockers Q1, Q4, Q6)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Immediately</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Provide SSO / API credentials for development]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client IT]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Initiate mobile vendor negotiation (API docs + export agreement)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Immediately (critical path)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Schedule kick-off and Sprint 0 planning]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Vendor PM]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[e.g., Confirm environments and access provisioning]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Client DevOps]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Date]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Identify 1-2 internal people for knowledge transfer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before Phase 1</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_what_happens_after_approval"><a class="anchor" href="#_what_happens_after_approval"></a>8.2. What Happens After Approval</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Week 1-2</strong> — Kick-off, environment setup, Sprint 0</p>
-</li>
-<li>
-<p><strong>Week 3-4</strong> — POC delivery, first client demo</p>
-</li>
-<li>
-<p><strong>Month 2-3</strong> — Core build sprints with bi-weekly demos</p>
-</li>
-<li>
-<p><strong>Month 3-4</strong> — UAT, bug fixes, go-live preparation</p>
-</li>
-<li>
-<p><strong>Go-Live</strong> — Production deployment + hypercare (2 weeks)</p>
-</li>
-</ol>
-</div>
 <hr>
-<div class="paragraph text-center">
-<p><em>For technical deep-dive see the full <a href="solution-design-template.adoc">Solution Design Document</a> (25 sections, 16 diagrams).</em></p>
-</div>
+<div class="paragraph">
+<p><em>This brief summarizes decisions from the full solution design and architecture decision records. For detailed analysis, alternatives comparison, and traceability, see the linked documents.</em></p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-13 10:27:41 +0100
+Last updated 2026-02-19 01:22:29 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

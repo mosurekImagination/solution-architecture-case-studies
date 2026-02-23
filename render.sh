@@ -62,7 +62,7 @@ check_prerequisites() {
   fi
 
   # Check asciidoctor-kroki availability
-  if npx asciidoctor --version &>/dev/null 2>&1; then
+  if npx --yes asciidoctor --version &>/dev/null 2>&1; then
     log_ok "asciidoctor available via npx"
   else
     log_warn "asciidoctor not found. Will attempt: npx asciidoctor"
@@ -90,7 +90,7 @@ render_file() {
 
   log_info "Rendering: ${relative_path}"
 
-  if npx asciidoctor \
+  if npx --yes asciidoctor \
     -r asciidoctor-kroki \
     -a kroki-server-url="${KROKI_URL}" \
     -a kroki-fetch-diagram \

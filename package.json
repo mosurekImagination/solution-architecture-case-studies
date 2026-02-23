@@ -1,0 +1,13 @@
+{
+  "name": "solution-architecture-case-studies",
+  "private": true,
+  "description": "AsciiDoc rendering toolchain for solution architecture case studies",
+  "scripts": {
+    "render": "./render.sh",
+    "render:check": "./render.sh --check"
+  },
+  "dependencies": {
+    "asciidoctor": "^3.0.0",
+    "asciidoctor-kroki": "^0.18.0"
+  }
+}

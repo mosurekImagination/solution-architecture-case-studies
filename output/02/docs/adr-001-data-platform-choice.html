@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
-<meta name="author" content="[Author Name]">
-<title>ADR-[NNN]: [Title of Decision]</title>
+<meta name="author" content="Solution Architect">
+<title>ADR-001: Choose Data Platform for Recommendation Engine</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>ADR-[NNN]: [Title of Decision]</h1>
+<h1>ADR-001: Choose Data Platform for Recommendation Engine</h1>
 <div class="details">
-<span id="author" class="author">[Author Name]</span><br>
-<span id="revdate">[YYYY-MM-DD]</span>
+<span id="author" class="author">Solution Architect</span><br>
+<span id="revdate">2026-02-19</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -468,18 +468,71 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_context"><a class="anchor" href="#_context"></a>Context</h2>
 <div class="sectionbody">
 <div class="paragraph">
+<p>The client — an international European webshop chain with 15 years of operational history and ~1M daily customers — needs a centralized analytical data platform to:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Consolidate data</strong> from isolated sources (WordPress DB, mobile app via external vendor, multiple wholesaler feeds)</p>
+</li>
+<li>
+<p><strong>Process and transform</strong> raw transactional data into analytical structures suitable for customer profiling</p>
+</li>
+<li>
+<p><strong>Power a recommendation engine</strong> that generates personalized product suggestions</p>
+</li>
+<li>
+<p><strong>Enable self-service analytics</strong> for the marketing team</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The client&#8217;s internal team is not deeply technical and has limited data engineering experience. The chosen platform must balance analytical capability with operational simplicity, as the client will eventually need to own and operate it.</p>
+</div>
+<div class="paragraph">
+<p>The Client Representative explicitly mentioned <strong>Snowflake</strong> and <strong>Databricks</strong> as technology options to investigate, noting:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Snowflake is "more like a Data Lake" — good for having everything in one place and running queries</p>
+</li>
+<li>
+<p>Databricks is "more complex and robust" — allows building various pipeline types and potentially training AI models</p>
+</li>
+<li>
+<p>Snowflake is more popular on AWS; Databricks is gaining momentum</p>
+</li>
+<li>
+<p>"Your AI is only as good as your data" — data quality is the critical foundation</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
 <p><strong>Relevant constraints:</strong></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>[Technical constraint — e.g., must integrate with existing SSO]</p>
+<p>Client team is not deeply technical — steep learning curves are risky</p>
 </li>
 <li>
-<p>[Business constraint — e.g., team has no Go experience]</p>
+<p><strong>No data team, no plans to hire, no expertise</strong> — "be the change" (confirmed 2026-02-19)</p>
 </li>
 <li>
-<p>[Timeline constraint — e.g., must be ready for Q3 launch]</p>
+<p>Must operate within EU for GDPR data residency compliance — GDPR consent confirmed</p>
+</li>
+<li>
+<p>WordPress must remain as-is — 900GB heavily-customized MySQL, hosted on-prem</p>
+</li>
+<li>
+<p>Mobile app has APIs and own DB on vendor backend (2M installs) — lower integration risk than initially assumed</p>
+</li>
+<li>
+<p><strong>Budget: $500K</strong> (confirmed) — fits Snowflake; eliminates Databricks full platform ($800K+)</p>
+</li>
+<li>
+<p>The platform should be extensible to AI/ML workloads in the future</p>
 </li>
 </ul>
 </div>
@@ -489,10 +542,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[e.g., § System Context — shows where this component fits]</p>
+<p>§ System Context — shows where the data platform fits in the overall architecture</p>
 </li>
 <li>
-<p>[e.g., § Data Architecture — data model impacted by this choice]</p>
+<p>§ Data Architecture — data flow from sources through ETL to analytical store</p>
+</li>
+<li>
+<p>§ Options Comparison — this ADR details the platform choice that underpins all three options</p>
 </li>
 </ul>
 </div>
@@ -502,7 +558,29 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_decision"><a class="anchor" href="#_decision"></a>Decision</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>We will use [Technology / Pattern / Approach] because [primary reason].</strong></p>
+<p><strong>We will use Snowflake as the analytical data platform because it provides the best balance of analytical capability, operational simplicity, and cost predictability for a team with limited data engineering experience.</strong></p>
+</div>
+<div class="paragraph">
+<p>Snowflake will serve as:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <strong>centralized analytical data store</strong> (OLAP) receiving data from all sources via ETL</p>
+</li>
+<li>
+<p>The <strong>query engine</strong> for customer segmentation and recommendation generation</p>
+</li>
+<li>
+<p>The <strong>data warehouse</strong> powering analytics dashboards for the marketing team</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>ETL orchestration will be handled by <strong>dbt</strong> (transformation) + <strong>Apache Airflow</strong> or a managed equivalent (orchestration), deployed on AWS alongside Snowflake.</p>
+</div>
+<div class="paragraph">
+<p>If the client&#8217;s needs evolve to require custom ML model training (beyond SQL-based analytics and basic ML via Snowpark), migration to Databricks or addition of SageMaker can be evaluated in a future ADR.</p>
 </div>
 </div>
 </div>
@@ -526,22 +604,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 1]</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Snowflake (Data Cloud)</strong> ✓ CHOSEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mature managed service with minimal ops burden. Strong SQL-first approach — accessible to non-ML engineers. Auto-scaling compute with pay-per-query pricing. Popular on AWS with large community. Snowpark enables Python/ML workloads. Strong GDPR compliance (EU regions available). Simpler learning curve for client team.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Proprietary — vendor lock-in risk. Limited native ML capabilities compared to Databricks (improving with Snowpark). Cost can spike with unoptimized queries at scale. Not ideal for real-time streaming (batch-oriented).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CHOSEN</strong> — best fit for current team skills, operational simplicity, and phase 1 requirements.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 2]</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Databricks (Data Lakehouse)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unified analytics and ML platform. Native MLflow for model training, tracking, and deployment. Supports streaming (Spark Structured Streaming) + batch. Open-source foundations (Apache Spark, Delta Lake). More advanced AI/ML capabilities out of the box. Flexible compute (notebooks, jobs, SQL warehouses).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Higher operational complexity — requires Spark expertise. Steeper learning curve for non-data-engineering teams. More complex pricing model (DBUs). Overengineered for Phase 1 scope (email suggestions). Requires more DevOps maturity to operate.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Client team lacks data engineering depth. Phase 1 requirements (ETL + SQL analytics + email) don&#8217;t justify the complexity. Databricks becomes relevant only if custom ML model training is needed (Phase 4+). Can be reconsidered in future ADR.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 3]</strong> (if applicable)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Custom ETL + PostgreSQL/BigQuery (Open Source)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lowest license cost (open-source ETL tools). No vendor lock-in. Full control over pipeline. Team can use familiar technologies (Python, SQL, PostgreSQL).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High operational burden — must manage infrastructure, scaling, monitoring. No managed auto-scaling. Slower to build — must build what Snowflake/Databricks provide out of the box. Limited analytical query performance at TB-scale. Requires dedicated DevOps/platform engineer.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Client explicitly mentioned Snowflake/Databricks — open-source is outside their expressed interest. Operational burden contradicts the "not deeply technical" team profile. Time-to-value is significantly longer. False economy — ops cost offsets license savings.</p></td>
 </tr>
 </tbody>
 </table>
@@ -555,13 +633,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[Benefit 1 — e.g., reduces deployment time by 50%]</p>
+<p><strong>Reduced operational burden</strong> — Snowflake is fully managed; no infrastructure to maintain, auto-scaling, auto-suspend</p>
 </li>
 <li>
-<p>[Benefit 2 — e.g., enables horizontal scaling]</p>
+<p><strong>SQL-first approach</strong> — accessible to the broadest range of team members, including marketing analysts</p>
 </li>
 <li>
-<p>[Benefit 3 — e.g., leverages existing team expertise]</p>
+<p><strong>Predictable costs</strong> — pay-per-query model with auto-suspend means idle clusters don&#8217;t cost money</p>
+</li>
+<li>
+<p><strong>Fast time to value</strong> — dbt + Snowflake is a well-established pattern; many pre-built connectors and templates available</p>
+</li>
+<li>
+<p><strong>EU compliance ready</strong> — Snowflake offers EU-hosted regions (Frankfurt, Dublin, etc.)</p>
+</li>
+<li>
+<p><strong>Extensibility</strong> — Snowpark allows Python/ML workloads when the team is ready for advanced analytics</p>
 </li>
 </ul>
 </div>
@@ -571,13 +658,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[Trade-off 1 — e.g., increased operational complexity]</p>
+<p><strong>Vendor lock-in</strong> — Snowflake SQL extensions and Snowpark are proprietary; migration to another platform requires rework</p>
 </li>
 <li>
-<p>[Trade-off 2 — e.g., vendor lock-in risk]</p>
+<p><strong>Limited real-time capability</strong> — Snowflake is batch-oriented; if real-time suggestions are needed later, additional infrastructure (Kafka, Flink) would be required</p>
 </li>
 <li>
-<p>[Trade-off 3 — e.g., learning curve for some team members]</p>
+<p><strong>ML ceiling</strong> — for advanced custom model training (deep learning, complex recommendation algorithms), Snowpark may not suffice; Databricks or SageMaker would be needed</p>
+</li>
+<li>
+<p><strong>Query cost discipline required</strong> — unoptimized queries or dashboard refreshes can spike costs unexpectedly</p>
 </li>
 </ul>
 </div>
@@ -587,13 +677,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Dependency accumulation risk:</strong> [Does this decision add a new runtime dependency, external service, or vendor relationship? What happens if that dependency is discontinued or changes pricing?]</p>
+<p><strong>Dependency accumulation risk:</strong> Adds Snowflake as a critical runtime dependency. If Snowflake changes pricing dramatically or has regional outages, the entire analytics pipeline is affected. Mitigation: data is replicated from source systems, so Snowflake is reconstructable.</p>
 </li>
 <li>
-<p><strong>Hiring impact:</strong> [Does this technology narrow or widen the hiring pool? Can the current team maintain this without the original author?]</p>
+<p><strong>Hiring impact:</strong> Snowflake skills are widely available in the market (more so than Databricks/Spark). SQL proficiency is sufficient for most operations. This <strong>widens</strong> the hiring pool compared to Databricks.</p>
 </li>
 <li>
-<p><strong>Operational burden:</strong> [What new operational skills does this require? Monitoring, upgrades, security patches?]</p>
+<p><strong>Operational burden:</strong> Minimal — Snowflake handles infrastructure. Team needs to learn: Snowflake SQL, dbt models, Airflow DAGs. Estimated ramp-up: 2-4 weeks for experienced SQL developers.</p>
 </li>
 </ul>
 </div>
@@ -603,10 +693,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[Observation 1 — e.g., requires updating CI/CD pipeline]</p>
+<p>Requires AWS account setup and networking configuration (VPC, private endpoints if needed)</p>
 </li>
 <li>
-<p>[Observation 2 — e.g., no impact on existing APIs]</p>
+<p>CI/CD pipeline needed for dbt model deployments (standard practice)</p>
+</li>
+<li>
+<p>Monitoring via Snowflake&#8217;s built-in query history + external alerting (CloudWatch / Datadog)</p>
 </li>
 </ul>
 </div>
@@ -632,28 +725,28 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect performance?]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake auto-scaling compute ensures query performance scales with data volume; dedicated warehouses prevent query contention</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Security</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect security?]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">End-to-end encryption (at rest and in transit), role-based access control, SOC 2 Type II certified, GDPR-compliant EU regions</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Maintainability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect maintenance?]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Managed service eliminates infrastructure maintenance; dbt provides version-controlled, testable transformations; SQL-first approach lowers maintenance barrier</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect scalability?]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">=</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scales well for batch analytics (auto-scaling warehouses); neutral for real-time streaming (not natively supported — would need additional infrastructure)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Testability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect testability?]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dbt provides built-in testing framework for data quality assertions; Snowflake clone feature allows zero-copy test environments</p></td>
 </tr>
 </tbody>
 </table>
@@ -668,16 +761,34 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist checklist">
 <ul class="checklist">
 <li>
-<p><i class="fa fa-square-o"></i> [Action 1 — e.g., Update deployment scripts]</p>
+<p><i class="fa fa-check-square-o"></i> Confirm AWS as cloud provider with client — ✅ <strong>AWS confirmed</strong> (hybrid with on-prem hosting); Snowflake on AWS EU region</p>
 </li>
 <li>
-<p><i class="fa fa-square-o"></i> [Action 2 — e.g., Train team on new technology]</p>
+<p><i class="fa fa-square-o"></i> Provision Snowflake account in EU region (Frankfurt or Dublin)</p>
 </li>
 <li>
-<p><i class="fa fa-square-o"></i> [Action 3 — e.g., Create monitoring dashboards]</p>
+<p><i class="fa fa-square-o"></i> Set up Snowflake cost monitoring and usage alerts from day one — $500K budget requires strict cost discipline</p>
 </li>
 <li>
-<p><i class="fa fa-square-o"></i> [Action 4 — e.g., Update architecture diagrams]</p>
+<p><i class="fa fa-square-o"></i> Evaluate dbt Cloud vs. dbt Core (managed vs. self-hosted) — separate mini-decision</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Select Airflow hosting (MWAA on AWS vs. self-managed vs. Dagster alternative)</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Run proof-of-concept: WordPress DB direct SQL read via VPN → S3 → Snowflake ingestion → basic segmentation query (see ADR-002)</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Define Snowflake warehouse sizing and auto-suspend policies</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Create data quality testing framework in dbt for customer email validation</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Schedule Snowflake + dbt training for client internal team — <strong>critical: no data team exists, no hire plans</strong></p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Plan future ADR checkpoint: reassess Databricks need after Phase 2 (if ML requirements emerge)</p>
 </li>
 </ul>
 </div>
@@ -689,13 +800,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>[Link to relevant documentation]</p>
+<p><a href="https://www.snowflake.com/en/data-cloud/platform/">Snowflake Platform Overview</a></p>
 </li>
 <li>
-<p>[Link to benchmark results or PoC findings]</p>
+<p><a href="https://www.databricks.com/product/data-lakehouse">Databricks Lakehouse Overview</a></p>
 </li>
 <li>
-<p>[Link to related ADRs (superseded, related)]</p>
+<p><a href="https://docs.getdbt.com/docs/introduction">dbt Documentation</a></p>
+</li>
+<li>
+<p><a href="https://airflow.apache.org/docs/">Apache Airflow Documentation</a></p>
+</li>
+<li>
+<p><a href="https://docs.snowflake.com/en/developer-guide/snowpark/index">Snowpark Developer Guide</a></p>
+</li>
+<li>
+<p><a href="https://www.snowflake.com/en/data-cloud/overview/compliance/">Snowflake Compliance &amp; Security</a></p>
 </li>
 </ul>
 </div>
@@ -704,7 +824,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-13 10:27:41 +0100
+Last updated 2026-02-19 00:57:48 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

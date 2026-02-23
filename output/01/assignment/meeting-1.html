@@ -5,8 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
-<meta name="author" content="[Author Name]">
-<title>ADR-[NNN]: [Title of Decision]</title>
+<title>Software Solution Architect Mentoring Program - Assignment #1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,273 +437,390 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>ADR-[NNN]: [Title of Decision]</h1>
-<div class="details">
-<span id="author" class="author">[Author Name]</span><br>
-<span id="revdate">[YYYY-MM-DD]</span>
-</div>
+<h1>Software Solution Architect Mentoring Program - Assignment #1</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_context">Context</a></li>
-<li><a href="#_decision">Decision</a></li>
-<li><a href="#_alternatives_considered">Alternatives Considered</a></li>
-<li><a href="#_consequences">Consequences</a>
+<li><a href="#_project_overview">1. Project Overview</a>
 <ul class="sectlevel2">
-<li><a href="#_positive">Positive</a></li>
-<li><a href="#_negative">Negative</a></li>
-<li><a href="#_dependency_hiring_impact">Dependency &amp; Hiring Impact</a></li>
-<li><a href="#_neutral">Neutral</a></li>
+<li><a href="#_client_need">1.1. Client Need</a>
+<ul class="sectlevel3">
+<li><a href="#_primary_function">1.1.1. Primary Function</a></li>
+<li><a href="#_secondary_function_partnership_ecosystem">1.1.2. Secondary Function - Partnership Ecosystem</a></li>
+<li><a href="#_tertiary_function_discount_system">1.1.3. Tertiary Function - Discount System</a></li>
 </ul>
 </li>
-<li><a href="#_quality_attribute_impact">Quality Attribute Impact</a></li>
-<li><a href="#_follow_up_actions">Follow-Up Actions</a></li>
-<li><a href="#_references">References</a></li>
+<li><a href="#_scope">1.2. Scope</a></li>
+</ul>
+</li>
+<li><a href="#_assignment_structure">2. Assignment Structure</a>
+<ul class="sectlevel2">
+<li><a href="#_part_1_questions_due_next_week">2.1. Part 1: Questions (Due: Next Week)</a>
+<ul class="sectlevel3">
+<li><a href="#_whats_missing">2.1.1. What&#8217;s Missing</a></li>
+<li><a href="#_deliverable">2.1.2. Deliverable</a></li>
+</ul>
+</li>
+<li><a href="#_part_2_solution_design_due_week_after_2_weeks_total">2.2. Part 2: Solution Design (Due: Week After - ~2 weeks total)</a>
+<ul class="sectlevel3">
+<li><a href="#_required_components">2.2.1. Required Components</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_format_notes">3. Format Notes</a></li>
+<li><a href="#_key_insights_from_mentor">4. Key Insights from Mentor</a>
+<ul class="sectlevel2">
+<li><a href="#_question_development_approaches">4.1. Question Development Approaches</a></li>
+<li><a href="#_important_considerations_mentioned">4.2. Important Considerations Mentioned</a></li>
+</ul>
+</li>
+<li><a href="#_timeline">5. Timeline</a></li>
+<li><a href="#_next_steps">6. Next Steps</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_context"><a class="anchor" href="#_context"></a>Context</h2>
+<h2 id="_project_overview"><a class="anchor" href="#_project_overview"></a>1. Project Overview</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_client_need"><a class="anchor" href="#_client_need"></a>1.1. Client Need</h3>
 <div class="paragraph">
-<p><strong>Relevant constraints:</strong></p>
+<p>A mobile tourist application with the following core features:</p>
 </div>
+<div class="sect3">
+<h4 id="_primary_function"><a class="anchor" href="#_primary_function"></a>1.1.1. Primary Function</h4>
 <div class="ulist">
 <ul>
 <li>
-<p>[Technical constraint — e.g., must integrate with existing SSO]</p>
+<p>Take a photo of an attraction (landmark, scenery, etc.)</p>
 </li>
 <li>
-<p>[Business constraint — e.g., team has no Go experience]</p>
+<p>Receive description via voice-over and/or text</p>
 </li>
 <li>
-<p>[Timeline constraint — e.g., must be ready for Q3 launch]</p>
+<p>Replaces the current flow of: photo → ChatGPT/Wikipedia → manual search</p>
 </li>
 </ul>
 </div>
-<div class="paragraph">
-<p><strong>Related sections in Solution Design:</strong></p>
 </div>
+<div class="sect3">
+<h4 id="_secondary_function_partnership_ecosystem"><a class="anchor" href="#_secondary_function_partnership_ecosystem"></a>1.1.2. Secondary Function - Partnership Ecosystem</h4>
 <div class="ulist">
 <ul>
 <li>
-<p>[e.g., § System Context — shows where this component fits]</p>
+<p>Advertise partner businesses near attractions</p>
 </li>
 <li>
-<p>[e.g., § Data Architecture — data model impacted by this choice]</p>
+<p>Example: Photo of Eiffel Tower → description + recommendation for partner cafeteria nearby</p>
+</li>
+<li>
+<p>Partners are <strong>NOT</strong> random businesses but signed partners</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tertiary_function_discount_system"><a class="anchor" href="#_tertiary_function_discount_system"></a>1.1.3. Tertiary Function - Discount System</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Show QR code at partner locations</p>
+</li>
+<li>
+<p>Receive discounts when scanned</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scope"><a class="anchor" href="#_scope"></a>1.2. Scope</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Global ambitions (from famous attractions like Eiffel Tower to small local vineyards in Spain)</p>
+</li>
+<li>
+<p>Some attractions may lack Wikipedia pages</p>
+</li>
+<li>
+<p>Partners will provide their own information</p>
+</li>
+<li>
+<p>Geo-location is potentially important</p>
+</li>
+<li>
+<p>All functionality should be <strong>within the mobile app</strong> (no external website visits)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_assignment_structure"><a class="anchor" href="#_assignment_structure"></a>2. Assignment Structure</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_part_1_questions_due_next_week"><a class="anchor" href="#_part_1_questions_due_next_week"></a>2.1. Part 1: Questions (Due: Next Week)</h3>
+<div class="paragraph">
+<p><strong>Goal:</strong> Extract missing information through questions or assumptions</p>
+</div>
+<div class="sect3">
+<h4 id="_whats_missing"><a class="anchor" href="#_whats_missing"></a>2.1.1. What&#8217;s Missing</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Back-end infrastructure details</p>
+</li>
+<li>
+<p>Non-functional requirements (performance, scalability, etc.)</p>
+</li>
+<li>
+<p>How LLM integration works</p>
+</li>
+<li>
+<p>Partnership initiation and management process</p>
+</li>
+<li>
+<p>Partnership network operations</p>
+</li>
+<li>
+<p>Security guardrails and rate limiting</p>
+</li>
+<li>
+<p>What happens in edge cases (unknown attractions, spam requests, etc.)</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_deliverable"><a class="anchor" href="#_deliverable"></a>2.1.2. Deliverable</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>List of questions</p>
+</li>
+<li>
+<p>Optional: Schedule recorded Q&amp;A session with mentor (acting as client)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_part_2_solution_design_due_week_after_2_weeks_total"><a class="anchor" href="#_part_2_solution_design_due_week_after_2_weeks_total"></a>2.2. Part 2: Solution Design (Due: Week After - ~2 weeks total)</h3>
+<div class="sect3">
+<h4 id="_required_components"><a class="anchor" href="#_required_components"></a>2.2.1. Required Components</h4>
+<div class="sect4">
+<h5 id="_1_assumptions"><a class="anchor" href="#_1_assumptions"></a>1. Assumptions</h5>
+<div class="paragraph">
+<p>Document what you&#8217;re assuming since you won&#8217;t have 100% information</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_2_high_level_component_design"><a class="anchor" href="#_2_high_level_component_design"></a>2. High-Level Component Design</h5>
+<div class="ulist">
+<ul>
+<li>
+<p>What talks to what</p>
+</li>
+<li>
+<p>Key flows and use cases</p>
+</li>
+<li>
+<p>Simple scenario: User takes photo → what happens?</p>
+</li>
+<li>
+<p>Complex scenario: User in mountain village photographs partner vineyard → what happens?</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_3_deep_dive_on_key_areas"><a class="anchor" href="#_3_deep_dive_on_key_areas"></a>3. Deep Dive on Key Areas</h5>
+<div class="ulist">
+<ul>
+<li>
+<p>Infrastructure design</p>
+</li>
+<li>
+<p>Back-end configuration</p>
+</li>
+<li>
+<p>Key integrations (especially LLM: Anthropic API? OpenAI? Self-hosted open source on EC2?)</p>
+</li>
+<li>
+<p>Rationale for technical choices</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_4_cost_breakdown"><a class="anchor" href="#_4_cost_breakdown"></a>4. Cost Breakdown</h5>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>CAPEX (Capital Expenses):</strong> Development costs (e.g., 5 developers × hourly rate × time)</p>
+</li>
+<li>
+<p><strong>OPEX (Operational Expenses):</strong> Monthly recurring costs (cloud infrastructure, licenses, etc.)</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_5_development_milestones"><a class="anchor" href="#_5_development_milestones"></a>5. Development Milestones</h5>
+<div class="ulist">
+<ul>
+<li>
+<p>POC (Proof of Concept) - what features?</p>
+</li>
+<li>
+<p>MVP (Minimum Viable Product for App Store) - what features?</p>
+</li>
+<li>
+<p>Full-scale release - what features?</p>
+</li>
+<li>
+<p>Out of scope items</p>
+</li>
+<li>
+<p>Feature priorities</p>
+</li>
+<li>
+<p>High-level epic structure</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_6_business_flows"><a class="anchor" href="#_6_business_flows"></a>6. Business Flows</h5>
+<div class="paragraph">
+<p>Cover various scenarios</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_7_additional_enhancements"><a class="anchor" href="#_7_additional_enhancements"></a>7. Additional Enhancements</h5>
+<div class="paragraph">
+<p>You CAN propose improvements if you see gaps (e.g., security, rate limiting, etc.)</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_format_notes"><a class="anchor" href="#_format_notes"></a>3. Format Notes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Informal structure (not a formal RFP)</p>
+</li>
+<li>
+<p>But technically complete</p>
+</li>
+<li>
+<p>Free-form document</p>
+</li>
+<li>
+<p>Reasonable complexity (achievable by engineering team in viable timeframe)</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_decision"><a class="anchor" href="#_decision"></a>Decision</h2>
+<h2 id="_key_insights_from_mentor"><a class="anchor" href="#_key_insights_from_mentor"></a>4. Key Insights from Mentor</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p><strong>We will use [Technology / Pattern / Approach] because [primary reason].</strong></p>
+<div class="sect2">
+<h3 id="_question_development_approaches"><a class="anchor" href="#_question_development_approaches"></a>4.1. Question Development Approaches</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Try to design solution with available info → identify gaps → questions emerge naturally</p>
+</li>
+<li>
+<p>Push system boundaries → edge cases reveal questions</p>
+<div class="ulist">
+<ul>
+<li>
+<p>What if no attraction found?</p>
+</li>
+<li>
+<p>What if spam?</p>
+</li>
+<li>
+<p>What if conflicting requirements?</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_important_considerations_mentioned"><a class="anchor" href="#_important_considerations_mentioned"></a>4.2. Important Considerations Mentioned</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Security guardrails and rate limiting (to prevent DoS and unbearable costs)</p>
+</li>
+<li>
+<p>Client may not know all answers</p>
+</li>
+<li>
+<p>Client descriptions may be contradictory</p>
+</li>
+<li>
+<p>Your job to provide reasonable solutions and flag missing critical items</p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_alternatives_considered"><a class="anchor" href="#_alternatives_considered"></a>Alternatives Considered</h2>
+<h2 id="_timeline"><a class="anchor" href="#_timeline"></a>5. Timeline</h2>
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 18.1818%;">
-<col style="width: 27.2727%;">
-<col style="width: 27.2727%;">
-<col style="width: 27.2728%;">
+<col style="width: 25%;">
+<col style="width: 75%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Alternative</th>
-<th class="tableblock halign-left valign-top">Pros</th>
-<th class="tableblock halign-left valign-top">Cons</th>
-<th class="tableblock halign-left valign-top">Why Not Chosen</th>
+<th class="tableblock halign-left valign-top">Timeframe</th>
+<th class="tableblock halign-left valign-top">Deliverable</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 1]</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Next week</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Questions prepared + optional Q&amp;A session</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 2]</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 3]</strong> (if applicable)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Week after (~2 weeks total)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Solution design document</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_consequences"><a class="anchor" href="#_consequences"></a>Consequences</h2>
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>6. Next Steps</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_positive"><a class="anchor" href="#_positive"></a>Positive</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>[Benefit 1 — e.g., reduces deployment time by 50%]</p>
-</li>
-<li>
-<p>[Benefit 2 — e.g., enables horizontal scaling]</p>
-</li>
-<li>
-<p>[Benefit 3 — e.g., leverages existing team expertise]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_negative"><a class="anchor" href="#_negative"></a>Negative</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>[Trade-off 1 — e.g., increased operational complexity]</p>
-</li>
-<li>
-<p>[Trade-off 2 — e.g., vendor lock-in risk]</p>
-</li>
-<li>
-<p>[Trade-off 3 — e.g., learning curve for some team members]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_dependency_hiring_impact"><a class="anchor" href="#_dependency_hiring_impact"></a>Dependency &amp; Hiring Impact</h3>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>Dependency accumulation risk:</strong> [Does this decision add a new runtime dependency, external service, or vendor relationship? What happens if that dependency is discontinued or changes pricing?]</p>
-</li>
-<li>
-<p><strong>Hiring impact:</strong> [Does this technology narrow or widen the hiring pool? Can the current team maintain this without the original author?]</p>
-</li>
-<li>
-<p><strong>Operational burden:</strong> [What new operational skills does this require? Monitoring, upgrades, security patches?]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_neutral"><a class="anchor" href="#_neutral"></a>Neutral</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>[Observation 1 — e.g., requires updating CI/CD pipeline]</p>
-</li>
-<li>
-<p>[Observation 2 — e.g., no impact on existing APIs]</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_quality_attribute_impact"><a class="anchor" href="#_quality_attribute_impact"></a>Quality Attribute Impact</h2>
-<div class="sectionbody">
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 16.6666%;">
-<col style="width: 50.0001%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Quality Attribute</th>
-<th class="tableblock halign-left valign-top">Impact</th>
-<th class="tableblock halign-left valign-top">Explanation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect performance?]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Security</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect security?]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Maintainability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect maintenance?]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect scalability?]</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Testability</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect testability?]</p></td>
-</tr>
-</tbody>
-</table>
 <div class="paragraph">
-<p><em>Impact: + improves, − degrades, = neutral</em></p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_follow_up_actions"><a class="anchor" href="#_follow_up_actions"></a>Follow-Up Actions</h2>
-<div class="sectionbody">
-<div class="ulist checklist">
-<ul class="checklist">
-<li>
-<p><i class="fa fa-square-o"></i> [Action 1 — e.g., Update deployment scripts]</p>
-</li>
-<li>
-<p><i class="fa fa-square-o"></i> [Action 2 — e.g., Train team on new technology]</p>
-</li>
-<li>
-<p><i class="fa fa-square-o"></i> [Action 3 — e.g., Create monitoring dashboards]</p>
-</li>
-<li>
-<p><i class="fa fa-square-o"></i> [Action 4 — e.g., Update architecture diagrams]</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>[Link to relevant documentation]</p>
-</li>
-<li>
-<p>[Link to benchmark results or PoC findings]</p>
-</li>
-<li>
-<p>[Link to related ADRs (superseded, related)]</p>
-</li>
-</ul>
+<p>Formulate questions for Part 1 based on the identified gaps and edge cases.</p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-13 10:27:41 +0100
+Last updated 2026-01-22 09:40:41 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
