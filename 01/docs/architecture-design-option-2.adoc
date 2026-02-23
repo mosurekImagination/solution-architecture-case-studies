@@ -1,0 +1,1224 @@
+= TourLens — Architecture Design (Option 2)
+:author: Solution Architect
+:revnumber: 1.0
+:revdate: 2026-02-23
+:status: Draft
+:toc: left
+:toclevels: 3
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+== System Context (C4 Level 1)
+
+Shows TourLens as a black box — who uses it and what it depends on.
+
+.System Context — TourLens
+[structurizr,c4-context-tourlens,format=svg,view-key=ctx]
+....
+workspace {
+
+  model {
+    tourist = person "Tourist" "Takes photos of attractions, views descriptions, earns loyalty points"
+    partner = person "Partner Business" "Manages offers, views analytics, receives commissions"
+
+    system = softwareSystem "TourLens" "AI-powered tourist attraction recognition and engagement platform" {
+      ios = container "iOS App" "Native camera, photo recognition, offline cache" "Swift / SwiftUI"
+      android = container "Android App" "Native camera, photo recognition, offline cache" "Kotlin / Jetpack Compose"
+      api = container "Monolith API" "Users, Partners, Recommendations, Payments, Loyalty" "Node.js / ECS Fargate"
+      aiWorker = container "AI Recognition" "Photo recognition pipeline" "Python / Lambda"
+      db = container "PostgreSQL + PostGIS" "Core domain data, geolocation" "RDS t4g.medium" "database"
+      cache = container "Redis Cache" "Sessions, hot data, AI result cache" "ElastiCache 5GB" "database"
+      photoStore = container "Photo Storage" "User-uploaded photos" "S3" "database"
+      assetStore = container "Static Assets" "CDN origin for app assets" "S3" "database"
+      queue = container "Recognition Queue" "Async photo processing" "SQS" "database"
+    }
+
+    cognito = softwareSystem "AWS Cognito" "OAuth 2.0 / OIDC authentication" "Existing System"
+    stripe = softwareSystem "Stripe" "Payment processing (Phase 2)" "Existing System"
+    cdn = softwareSystem "CloudFront CDN" "US edge caching for static assets" "Existing System"
+    googleVision = softwareSystem "Google Vision API" "Landmark detection" "Existing System"
+    openai = softwareSystem "OpenAI GPT-4V" "Rich description generation" "Existing System"
+    gemini = softwareSystem "Google Gemini" "Fallback LLM" "Existing System"
+    maps = softwareSystem "Google Maps API" "POI data and mapping" "Existing System"
+    ses = softwareSystem "AWS SES" "Transactional email" "Existing System"
+    monitoring = softwareSystem "CloudWatch + Slack" "Observability and alerting" "Existing System"
+
+    # External relationships
+    tourist -> system "Uses" "HTTPS"
+    partner -> system "Manages offers" "HTTPS"
+    system -> cognito "Authenticates via" "OAuth2 / OIDC"
+    system -> stripe "Processes payments" "REST API"
+    system -> cdn "Serves assets" "HTTPS"
+    system -> googleVision "Detects landmarks" "REST API"
+    system -> openai "Generates descriptions" "REST API"
+    system -> gemini "Fallback descriptions" "REST API"
+    system -> maps "POI data" "REST API"
+    system -> ses "Sends email" "AWS SDK"
+    system -> monitoring "Sends telemetry" "AWS SDK"
+
+    # Internal relationships
+    tourist -> ios "Takes photos" "Native"
+    tourist -> android "Takes photos" "Native"
+    ios -> api "API calls" "REST / HTTPS"
+    android -> api "API calls" "REST / HTTPS"
+    partner -> api "Manages offers" "REST / HTTPS"
+    api -> db "Reads/Writes" "SQL"
+    api -> cache "Caches" "Redis Protocol"
+    api -> photoStore "Uploads photos" "S3 API"
+    photoStore -> queue "S3 event trigger" "SQS"
+    queue -> aiWorker "Processes async" "SQS"
+    aiWorker -> googleVision "1. Landmark detect" "REST API"
+    aiWorker -> openai "2. Rich description" "REST API"
+    aiWorker -> gemini "3. Fallback" "REST API"
+    api -> cognito "Validates tokens" "OAuth2"
+    api -> stripe "Charges (Phase 2)" "REST API"
+    api -> ses "Notifications" "AWS SDK"
+    api -> maps "POI data" "REST API"
+  }
+
+  views {
+    systemContext system "ctx" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+== Container Diagram (C4 Level 2)
+
+Shows the applications, data stores, and message brokers inside the TourLens system boundary.
+
+.Container View — TourLens
+[structurizr,c4-container-tourlens,format=svg,view-key=cont]
+....
+workspace {
+
+  model {
+    tourist = person "Tourist" "Takes photos of attractions"
+    partner = person "Partner Business" "Manages offers"
+
+    system = softwareSystem "TourLens" "AI-powered tourist platform" {
+      ios = container "iOS App" "Native camera, offline cache" "Swift / SwiftUI"
+      android = container "Android App" "Native camera, offline cache" "Kotlin / Jetpack Compose"
+      api = container "Monolith API" "Users + Partners + Recommendations + Payments + Loyalty" "ECS Fargate"
+      aiWorker = container "AI Recognition Lambda" "Photo recognition pipeline" "Lambda / Python"
+      db = container "PostgreSQL + PostGIS" "Core domain data" "RDS Multi-AZ" "database"
+      cache = container "Redis" "Sessions, hot data, AI cache" "ElastiCache" "database"
+      photos = container "Photo Storage" "User uploads" "S3" "database"
+      assets = container "Static Assets" "CDN origin" "S3" "database"
+      queue = container "Recognition Queue" "Async processing" "SQS" "database"
+    }
+
+    cognito = softwareSystem "AWS Cognito" "Auth provider" "Existing System"
+    stripe = softwareSystem "Stripe" "Payments" "Existing System"
+    cdn = softwareSystem "CloudFront" "CDN" "Existing System"
+    vision = softwareSystem "Google Vision" "Landmark detection" "Existing System"
+    gpt = softwareSystem "OpenAI GPT-4V" "Descriptions" "Existing System"
+    gemini = softwareSystem "Gemini" "Fallback LLM" "Existing System"
+    maps = softwareSystem "Google Maps" "POI data" "Existing System"
+
+    tourist -> ios "Uses" "Native"
+    tourist -> android "Uses" "Native"
+    partner -> api "Manages" "HTTPS"
+    ios -> cdn "Static assets" "HTTPS"
+    android -> cdn "Static assets" "HTTPS"
+    cdn -> assets "Origin" "S3 API"
+    ios -> api "API calls" "HTTPS"
+    android -> api "API calls" "HTTPS"
+    api -> cognito "Auth" "OAuth2"
+    api -> db "SQL" "TCP"
+    api -> cache "Cache" "Redis"
+    api -> photos "Upload" "S3 API"
+    api -> stripe "Pay" "HTTPS"
+    api -> maps "POI" "HTTPS"
+    photos -> queue "S3 event" "SQS"
+    queue -> aiWorker "Process" "SQS"
+    aiWorker -> vision "Detect" "HTTPS"
+    aiWorker -> gpt "Describe" "HTTPS"
+    aiWorker -> gemini "Fallback" "HTTPS"
+    aiWorker -> db "Store result" "SQL"
+    aiWorker -> cache "Cache result" "Redis"
+  }
+
+  views {
+    container system "cont" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+== Deployment Diagram (C4 Level 3)
+
+Shows how containers map to AWS infrastructure nodes.
+
+.Deployment View — TourLens Production (US-EAST-1)
+[structurizr,c4-deploy-tourlens,format=svg,view-key=deploy]
+....
+workspace {
+
+  model {
+    system = softwareSystem "TourLens" {
+      ios = container "iOS App" "" "Swift"
+      android = container "Android App" "" "Kotlin"
+      api = container "Monolith API" "" "ECS Fargate"
+      aiWorker = container "AI Lambda" "" "Lambda"
+      db = container "PostgreSQL" "" "RDS" "database"
+      cache = container "Redis" "" "ElastiCache" "database"
+      photos = container "S3 Photos" "" "S3" "database"
+      assets = container "S3 Assets" "" "S3" "database"
+      queue = container "SQS Queue" "" "SQS" "database"
+    }
+
+    prod = deploymentEnvironment "Production" {
+      deploymentNode "User Devices" "" "" {
+        deploymentNode "iPhone / iPad" "" "iOS 16+" {
+          iosInst = containerInstance ios
+        }
+        deploymentNode "Android Phone" "" "Android 12+" {
+          androidInst = containerInstance android
+        }
+      }
+
+      deploymentNode "AWS US-EAST-1" "" "Amazon Web Services" {
+        deploymentNode "CloudFront" "CDN edge caching" "CloudFront" {
+          assetsInst = containerInstance assets
+        }
+        deploymentNode "VPC (10.0.0.0/16)" "" "" {
+          deploymentNode "Public Subnet" "" "" {
+            deploymentNode "ALB" "HTTPS termination, JWT validation" "Application Load Balancer" {
+              lbInst = containerInstance api
+            }
+          }
+          deploymentNode "Private Subnet — Compute" "" "" {
+            deploymentNode "ECS Fargate Cluster" "Auto-scaling 1-8 tasks" "ECS Fargate" {
+              apiInst = containerInstance api
+            }
+            deploymentNode "Lambda" "On-demand scaling" "AWS Lambda" {
+              lambdaInst = containerInstance aiWorker
+            }
+          }
+          deploymentNode "Private Subnet — Data" "" "" {
+            deploymentNode "RDS Multi-AZ" "Failover replica" "db.t4g.medium → r6g.xlarge" {
+              dbInst = containerInstance db
+            }
+            deploymentNode "ElastiCache" "Multi-AZ" "cache.t3.micro → cluster mode" {
+              cacheInst = containerInstance cache
+            }
+          }
+        }
+        deploymentNode "S3" "Photo storage" "S3 Standard" {
+          photosInst = containerInstance photos
+        }
+        deploymentNode "SQS" "Recognition queue" "SQS Standard" {
+          queueInst = containerInstance queue
+        }
+      }
+    }
+  }
+
+  views {
+    deployment system "Production" "deploy" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+== Component Architecture
+
+Internal services, data stores, and connections within the TourLens monolith.
+
+.Component Architecture — TourLens Monolith
+[d2,tourlens-component-architecture,format=svg,layout=elk]
+....
+direction: right
+
+clients: Client Layer {
+  style.fill: "#E3F2FD"
+  ios: iOS App (Swift)
+  android: Android App (Kotlin)
+}
+
+gateway: API Gateway {
+  style.fill: "#E8F5E9"
+  alb: ALB (HTTPS)
+  cognito: Cognito (JWT)
+}
+
+monolith: "Modular Monolith (ECS Fargate)" {
+  style.fill: "#FFF3E0"
+
+  users: Users Module {
+    style.fill: "#FFECB3"
+    registration: Registration
+    profile: Profile
+    preferences: Preferences
+  }
+
+  partners: Partners Module {
+    style.fill: "#FFECB3"
+    onboarding: Onboarding
+    offers: Offers & Discounts
+    analytics: Partner Analytics
+  }
+
+  recognition: Recommendations Module {
+    style.fill: "#FFECB3"
+    attractions: Attractions Catalog
+    proximity: Nearby POI (PostGIS)
+    history: Visit History
+  }
+
+  payments: "Payments Module (Phase 2)" {
+    style.fill: "#FFE0B2"
+    checkout: Checkout
+    refunds: Refunds
+    webhooks: Stripe Webhooks
+  }
+
+  loyalty: "Loyalty Module (Phase 2)" {
+    style.fill: "#FFE0B2"
+    points: Points Engine
+    rewards: Rewards
+    qr: QR Scan
+  }
+}
+
+ai: AI Recognition (Lambda) {
+  style.fill: "#E3F2FD"
+  pipeline: Recognition Pipeline
+  cache_check: Cache Check
+  fallback: Provider Fallback
+}
+
+data: Data Layer {
+  style.fill: "#F3E5F5"
+  db: "PostgreSQL + PostGIS" {
+    shape: cylinder
+  }
+  redis: Redis Cache {
+    shape: cylinder
+  }
+  s3: S3 Photos {
+    shape: cylinder
+  }
+  sqs: SQS Queue {
+    shape: queue
+  }
+}
+
+external: External Services {
+  style.fill: "#ECEFF1"
+  vision: Google Vision API
+  openai: OpenAI GPT-4V
+  gemini: Google Gemini
+  stripe_ext: Stripe
+  maps: Google Maps
+  ses: AWS SES
+}
+
+# Client connections
+clients.ios -> gateway.alb: HTTPS
+clients.android -> gateway.alb: HTTPS
+gateway.alb -> gateway.cognito: Validate JWT
+gateway.alb -> monolith.users: Route
+gateway.alb -> monolith.partners: Route
+gateway.alb -> monolith.recognition: Route
+gateway.alb -> monolith.payments: Route
+gateway.alb -> monolith.loyalty: Route
+
+# Monolith to data
+monolith.users -> data.db: SQL
+monolith.partners -> data.db: SQL
+monolith.recognition -> data.db: SQL (PostGIS)
+monolith.payments -> data.db: SQL
+monolith.loyalty -> data.db: SQL
+monolith.users -> data.redis: Sessions
+monolith.recognition -> data.redis: AI cache
+monolith.recognition -> data.s3: Upload photo
+
+# AI pipeline
+data.s3 -> data.sqs: S3 event
+data.sqs -> ai.pipeline: Consume
+ai.cache_check -> data.redis: Check cache
+ai.pipeline -> external.vision: 1. Detect
+ai.pipeline -> external.openai: 2. Describe
+ai.fallback -> external.gemini: 3. Fallback
+ai.pipeline -> data.db: Store result
+
+# External
+monolith.payments -> external.stripe_ext: API
+monolith.recognition -> external.maps: POI data
+monolith.users -> external.ses: Email
+....
+
+== Data Model
+
+Entity-relationship diagram for the core domain.
+
+.Data Model — TourLens
+[erd,tourlens-data-model,format=svg]
+....
+title {label: "TourLens — Data Model", size: "20"}
+
+# Entities
+
+[User]
+*id {label: "bigint, PK"}
+cognito_sub {label: "varchar(255), unique"}
+email {label: "varchar(255), unique"}
+display_name {label: "varchar(255)"}
+preferred_language {label: "enum(en, zh, es)"}
+loyalty_points {label: "integer, default 0"}
+created_at {label: "timestamp"}
+
+[Partner]
+*id {label: "bigint, PK"}
+business_name {label: "varchar(255)"}
+category {label: "enum(restaurant, hotel, shop, tour)"}
+location {label: "geography(Point, 4326)"}
+contact_email {label: "varchar(255)"}
+commission_rate {label: "decimal(5,2)"}
+is_active {label: "boolean"}
+created_at {label: "timestamp"}
+
+[Attraction]
+*id {label: "bigint, PK"}
+name {label: "varchar(255)"}
+description {label: "text"}
+location {label: "geography(Point, 4326)"}
+category {label: "varchar(100)"}
+metadata {label: "jsonb"}
+photo_url {label: "varchar(512)"}
+created_at {label: "timestamp"}
+
+[PhotoRecognition]
+*id {label: "bigint, PK"}
++user_id {label: "bigint, FK"}
++attraction_id {label: "bigint, FK, nullable"}
+photo_s3_key {label: "varchar(512)"}
+ai_provider {label: "enum(vision, openai, gemini)"}
+confidence_score {label: "decimal(5,4)"}
+description_text {label: "text"}
+description_audio_url {label: "varchar(512), nullable"}
+processing_time_ms {label: "integer"}
+created_at {label: "timestamp"}
+
+[Offer]
+*id {label: "bigint, PK"}
++partner_id {label: "bigint, FK"}
+title {label: "varchar(255)"}
+discount_percent {label: "decimal(5,2)"}
+valid_from {label: "timestamp"}
+valid_until {label: "timestamp"}
+is_active {label: "boolean"}
+
+[Transaction]
+*id {label: "bigint, PK"}
++user_id {label: "bigint, FK"}
++offer_id {label: "bigint, FK, nullable"}
+stripe_payment_id {label: "varchar(255)"}
+amount_cents {label: "integer"}
+currency {label: "varchar(3)"}
+status {label: "enum(pending, completed, refunded)"}
+created_at {label: "timestamp"}
+
+[LoyaltyEvent]
+*id {label: "bigint, PK"}
++user_id {label: "bigint, FK"}
+event_type {label: "enum(earn, redeem, expire)"}
+points {label: "integer"}
+source {label: "varchar(100)"}
+created_at {label: "timestamp"}
+
+# Relationships
+User 1--* PhotoRecognition
+Attraction 1--* PhotoRecognition
+Partner 1--* Offer
+User 1--* Transaction
+Offer 1--* Transaction
+User 1--* LoyaltyEvent
+....
+
+== Key Flows
+
+=== Happy Path — Photo Recognition
+
+.Core Flow — Tourist Takes Photo of Landmark
+[plantuml,flow-photo-recognition,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title Photo Recognition — Happy Path
+
+actor Tourist
+participant "iOS / Android" as app
+participant "ALB" as alb
+participant "Cognito" as auth
+participant "Monolith API\n(ECS)" as api
+database "PostgreSQL" as db
+database "Redis" as cache
+queue "SQS" as sqs
+participant "Lambda\n(AI)" as lambda
+participant "Google Vision" as vision
+participant "OpenAI GPT-4V" as gpt
+
+Tourist -> app: Takes photo of landmark
+app -> alb: POST /api/recognitions\n{photo: base64}
+alb -> auth: Validate JWT
+auth --> alb: 200 OK
+
+alb -> api: Route request
+api -> api: Resize photo (max 2MB)
+api -> db: Save recognition record\n(status: pending)
+api -> cache: Check photo hash cache
+
+alt Cache hit (known landmark)
+  cache --> api: Cached description
+  api --> alb: 200 {description, attraction}
+  alb --> app: JSON result
+  app --> Tourist: Show description + audio
+else Cache miss
+  api -> app: 202 Accepted {recognition_id}
+  api -> sqs: Enqueue photo for processing
+
+  sqs -> lambda: Consume message
+  lambda -> vision: DetectLandmarks(photo)
+  vision --> lambda: {landmark: "Statue of Liberty",\nconfidence: 0.97}
+
+  lambda -> gpt: Generate description\nfor "Statue of Liberty"
+  gpt --> lambda: Rich description (500 words)
+
+  lambda -> db: Update recognition\n(status: completed)
+  lambda -> cache: Cache result\n(landmark_hash → description, 24h TTL)
+
+  app -> api: GET /api/recognitions/{id}\n(polling every 2s)
+  api -> db: Fetch result
+  db --> api: Completed recognition
+  api --> app: 200 {description, attraction, confidence}
+  app --> Tourist: Show description + audio
+end
+
+note right of cache
+  AI result caching saves
+  40-60% of API costs
+end note
+@enduml
+....
+
+=== Error Flow — AI Provider Fallback Chain
+
+.AI Fallback — Provider Failure Handling
+[plantuml,flow-ai-fallback,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title AI Recognition — Fallback Chain
+
+participant "Lambda\n(AI)" as lambda
+participant "Google Vision" as vision
+participant "OpenAI GPT-4V" as gpt
+participant "Google Gemini" as gemini
+database "PostgreSQL" as db
+database "Redis" as cache
+
+lambda -> vision: DetectLandmarks(photo)
+
+alt Vision succeeds
+  vision --> lambda: {landmark, confidence}
+
+  lambda -> gpt: Generate description
+  alt GPT-4V succeeds
+    gpt --> lambda: Rich description
+  else GPT-4V fails (timeout/rate limit)
+    gpt --> lambda: 429 / 503
+    lambda -> gemini: Generate description (fallback)
+    gemini --> lambda: Description
+  end
+
+else Vision fails (no landmark found)
+  vision --> lambda: {landmarks: []}
+  lambda -> gemini: Describe image generally
+  gemini --> lambda: General description
+
+else Vision fails (service error)
+  vision --> lambda: 503 Service Unavailable
+  lambda -> gemini: Full pipeline fallback
+  gemini --> lambda: Description
+end
+
+lambda -> db: Store result
+lambda -> cache: Cache (24h TTL)
+
+note right of lambda
+  Circuit breaker: after 5 failures
+  in 30s, skip provider for 60s
+end note
+@enduml
+....
+
+== Infrastructure Topology
+
+.Infrastructure — TourLens Production (US-EAST-1)
+[d2,tourlens-infrastructure,format=svg,layout=elk]
+....
+direction: right
+
+internet: Internet {
+  shape: cloud
+}
+
+route53: Route 53 (DNS) {
+  style.fill: "#E3F2FD"
+}
+
+cloudfront: CloudFront CDN {
+  style.fill: "#E3F2FD"
+}
+
+vpc: "VPC — US-EAST-1 (10.0.0.0/16)" {
+  style.fill: "#FAFAFA"
+
+  public: Public Subnet {
+    style.fill: "#E8F5E9"
+    alb: ALB (HTTPS termination)
+  }
+
+  private_app: "Private Subnet — Compute" {
+    style.fill: "#FFF3E0"
+    ecs: "ECS Fargate Cluster" {
+      task1: "Monolith Task 1"
+      task2: "Monolith Task 2 (at 10k MAU)"
+      task3: "Monolith Task 3 (at 25k MAU)"
+    }
+    lambda: "Lambda (AI Recognition)" {
+      handler: Photo Handler
+    }
+  }
+
+  private_data: "Private Subnet — Data" {
+    style.fill: "#F3E5F5"
+    rds: "RDS PostgreSQL + PostGIS" {
+      shape: cylinder
+      primary: "Primary (Multi-AZ)"
+      replica: "Read Replica (at 10k MAU)"
+    }
+    elasticache: "ElastiCache Redis" {
+      shape: cylinder
+    }
+  }
+}
+
+s3: "S3 Buckets" {
+  photos: "Photos Bucket" {
+    shape: cylinder
+  }
+  assets: "Assets Bucket" {
+    shape: cylinder
+  }
+}
+
+sqs: "SQS Recognition Queue" {
+  shape: queue
+}
+
+cognito: "Cognito (Auth)" {
+  style.fill: "#FFCDD2"
+}
+
+monitoring: Monitoring {
+  style.fill: "#ECEFF1"
+  cloudwatch: CloudWatch
+  slack: Slack Alerts
+}
+
+# Connections
+internet -> route53: DNS lookup
+route53 -> cloudfront: Resolve
+cloudfront -> vpc.public.alb: HTTPS
+cloudfront -> s3.assets: Static assets
+vpc.public.alb -> cognito: JWT validation
+vpc.public.alb -> vpc.private_app.ecs.task1: HTTP
+vpc.public.alb -> vpc.private_app.ecs.task2: HTTP
+vpc.public.alb -> vpc.private_app.ecs.task3: HTTP
+vpc.private_app.ecs.task1 -> vpc.private_data.rds.primary: SQL
+vpc.private_app.ecs.task2 -> vpc.private_data.rds.primary: SQL (writes)
+vpc.private_app.ecs.task3 -> vpc.private_data.rds.replica: SQL (reads)
+vpc.private_app.ecs.task1 -> vpc.private_data.elasticache: Redis
+vpc.private_app.ecs.task1 -> s3.photos: Upload
+s3.photos -> sqs: S3 event
+sqs -> vpc.private_app.lambda.handler: Process
+vpc.private_app.lambda.handler -> vpc.private_data.rds.primary: Store result
+vpc.private_app.lambda.handler -> vpc.private_data.elasticache: Cache result
+vpc.private_app.ecs.task1 -> monitoring.cloudwatch: Metrics
+vpc.private_app.lambda.handler -> monitoring.cloudwatch: Logs
+monitoring.cloudwatch -> monitoring.slack: Alerts (>5% error rate)
+....
+
+NOTE: Grayed-out components (Task 2, Task 3, Read Replica) represent future scaling steps that are added as MAU grows. At launch (1k MAU), only Task 1 and the Primary DB are active.
+
+== Scalability Architecture
+
+Shows how the architecture evolves from 1 ECS task to multiple tasks with read replicas as traffic grows. All scaling happens within the same monolith codebase — no architectural changes needed until 500k+ MAU.
+
+=== Scaling Stages
+
+.Scaling — 1k MAU (Launch)
+[plantuml,scale-1k,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+title Scaling Stage: 1k MAU — Launch (~$785/mo)
+
+rectangle "ALB" as alb #ED7100
+
+package "ECS Fargate" #E8F5E9 {
+  component "Task 1\n(0.5 vCPU, 1GB)" as t1 #FF9900
+}
+
+package "Data" #EDE7F6 {
+  database "PostgreSQL\nt4g.medium\nMulti-AZ" as db #3B48CC
+  database "Redis\ncache.t3.micro\n0.5GB" as cache #3B48CC
+}
+
+queue "SQS" as sqs #FF4F8B
+component "Lambda\n(AI)" as lambda #FF9900
+
+alb --> t1
+t1 --> db
+t1 --> cache
+t1 --> sqs
+sqs --> lambda
+
+note bottom of t1
+  Single task handles
+  all traffic.
+  ~100 concurrent users.
+end note
+@enduml
+....
+
+.Scaling — 10k MAU (First Scale)
+[plantuml,scale-10k,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+title Scaling Stage: 10k MAU — First Scale (~$1,800/mo)
+
+rectangle "ALB\n(round-robin)" as alb #ED7100
+
+package "ECS Fargate (2 tasks)" #E8F5E9 {
+  component "Task 1\n(0.5 vCPU, 1GB)" as t1 #FF9900
+  component "Task 2\n(0.5 vCPU, 1GB)" as t2 #FF9900
+}
+
+package "Data" #EDE7F6 {
+  database "PostgreSQL\nt4g.medium\nPrimary" as db #3B48CC
+  database "PostgreSQL\nRead Replica" as replica #3B48CC
+  database "Redis\ncache.t3.small\n1GB" as cache #3B48CC
+}
+
+queue "SQS" as sqs #FF4F8B
+component "Lambda (AI)" as lambda #FF9900
+
+alb --> t1
+alb --> t2
+t1 --> db : Writes
+t2 --> db : Writes
+t1 --> replica : Reads
+t2 --> replica : Reads
+t1 --> cache
+t2 --> cache
+t1 --> sqs
+t2 --> sqs
+sqs --> lambda
+
+note bottom of replica
+  Read replica offloads
+  search & browse queries.
+  PgBouncer sidecar for
+  connection pooling.
+end note
+@enduml
+....
+
+.Scaling — 25k MAU (Optimized)
+[plantuml,scale-25k,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+title Scaling Stage: 25k MAU — Optimized (~$3,500/mo)
+
+rectangle "ALB\n(round-robin)" as alb #ED7100
+
+package "ECS Fargate (3 tasks)" #E8F5E9 {
+  component "Task 1\n(1 vCPU, 2GB)" as t1 #FF9900
+  component "Task 2\n(1 vCPU, 2GB)" as t2 #FF9900
+  component "Task 3\n(1 vCPU, 2GB)" as t3 #FF9900
+}
+
+package "Data" #EDE7F6 {
+  database "PostgreSQL\nt4g.large\nPrimary" as db #3B48CC
+  database "PostgreSQL\nRead Replica" as replica #3B48CC
+  database "Redis\ncache.t3.medium\n3GB\n+ AI result cache" as cache #3B48CC
+}
+
+queue "SQS" as sqs #FF4F8B
+component "Lambda (AI)\n+ geo-fence\n+ caching" as lambda #FF9900
+
+alb --> t1
+alb --> t2
+alb --> t3
+t1 --> db : Writes
+t2 --> db : Writes
+t3 --> db : Writes
+t1 --> replica : Reads
+t2 --> replica : Reads
+t3 --> replica : Reads
+t1 --> cache
+t2 --> cache
+t3 --> cache
+t1 --> sqs
+sqs --> lambda
+
+note bottom of cache
+  AI result caching active:
+  landmark_hash → description.
+  Saves 40-60% of API costs.
+  Geo-fence shortcuts skip
+  Vision API for known POIs.
+end note
+
+note bottom of t3
+  3 tasks behind ALB.
+  Each handles ~400
+  concurrent users.
+end note
+@enduml
+....
+
+.Scaling — 100k MAU (Maximum Monolith)
+[plantuml,scale-100k,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+title Scaling Stage: 100k MAU — Maximum Monolith (~$8,500/mo)
+
+rectangle "ALB\n(round-robin)" as alb #ED7100
+
+package "ECS Fargate (6-8 tasks, auto-scaling)" #E8F5E9 {
+  component "Task 1\n(2 vCPU, 4GB)" as t1 #FF9900
+  component "Task 2" as t2 #FF9900
+  component "Task 3" as t3 #FF9900
+  component "Task 4" as t4 #FF9900
+  component "..." as dots #CCCCCC
+  component "Task 6-8" as tn #FF9900
+}
+
+package "Data" #EDE7F6 {
+  database "PostgreSQL\nr6g.xlarge\nPrimary" as db #3B48CC
+  database "Read Replica 1" as r1 #3B48CC
+  database "Read Replica 2" as r2 #3B48CC
+  database "Redis Cluster\n5GB\nCluster mode" as cache #3B48CC
+}
+
+queue "SQS" as sqs #FF4F8B
+component "Lambda (AI)\n+ cheaper models\nfor top 500 landmarks" as lambda #FF9900
+component "Lambda@Edge\nPhoto resizing" as edge #FF9900
+
+alb --> t1
+alb --> t2
+alb --> t3
+alb --> t4
+alb --> dots
+alb --> tn
+
+t1 --> db : Writes
+t1 --> r1 : Reads
+t2 --> r2 : Reads
+t1 --> cache
+t1 --> sqs
+sqs --> lambda
+
+edge --> lambda : Optimized photos
+
+note bottom of tn
+  ECS auto-scaling policy:
+  CPU > 70% → add task
+  CPU < 30% → remove task
+  Min: 4 tasks, Max: 8 tasks
+end note
+
+note bottom of r2
+  2 read replicas separate:
+  - Search & browse traffic
+  - Analytics & reporting
+  PgBouncer on each task.
+end note
+
+note right of lambda
+  AI cost optimization:
+  - GPT-4o-mini for top 500 landmarks
+  - GPT-4V for unknowns only
+  - Perceptual hash dedup
+  - Result cache hit rate ~70%
+end note
+@enduml
+....
+
+=== Scaling Summary
+
+[cols="1,1,1,1,2", options="header"]
+|===
+|MAU |ECS Tasks |DB Config |OPEX/mo |Key Change
+
+|**1k**
+|1
+|t4g.medium, Multi-AZ
+|~$785
+|Launch config — handles everything
+
+|**5k**
+|1
+|t4g.medium, Multi-AZ
+|~$1,200
+|Upgrade Redis only
+
+|**10k**
+|2
+|t4g.medium + read replica
+|~$1,800
+|First horizontal scale + PgBouncer
+
+|**25k**
+|3
+|t4g.large + read replica
+|~$3,500
+|AI result caching (first code change)
+
+|**50k**
+|4-5
+|t4g.large + read replica
+|~$5,500
+|Redis cluster mode, photo dedup
+
+|**100k**
+|6-8
+|r6g.xlarge + 2 read replicas
+|~$8,500
+|ECS auto-scaling, Lambda@Edge, cheaper AI models
+
+|**250k**
+|8-12
+|Aurora PostgreSQL
+|~$15-20k
+|Aurora migration, custom ML model
+
+|**500k+**
+|→ EKS
+|Aurora Global DB
+|~$50k+
+|Microservices, Kafka, multi-region
+|===
+
+== Observability Stack
+
+.Observability — TourLens
+[d2,tourlens-observability,format=svg,layout=elk]
+....
+direction: down
+
+services: Application {
+  style.fill: "#E3F2FD"
+  ecs: "ECS Monolith (Tasks 1-N)"
+  lambda: "Lambda (AI Recognition)"
+}
+
+collection: Collection {
+  style.fill: "#E8F5E9"
+  cloudwatch_agent: "CloudWatch Agent (sidecar)"
+  xray: "X-Ray SDK (traces)"
+}
+
+storage: "Storage & Analysis" {
+  style.fill: "#FFF3E0"
+  cw_logs: "CloudWatch Logs" {
+    shape: cylinder
+  }
+  cw_metrics: "CloudWatch Metrics" {
+    shape: cylinder
+  }
+  cw_traces: "X-Ray Traces" {
+    shape: cylinder
+  }
+}
+
+alerting: "Dashboards & Alerts" {
+  style.fill: "#F3E5F5"
+  dashboards: "CloudWatch Dashboards"
+  alarms: "CloudWatch Alarms"
+  slack: "Slack (#ops-alerts)"
+}
+
+# Flow
+services.ecs -> collection.cloudwatch_agent: stdout/stderr
+services.ecs -> collection.xray: Traces
+services.lambda -> collection.cloudwatch_agent: Logs
+services.lambda -> collection.xray: Traces
+
+collection.cloudwatch_agent -> storage.cw_logs: Push
+collection.cloudwatch_agent -> storage.cw_metrics: Push
+collection.xray -> storage.cw_traces: Push
+
+storage.cw_logs -> alerting.dashboards: Query
+storage.cw_metrics -> alerting.dashboards: Query
+storage.cw_traces -> alerting.dashboards: Query
+storage.cw_metrics -> alerting.alarms: Threshold rules
+alerting.alarms -> alerting.slack: "Error rate >5%, P95 >500ms"
+....
+
+=== SLOs
+
+[cols="2,2,2,1"]
+|===
+|Objective |Indicator (SLI) |Target |Alert
+
+|Availability
+|Successful requests / total
+|99.9% monthly
+|< 99.5% over 5 min
+
+|API Latency
+|P95 response time
+|< 200ms
+|> 500ms over 5 min
+
+|AI Recognition
+|P95 processing time
+|< 5 seconds
+|> 10 seconds over 5 min
+
+|Error Rate
+|5xx / total responses
+|< 0.1%
+|> 1% over 5 min
+
+|AI Cache Hit Rate
+|Cache hits / total recognitions
+|> 60% (at 25k+ MAU)
+|< 40% over 1 hour
+|===
+
+== Business Process Flow
+
+.Tourist Photo Recognition — Decision Flow
+[plantuml,tourlens-business-flow,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+title Tourist Photo Recognition — Decision Flow
+
+start
+
+:Tourist opens camera;
+
+:Takes photo of attraction;
+
+:App submits photo;
+
+if (Authenticated?) then (yes)
+  :Upload photo to S3;
+
+  if (Photo hash in cache?) then (yes)
+    :Return cached description;
+    :Show result instantly;
+  else (no)
+    :Enqueue for AI processing;
+
+    :Google Vision: detect landmark;
+
+    if (Landmark found?) then (yes)
+      :GPT-4V: generate description;
+
+      if (GPT-4V succeeded?) then (yes)
+        :Cache result (24h);
+        :Return rich description;
+      else (no — timeout/rate limit)
+        :Gemini: fallback description;
+        :Cache result (24h);
+        :Return description;
+      endif
+
+    else (no landmark detected)
+      :Gemini: general scene description;
+      :Return general description;
+    endif
+
+    :Show description + audio;
+  endif
+
+  fork
+    :Log analytics event;
+  fork again
+    :Award loyalty points;
+  fork again
+    :Show nearby partner offers;
+  end fork
+
+  :Tourist explores recommendations;
+
+else (no)
+  :Prompt login / sign up;
+endif
+
+stop
+@enduml
+....
+
+== Feature Breakdown
+
+.Feature Mind Map — TourLens Option 2
+[plantuml,tourlens-features,format=svg]
+....
+@startmindmap
+title TourLens — Option 2 Features
+
+* TourLens
+** Phase 1: POC + MVP
+*** AI Recognition
+**** Photo capture (native camera)
+**** Google Vision landmark detection
+**** OpenAI GPT-4V descriptions
+**** Gemini fallback
+**** Audio playback (TTS)
+*** User Management
+**** Cognito auth (email + social)
+**** User profiles
+**** Preference settings
+*** Attractions
+**** Attraction catalog
+**** PostGIS nearby search
+**** Visit history
+*** Partner Portal
+**** Partner onboarding (manual)
+**** Offer management
+**** Basic analytics
+** Phase 2: Full Features
+*** Payments (Stripe)
+**** Ticket purchases
+**** Tour bookings
+**** Refund handling
+*** Loyalty Program
+**** Points earning
+**** Points redemption
+**** QR-based discounts
+*** Multi-language
+**** English
+**** Chinese
+**** Spanish
+*** Offline Mode
+**** Cached content
+**** Previously visited attractions
+** Deferred (250k+ MAU)
+*** China Region
+*** Custom ML Model (SageMaker)
+*** On-device ML
+@endmindmap
+....
+
+== Work Breakdown Structure
+
+.WBS — TourLens Option 2
+[plantuml,tourlens-wbs,format=svg]
+....
+@startwbs
+title TourLens — Work Breakdown Structure
+
+* Option 2: Validate + Monetize
+** POC (2 months)
+*** Backend
+**** ECS + Terraform setup
+**** PostgreSQL + PostGIS schema
+**** User API (CRUD)
+**** Partner API (CRUD)
+**** Photo upload pipeline
+*** AI Pipeline
+**** Lambda + SQS integration
+**** Google Vision integration
+**** OpenAI GPT-4V integration
+**** Gemini fallback
+**** Result caching (Redis)
+*** iOS
+**** Camera module
+**** Photo submission
+**** Result display
+*** Android
+**** Camera module
+**** Photo submission
+**** Result display
+*** DevOps
+**** CI/CD (GitHub Actions)
+**** Terraform modules
+**** CloudWatch dashboards
+** MVP (2 months)
+*** Backend
+**** Partner offers CRUD
+**** Attraction catalog
+**** Nearby POI (PostGIS)
+**** Push notifications
+*** Mobile (both platforms)
+**** Partner offers UI
+**** Attraction details
+**** Visit history
+**** Offline data cache
+*** QA
+**** Integration tests
+**** Load testing
+**** App Store prep
+** Full (4 months)
+*** Backend
+**** Stripe payments
+**** Loyalty points engine
+**** Multi-language API
+*** iOS
+**** Payments UI
+**** Loyalty dashboard
+**** Offline mode
+*** Android
+**** Payments UI
+**** Loyalty dashboard
+**** Offline mode
+*** DevOps
+**** US prod hardening
+**** Monitoring alerts
+@endwbs
+....
