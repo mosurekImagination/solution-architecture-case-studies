@@ -7,6 +7,45 @@
 :kroki-server-url: http://localhost:8000
 :kroki-fetch-diagram: true
 
+== Glossary
+
+[cols="1,3", options="header"]
+|===
+|Term |Definition
+
+|AI |Artificial Intelligence — software that can recognize images, generate text, or make decisions
+|API |Application Programming Interface — how software systems communicate with each other
+|ALB |Application Load Balancer — distributes incoming traffic across multiple servers
+|AWS |Amazon Web Services — cloud infrastructure provider
+|CAPEX |Capital Expenditure — one-time development costs (building the product)
+|CDN |Content Delivery Network — servers that cache and deliver content closer to users for faster loading
+|CI/CD |Continuous Integration / Continuous Deployment — automated pipeline that tests and deploys code changes
+|CSL |Cybersecurity Law — Chinese law requiring network operators to store Chinese user data within China
+|DAU |Daily Active Users — unique users who open the app on a given day
+|DNS |Domain Name System — translates domain names (e.g., app.example.com) to server addresses
+|DSL |Data Security Law — Chinese law that classifies data by sensitivity and restricts cross-border transfer of "important data"
+|ECS |Elastic Container Service — AWS service that runs application containers
+|GDPR |General Data Protection Regulation — EU data privacy law
+|IaC |Infrastructure as Code — managing servers and infrastructure through code (Terraform) instead of manual setup
+|JWT |JSON Web Token — a secure token used for user authentication
+|LLM |Large Language Model — AI model that generates human-like text (e.g., GPT-4V, Gemini)
+|MAU |Monthly Active Users — unique users who open the app at least once per month
+|ML |Machine Learning — AI that learns from data to make predictions
+|MFA |Multi-Factor Authentication — requiring a second verification step (e.g., SMS code) when logging in
+|Multi-AZ |Multi-Availability Zone — running database copies in separate data centers for reliability
+|MVP |Minimum Viable Product — the smallest version of the product that delivers value
+|OPEX |Operational Expenditure — ongoing monthly costs (infrastructure, APIs, hosting)
+|PCI-DSS |Payment Card Industry Data Security Standard — security requirements for handling credit card data
+|PIPL |Personal Information Protection Law — Chinese data privacy law requiring personal data of Chinese citizens to stay in China
+|POC |Proof of Concept — initial prototype to validate that the core idea works
+|QR Code |Quick Response Code — scannable barcode used for discounts and check-ins
+|RDS |Relational Database Service — AWS managed database service
+|SES |Simple Email Service — AWS email sending service
+|SQS |Simple Queue Service — AWS message queue for async processing
+|TCO |Total Cost of Ownership — full cost including development, infrastructure, and team
+|TLS |Transport Layer Security — encryption protocol that secures data in transit (HTTPS)
+|===
+
 == Executive Summary
 
 A mobile tourist application that uses AI-powered photo recognition to identify attractions and provide descriptions via text and audio. The platform connects tourists with signed partner businesses for monetization through commissions, advertising, and loyalty programs.
@@ -90,7 +129,7 @@ Three options are presented, each building on the previous:
 |$546k
 |$730
 |~8 months
-|US (China: Terraform-ready)
+|US (China: region-portable architecture)
 
 |**3: Full Platform**
 |Complete platform, Day 1
@@ -446,7 +485,7 @@ Risk buffer: **25%** — justified by:
 |CAPEX |$546,000 (incl. 25-35% risk buffer)
 |OPEX |~$730/month (Year 1, ~1k users)
 |Team |5 developers, stable throughout — 2 backend, 1 iOS, 1 Android, 1 mobile lead
-|Regions |US (us-east-1). China: Terraform-ready, deployable in <1 day when needed
+|Regions |US (us-east-1). Architecture is region-portable — same code and Terraform modules deploy to any AWS region
 |Architecture |Modular monolith (single deployable) + Lambda for AI recognition
 |===
 
@@ -468,7 +507,7 @@ NOTE: Developer rates assume mid-senior nearshore developers (Eastern Europe / L
 
 **Deferred (deploy when business triggers are met):**
 
-* **China region** — Terraform template ready. Deploy when first 10 Chinese partner businesses are signed.
+* **China region** — architecture is region-portable (same code, same Terraform modules), but entering China is a ~6-8 week product initiative, not just an infrastructure deploy. Requires: Chinese-language content, Chinese partner onboarding, WeChat Pay/Alipay integration, ICP license filing, and PIPL compliance. Without these, the app is technically accessible from China but commercially useless.
 * **On-device ML model** — Defer to Year 2+ when user base justifies the engineering investment. Offline cached content covers 90% of the use case.
 
 === Why This Option Is Recommended
@@ -477,7 +516,7 @@ NOTE: Developer rates assume mid-senior nearshore developers (Eastern Europe / L
 . **Monetization-ready**: Stripe payments + loyalty program create revenue streams from Month 5+
 . **Architecture migration path**: Modular monolith with clear boundaries enables future microservices extraction and multi-region deployment when traffic demands it
 . **Stable team**: 5 devs throughout avoids mid-project hiring and onboarding disruption
-. **China-ready, not China-deployed**: Terraform templates prepared during build, deployable in <1 day — satisfies the requirement to be "prepared to spin up" without paying for idle infrastructure
+. **China-portable, not China-deployed**: Architecture is region-portable (same code and Terraform modules deploy to any AWS region). Entering China is a ~6-8 week product initiative (content, partners, payments, ICP, PIPL) — not just a Terraform apply. Chinese tourists visiting the US use the US-hosted app with no issues
 
 === Architecture
 
@@ -581,7 +620,7 @@ Key components:
 **Scaling triggers:**
 
 * Add **read replica** when p95 query latency exceeds 200ms
-* Add **China region** (from Terraform template) when first 10 Chinese partners are signed
+* Add **China region** when strategic decision to enter China market is made (~6-8 week product initiative: Chinese content, local partners, WeChat Pay/Alipay, ICP license, PIPL compliance)
 * Add **EventBridge/SNS** when a single event needs to fan out to multiple consumers
 * Extract modules to **separate services** when team grows beyond one team boundary
 
@@ -689,7 +728,7 @@ Key components:
 |**~$785**
 |===
 
-NOTE: OPEX estimates reflect realistic Year 1 costs at ~1,000 users. Costs scale with usage — at 10k users (Year 2), expect ~$1,500-2,000/mo. Free tier credits excluded where they expire or usage exceeds thresholds.
+NOTE: Infrastructure is sized for ~1,000 MAU — realistic for a new app with no existing user base or launch campaign (expect 200-1,000 MAU in the first 3-4 months). AWS scales up in minutes if traffic grows faster (ECS tasks in <60s, RDS upgrade in ~15 min). See <<Scalability & Growth Roadmap>> for the full scaling path. Free tier credits excluded where they expire or usage exceeds thresholds.
 
 .Year 1 Total Cost of Ownership
 [cols="2,1,3", options="header"]
@@ -816,8 +855,6 @@ ganttDiagram {
 [Code Reviews + Integration Testing] is colored in #BBDEFB/#1976D2
 [Multi-language Support] starts 2026-08-20 and ends 2026-09-15
 [Multi-language Support] is colored in #FFE0B2/#E65100
-[China Terraform Templates] starts 2026-09-01 and ends 2026-09-15
-[China Terraform Templates] is colored in #FFE0B2/#E65100
 
 -- DevOps (shared) --
 [CI/CD + IaC - Terraform] starts 2026-03-01 and ends 2026-03-28
@@ -877,7 +914,7 @@ end legend
 |Mobile Lead
 |POC→Full
 |1 dev (shared)
-|Cross-platform architecture, API contracts, code reviews for both platforms, multi-language, China Terraform templates, QA coordination
+|Cross-platform architecture, API contracts, code reviews for both platforms, multi-language, QA coordination
 
 |DevOps
 |POC→MVP
@@ -906,6 +943,112 @@ NOTE: The mobile lead eliminates single points of failure on each platform by pr
 |Payments live, loyalty program active, multi-language support, App Store approved
 |===
 
+=== Scalability & Growth Roadmap
+
+How far the current infrastructure stretches, what changes at each growth tier, and what it costs.
+
+_Assumptions: 10% of MAU are DAU, each DAU performs ~3 photo recognitions per session, on-demand AWS pricing (reserved instances would be 30-40% cheaper)._
+
+.Growth Roadmap
+[cols="1,1,1,2,3", options="header"]
+|===
+|MAU |OPEX/mo |Eng. Effort |What Changes |Architecture
+
+|**1k**
+|**~$785**
+|—
+|Nothing. Current spec handles this.
+|Monolith
+
+|**5k**
+|**~$1,200**
+|0 days
+|Upgrade Redis (cache.t3.small). Monitor DB latency.
+|Monolith
+
+|**10k**
+|**~$1,800**
+|2 days
+|Add ECS task (2 total). Add PostgreSQL read replica. PgBouncer sidecar.
+|Monolith
+
+|**25k**
+|**~$3,500**
+|5 days
+|Upgrade DB (t4g.large). 3 ECS tasks. **Implement AI result caching** — first code change. Saves 40-60% of API costs.
+|Monolith
+
+|**50k**
+|**~$5,500**
+|10 days
+|Redis cluster mode. Photo perceptual hashing (skip Vision API for known landmarks). GPT-4o-mini for common attractions, GPT-4V for unknowns.
+|Monolith
+
+|**100k**
+|**~$8,500**
+|5-20 days
+|Scale ECS to 6-8 tasks. DB to r6g.xlarge. Lambda@Edge for photo resizing. Evaluate extracting Payments module.
+|Monolith (possibly 1 extraction)
+
+|**250k**
+|**~$15k-20k**
+|2-3 months
+|Migrate to Aurora PostgreSQL. Deploy China region (from Terraform). Custom ML model via SageMaker. Team grows to 8-10.
+|Modular monolith + 2nd region
+
+|**500k+**
+|**~$50k+**
+|6+ months
+|EKS, Kafka, microservices, Aurora Global DB, multi-region active-active. See <<Scaling Path (Future)>>.
+|Platform
+|===
+
+**Key insight:** The monolith handles **up to 100k MAU** with zero architectural changes — only instance sizing, horizontal scaling, and AI cost optimization. The first genuine architecture decision (Aurora, module extraction) comes at ~250k MAU. EKS/Kafka/microservices only at 500k+.
+
+==== AI Cost Optimization Strategies
+
+AI API costs are the dominant scaling concern. Strategies by impact:
+
+[cols="2,1,1,2", options="header"]
+|===
+|Strategy |Savings |Effort |How It Works
+
+|Result caching
+|40-60%
+|Low (2-3 days)
+|Redis hash: landmark_id → description. Same landmark = cached response.
+
+|Geo-fence shortcut
+|30-40%
+|Low (1-2 days)
+|If PostGIS says user is within 50m of a known attraction, skip Vision API entirely.
+
+|Cheaper models for common cases
+|50% per call
+|Medium (3-5 days)
+|GPT-4o-mini for top 500 landmarks, GPT-4V only for unknowns.
+
+|Custom ML model (250k+ MAU)
+|80% of external API costs
+|High (2-3 months)
+|SageMaker endpoint for top 1,000 landmarks. Eliminates external dependency for 80% of requests.
+|===
+
+==== Custom ML Model — How It Works
+
+At 250k+ MAU, 80% of photos are the same ~1,000 well-known landmarks. Instead of calling Google Vision + OpenAI every time, a fine-tuned image classifier (EfficientNet on SageMaker) recognizes known landmarks in ~50-100ms at ~$0.0002/call — vs $0.012-0.032/call externally. Pre-curated descriptions are served from PostgreSQL. Unknown landmarks (20%) still fall back to the Vision → GPT-4V pipeline.
+
+[cols="1,1,1", options="header"]
+|===
+|Metric |External APIs |Custom Model
+
+|Cost/recognition |$0.012-0.032 |~$0.0002
+|Latency |2-5 seconds |50-100ms
+|China availability |OpenAI blocked |Works everywhere
+|===
+
+*Investment:* ~$40-55k one-time (ML engineer, 2-3 months) + $500-1,500/mo endpoint. *Payback:* 2-4 months at 250k MAU.
+
 === Risk Assessment
 
 Risk buffer: **25% (POC/MVP) → 35% (Full)** — justified by:
@@ -918,6 +1061,145 @@ Risk buffer: **25% (POC/MVP) → 35% (Full)** — justified by:
 ** App Store review process can require multiple submission cycles
 
 
+
+=== China Market Entry — Architecture Reference
+
+When the business decides to enter the Chinese market, the same code and Terraform modules deploy to the China region. This is a ~6-8 week product initiative (Chinese content, partners, WeChat Pay/Alipay, ICP license, PIPL compliance) — infrastructure deploy itself takes hours, but the surrounding product work is the real effort. The diagram below shows the full multi-region state after deployment.
+
+NOTE: The app is technically usable from China without dedicated infrastructure — Chinese tourists visiting the US use the US-hosted app with no issues. However, serving users *physically in China* with Chinese landmarks requires the China region because: (1) GFW throttles international traffic (200-400ms added latency), (2) Google Play is blocked (need Chinese Android stores), (3) Stripe doesn't support WeChat Pay/Alipay, (4) PIPL requires Chinese user data to stay in mainland China when deliberately targeting Chinese consumers.
+
+IMPORTANT: China's *PIPL* (Personal Information Protection Law), *CSL* (Cybersecurity Law), and *DSL* (Data Security Law) require that personal data of Chinese users stays within mainland China. This means each region runs its own **primary database** for local users — a simple read replica is not legally compliant. Furthermore, landmarks are geographically specific (Great Wall vs. Statue of Liberty), so there is no shared catalog to sync. The two regions are **fully independent** — zero cross-region data transfer.
+
+.Option 2 Architecture — With China Region Deployed
+[plantuml,format=svg]
+....
+@startuml
+title Option 2: Multi-Region — US + China
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  roundCorner 10
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor #DEE2E6
+}
+
+actor "US Users\n(iOS/Android)" as us_users
+actor "China Users\n(iOS/Android)" as cn_users
+
+cloud "Route 53\nLatency-based routing" as dns
+cloud "CloudFront CDN\nUS edge caching" as cdn_us
+cloud "CloudFront CDN\nChina edge caching\n(via ICP license)" as cdn_cn
+
+rectangle "AWS US-EAST-1 (Primary)" as us_region #E8F5E9 {
+  component "ALB" as alb_us #ED7100
+
+  package "Compute" {
+    component "ECS: Monolith\nUsers + Partners +\nRecommendations +\nPayments + Loyalty" as ecs_us #FF9900
+    queue "SQS" as sqs_us #FF4F8B
+    component "Lambda: AI Recognition" as ar_us #FF9900
+  }
+
+  package "Data" {
+    database "PostgreSQL\nMulti-AZ\nPrimary (US users)" as db_us #3B48CC
+    database "Redis 5GB" as cache_us #3B48CC
+    storage "S3 Photos" as s3p_us #3F8624
+    storage "S3 Assets" as s3a_us #3F8624
+  }
+
+  component "SES" as ses_us #FF4F8B
+  component "CloudWatch" as cw_us #FF4F8B
+}
+
+rectangle "AWS CN-NORTHWEST-1 (Ningxia)" as cn_region #FFF3E0 {
+  component "ALB" as alb_cn #ED7100
+
+  package "Compute " {
+    component "ECS: Monolith\n(same image, CN config)" as ecs_cn #FF9900
+    queue "SQS" as sqs_cn #FF4F8B
+    component "Lambda: AI Recognition" as ar_cn #FF9900
+  }
+
+  package "Data " {
+    database "PostgreSQL\nMulti-AZ\nPrimary (CN users)" as db_cn #3B48CC
+    database "Redis 5GB" as cache_cn #3B48CC
+    storage "S3 Photos" as s3p_cn #3F8624
+    storage "S3 Assets" as s3a_cn #3F8624
+  }
+
+  component "SES" as ses_cn #FF4F8B
+  component "CloudWatch" as cw_cn #FF4F8B
+}
+
+component "Cognito\nOAuth 2.0/OIDC" as auth #DD344C
+
+package "AI Services" #E8F5E9 {
+  component "Google Vision API" as gv #4285F4
+  component "OpenAI GPT-4V\n(US only)" as openai #00A67E
+  component "Google Gemini\n(CN fallback)" as gemini #4285F4
+}
+
+package "3rd Party" #FFF3E0 {
+  component "Stripe" as stripe #635BFF
+  component "Google Maps API" as maps #4285F4
+}
+
+component "Slack Alerts" as slack #611f69
+
+' US flow
+us_users --> dns
+dns --> cdn_us : US latency
+cdn_us --> alb_us
+alb_us --> ecs_us
+ecs_us --> db_us
+ecs_us --> cache_us
+ecs_us --> s3p_us
+s3p_us --> sqs_us
+sqs_us --> ar_us
+ar_us --> gv
+ar_us --> openai
+ar_us --> gemini
+ecs_us --> ses_us
+ecs_us --> stripe
+ecs_us --> maps
+cw_us --> slack
+
+' CN flow
+cn_users --> dns
+dns --> cdn_cn : CN latency
+cdn_cn --> alb_cn
+alb_cn --> ecs_cn
+ecs_cn --> db_cn
+ecs_cn --> cache_cn
+ecs_cn --> s3p_cn
+s3p_cn --> sqs_cn
+sqs_cn --> ar_cn
+ar_cn --> gv
+ar_cn --> gemini : CN uses Gemini\n(OpenAI blocked)
+ecs_cn --> ses_cn
+cw_cn --> slack
+
+' No cross-region data transfer
+' Landmarks are geographically specific (CN landmarks ≠ US landmarks)
+' Databases are fully independent per PIPL/CSL/DSL
+alb_cn --> auth
+alb_us --> auth
+@enduml
+....
+
+**China region key differences:**
+
+* **Route 53 latency-based routing** — directs users to nearest region automatically
+* **Fully independent databases** — each region has its own primary PostgreSQL with its own users, partners, and landmark catalog. Landmarks are geographically specific (Chinese landmarks in CN, US landmarks in US), so there is nothing to sync. Zero cross-region data transfer — fully PIPL/CSL/DSL compliant
+* **Fully independent S3 buckets** — user photos and landmark assets stay in the region where they were created. No cross-region replication needed
+* **Gemini-only AI** — OpenAI is blocked in China; Lambda uses Google Gemini exclusively
+* **ICP license required** — serving content in China requires an ICP filing (2-4 weeks lead time); must be initiated early in the China market entry initiative
+* **Same container image** — identical ECS monolith with region-specific environment config (API keys, DB endpoints, AI provider)
+* **Shared Cognito** — single identity provider; user accounts authenticate via Cognito regardless of region. A Chinese tourist visiting the US is routed to US region and sees US landmarks — correct by design
+* **Estimated additional OPEX**: ~$400-500/mo (mirrors US compute + data, no separate AI costs since Gemini is shared)
 
 == Option 3: All Features Day 1
 
@@ -1105,25 +1387,21 @@ Risk buffer: **30-40%** — justified by:
 
 == Scaling Path (Future)
 
-This section is **not an option to choose now** — it describes the migration path if the product outgrows Options 2 or 3.
+This section describes the migration path at **500k+ MAU** — when the monolith genuinely reaches its limits. Not relevant until then (see <<Scalability & Growth Roadmap>> for the 1k–250k path).
 
-When the modular monolith reaches its limits, the architecture evolves toward:
+At this scale, the architecture evolves toward:
 
-* **EKS + Istio** service mesh — decompose modules into independent services
-* **Aurora Global DB** — sharding, cross-region replication
-* **Kafka** for high-throughput event streaming (replacing SQS at scale)
+* **EKS + Istio** service mesh — decompose modules into independent services for 3+ teams
+* **Aurora Global DB** — cross-region replication, auto-scaling storage
+* **Kafka** for high-throughput event streaming (replacing SQS for ordering/replay guarantees)
 * **Multi-region active-active** deployment (US, China, EU)
-* **SageMaker** for custom ML model training
 
 === Trigger Conditions
 
-This migration makes sense only when:
-
-* Active users exceed **100k+** and growing
-* Database queries hit performance limits despite indexing and read replicas
-* Monthly revenue justifies **$50k+/mo** infrastructure spend
+* MAU exceeds **500k+** and growing
 * Team has grown to **15+** and needs microservices team boundaries
-* Business requires multi-region active-active presence
+* Monthly revenue justifies **$50k+/mo** infrastructure spend
+* Business requires multi-region active-active presence (not just prepared — genuinely active)
 
 Detailed architecture and cost breakdown available on request once trigger conditions are met.
 
@@ -1253,12 +1531,12 @@ Photography is the core user action — native camera performance is a non-negot
 |Google Gemini (OpenAI blocked in China)
 
 |Replication
-|Source
-|Async replication target (RPO 15 min)
+|None needed
+|None needed — regions are fully independent
 
 |Data residency
 |US data stays in US
-|China user data stays in China (regulation)
+|China user data stays in China (PIPL/CSL/DSL)
 |===
 
 **Key constraint:** China data residency laws require personal data of Chinese users to remain within mainland China. This means separate database instances, not just read replicas.
@@ -1365,7 +1643,7 @@ Costs are estimated using **developer-price × time**, not per-module:
 
 . **Offline mode is essential for tourists** — areas like mountain vineyards may have poor connectivity. On-device ML is deferred to the Full phase to reduce initial complexity. Basic offline caching of previously viewed content is included in MVP.
 
-. **US is the priority market** — we deploy to US only. China infrastructure is Terraform-ready but not deployed until business triggers justify it (first Chinese attraction partner signed).
+. **US is the priority market** — we deploy to US only. Chinese tourists visiting the US use the US-hosted app with no issues. The architecture is region-portable (same code and Terraform modules), but entering China is a ~6-8 week product initiative (Chinese content, partners, WeChat Pay/Alipay, ICP license, PIPL compliance) — not just an infrastructure deploy.
 
 . **Partner onboarding is manual initially** — the client team signs partners and enters their information. A self-service partner portal comes in Phase 2 (Full).
 
@@ -1377,7 +1655,7 @@ Costs are estimated using **developer-price × time**, not per-module:
 
 === Constraints
 
-* **China data residency:** When China is deployed, personal data of Chinese users must remain in mainland China (Cybersecurity Law). Infrastructure is Terraform-ready.
+* **China data residency:** When China is deployed, personal data of Chinese users must remain in mainland China (PIPL/CSL/DSL). Architecture is region-portable — same code and Terraform modules.
 * **PCI-DSS compliance:** Payment card data must be tokenized through Stripe — never stored in our systems
 * **GDPR readiness:** Data collection, consent, and right-to-erasure mechanisms designed from Day 1
 * **AI API availability:** OpenAI may be blocked or restricted in China — Gemini serves as primary provider there
@@ -1405,7 +1683,7 @@ Costs are estimated using **developer-price × time**, not per-module:
 === Architecture Diagrams (3 options — inline PlantUML via Kroki)
 
 * Option 1 — Modular monolith, US only
-* Option 2 — Progressive build, US only, China Terraform-ready (RECOMMENDED)
+* Option 2 — Progressive build, US only, China region-portable (RECOMMENDED)
 * Option 3 — Full platform, US + China + EU
 * Scaling Path — migration triggers for future growth
 
