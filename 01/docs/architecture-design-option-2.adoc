@@ -1038,6 +1038,97 @@ alerting.alarms -> alerting.slack: "Error rate >5%, P95 >500ms"
 |< 40% over 1 hour
 |===
 
+== Security Architecture
+
+=== Authentication & Authorization Flow
+
+.OAuth2 / OIDC Authentication Flow — TourLens
+[plantuml,tourlens-security-auth-flow,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+
+title Authentication Flow — TourLens (AWS Cognito + OAuth2)
+
+actor "Tourist" as user
+participant "Mobile App\n(iOS / Android)" as app
+participant "ALB\n(HTTPS)" as alb
+participant "AWS Cognito\n(User Pool)" as cognito
+participant "TourLens API\n(ECS Fargate)" as api
+database "PostgreSQL\n(RDS)" as db
+
+== Registration / Login ==
+user -> app: Open app
+app -> cognito: Hosted UI redirect\n(Authorization Code + PKCE)
+cognito -> user: Login page\n(email/password or social)
+user -> cognito: Enter credentials
+
+alt Credentials valid
+  cognito -> app: Authorization code (redirect)
+  app -> cognito: Exchange code for tokens\n(code_verifier)
+  cognito --> app: Access token + Refresh token + ID token
+else Invalid credentials
+  cognito --> user: Error message\n(retry or reset password)
+end
+
+== Authenticated API Call ==
+app -> alb: GET /api/attractions\nAuthorization: Bearer {access_token}
+alb -> api: Forward request
+api -> api: Validate JWT signature\n(Cognito public keys)
+
+alt Token valid & not expired
+  api -> db: Query attractions
+  db --> api: Results
+  api --> alb: 200 OK + JSON
+  alb --> app: Response
+else Token expired
+  app -> cognito: Refresh token\n(grant_type=refresh_token)
+  cognito --> app: New access token
+  app -> alb: Retry with new token
+end
+
+== Photo Upload (Authorized) ==
+user -> app: Take photo
+app -> alb: POST /api/photos\nAuthorization: Bearer {access_token}
+alb -> api: Forward
+api -> api: Validate JWT + extract user_id
+api --> app: 202 Accepted\n(recognition queued)
+
+@enduml
+....
+
+=== Security Controls Summary
+
+[cols="1,2,2"]
+|===
+|Layer |Implementation |Notes
+
+|**Authentication**
+|AWS Cognito (OAuth 2.0 / OIDC + PKCE)
+|Social login (Google, Apple) + email/password
+
+|**Transport**
+|TLS 1.3 enforced (ALB → client, ECS → RDS)
+|Certificate managed by ACM
+
+|**Data at rest**
+|AES-256 (S3 default, RDS encryption)
+|KMS upgrade path for Option 3+
+
+|**API protection**
+|ALB rate limiting + Cognito token validation
+|JWT verified on every request
+
+|**Payment security**
+|Stripe tokenization (PCI-DSS Level 1)
+|No raw card data touches our infrastructure
+
+|**Photo storage**
+|S3 with presigned URLs, bucket policy
+|Photos accessible only by owning user + API
+|===
+
 == Business Process Flow
 
 .Tourist Photo Recognition — Decision Flow
@@ -1101,6 +1192,73 @@ else (no)
 endif
 
 stop
+@enduml
+....
+
+== Entity Lifecycle
+
+Shows the lifecycle of a photo recognition request — the core domain entity that drives the user experience.
+
+.Photo Recognition — State Machine
+[plantuml,tourlens-entity-lifecycle,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+title PhotoRecognition State Machine
+
+[*] --> Uploaded : User takes photo
+
+Uploaded --> Queued : SQS enqueue
+
+Queued --> Processing : Lambda picks up
+
+Processing --> Recognized : AI confidence ≥ 0.7
+Processing --> LowConfidence : AI confidence < 0.7
+Processing --> Failed : All providers exhausted
+
+LowConfidence --> FallbackProcessing : Try next provider
+FallbackProcessing --> Recognized : Fallback confidence ≥ 0.7
+FallbackProcessing --> Failed : No providers left
+
+Recognized --> Described : Description generated\n(text + optional audio)
+Described --> OffersAttached : Nearby partner offers\nfound & linked
+Described --> Completed : No offers available
+
+OffersAttached --> Completed : Delivered to user
+
+Failed --> ManualReview : Flagged for review
+ManualReview --> Recognized : Manually matched
+ManualReview --> Discarded : Unrecognizable photo
+
+Completed --> [*]
+Discarded --> [*]
+
+@enduml
+....
+
+.Transaction — State Machine
+[plantuml,tourlens-transaction-lifecycle,format=svg]
+....
+@startuml
+skinparam backgroundColor white
+title Transaction State Machine
+
+[*] --> Initiated : User selects offer
+
+Initiated --> PaymentPending : Stripe checkout created
+
+PaymentPending --> Completed : Stripe webhook:\npayment_intent.succeeded
+PaymentPending --> Failed : Stripe webhook:\npayment_intent.failed
+PaymentPending --> Expired : No response in 30 min
+
+Completed --> LoyaltyAwarded : Points credited
+LoyaltyAwarded --> [*]
+
+Failed --> Initiated : User retries
+Failed --> [*] : User abandons
+
+Expired --> [*]
+
 @enduml
 ....
 

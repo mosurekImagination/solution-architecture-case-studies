@@ -455,7 +455,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_business_model">3.3. Business Model</a></li>
 </ul>
 </li>
-<li><a href="#_architecture_options_overview">4. Architecture Options Overview</a></li>
+<li><a href="#_architecture_options_overview">4. Architecture Options Overview</a>
+<ul class="sectlevel2">
+<li><a href="#_cost_comparison">4.1. Cost Comparison</a></li>
+</ul>
+</li>
 <li><a href="#_option_1_mvp_validate_the_core_concept">5. Option 1: MVP — Validate the Core Concept</a>
 <ul class="sectlevel2">
 <li><a href="#_overview">5.1. Overview</a></li>
@@ -858,6 +862,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 </tbody>
 </table>
+<div class="sect2">
+<h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>4.1. Cost Comparison</h3>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diagrams/cost-comparison-2bfb498211723e68509ecfd78391020e3692c252.svg" alt="OPEX Comparison by Option">
+</div>
+<div class="title">Figure 1. OPEX Comparison by Option</div>
+</div>
+<div class="paragraph">
+<p><em>Note: Option 2 costs are comparable to Option 1 at launch (~$785/mo vs ~$820/mo) due to consolidated single-task ECS and Cognito free tier. Option 3 jumps 8× due to microservices, multi-region, and analytics infrastructure.</em></p>
+</div>
+<div class="imageblock kroki">
+<div class="content">
+<img src="diagrams/capex-comparison-4b6fb91072af38343ef7ed68c5c8cd02f50cde93.svg" alt="CAPEX Comparison by Option">
+</div>
+<div class="title">Figure 2. CAPEX Comparison by Option</div>
+</div>
+<div class="paragraph">
+<p><em>CAPEX includes risk buffers (25-40%). Option 1 has no Full phase. Option 2 is 2.3x Option 1 but adds monetization. Option 3 is 6.9x Option 1 due to larger team (8-10 devs), higher rates, and multi-region scope.</em></p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -951,7 +976,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="content">
 <img src="diagrams/diag-fd3111ec9794347ccd8abe10b1fe0b9bd3d4abb4.svg" alt="Option 1 Architecture Diagram">
 </div>
-<div class="title">Figure 1. Option 1 Architecture Diagram</div>
+<div class="title">Figure 3. Option 1 Architecture Diagram</div>
 </div>
 <div class="paragraph">
 <p>Key components:</p>
@@ -1126,7 +1151,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="content">
 <img src="diagrams/diag-905e0a3a3ffe9cdd50d0972a8f0d38c7a3bed326.svg" alt="Option 1 Development Timeline">
 </div>
-<div class="title">Figure 2. Option 1 Development Timeline</div>
+<div class="title">Figure 4. Option 1 Development Timeline</div>
 </div>
 <div class="paragraph">
 <p><strong>Work Streams:</strong></p>
@@ -1313,7 +1338,7 @@ Developer rates assume mid-senior nearshore developers (Eastern Europe / Latin A
 <div class="content">
 <img src="diagrams/diag-3b2d9aa2630ca118b23e5c720783adc85a649e49.svg" alt="Option 2 Architecture Diagram">
 </div>
-<div class="title">Figure 3. Option 2 Architecture Diagram</div>
+<div class="title">Figure 5. Option 2 Architecture Diagram</div>
 </div>
 <div class="paragraph">
 <p>Key components:</p>
@@ -1606,7 +1631,7 @@ Team cost post-build assumes the full team is retained for maintenance, iteratio
 <div class="content">
 <img src="diagrams/diag-dc3c437c86ca8b849360dd241f3c9c83dd1c5150.svg" alt="Option 2 Development Timeline">
 </div>
-<div class="title">Figure 4. Option 2 Development Timeline</div>
+<div class="title">Figure 6. Option 2 Development Timeline</div>
 </div>
 <div class="paragraph">
 <p><strong>Work Streams:</strong></p>
@@ -1948,7 +1973,7 @@ China&#8217;s <strong>PIPL</strong> (Personal Information Protection Law), <stro
 <div class="content">
 <img src="diagrams/diag-a2628cc5c58ba2752b58f4750f1386992c28e7a1.svg" alt="Option 2 Architecture — With China Region Deployed">
 </div>
-<div class="title">Figure 5. Option 2 Architecture — With China Region Deployed</div>
+<div class="title">Figure 7. Option 2 Architecture — With China Region Deployed</div>
 </div>
 <div class="paragraph">
 <p><strong>China region key differences:</strong></p>
@@ -2925,7 +2950,7 @@ Result cached in Redis (24h TTL) → S3 (permanent archive)</pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-23 17:04:19 +0100
+Last updated 2026-02-25 23:03:33 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

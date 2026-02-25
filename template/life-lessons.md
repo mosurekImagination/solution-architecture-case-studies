@@ -47,6 +47,8 @@
 
 - **Never estimate in a meeting.** "I'll get back to you with a detailed estimate by Thursday" is always better than a number pulled from thin air under pressure. Estimates given on the spot become commitments.
 
+- **Always pair cost projections with revenue projections.** Showing $543K CAPEX without showing when that investment pays back leaves executives guessing. Include a simple break-even model: estimated MAU × conversion rate × average transaction × your commission = monthly revenue. Even rough numbers build confidence that you've thought past "how much does it cost" to "when does it make money."
+
 ---
 
 ## 3. Risk Management
@@ -68,6 +70,8 @@
 - **Integration risk is always underestimated.** Every integration with an external system should be treated as medium-high risk until proven otherwise through a spike or PoC. "They have a REST API" tells you nothing about data quality, rate limits, error handling, or whether their staging environment actually works.
 
 - **Risk buffers are not negotiable scope.** When the timeline is tight, stakeholders will try to "negotiate away" the risk buffer. This is like removing the airbags to make the car lighter. Protect the buffer — it's exactly when timelines are tight that risks are most likely to materialize.
+
+- **Track external dependencies as first-class risks.** Third-party API access, App Store approval timelines, partner agreements, domain provisioning — these are outside your control but on your critical path.
 
 ---
 
@@ -137,6 +141,8 @@
 
 - **"Phase 2" is where features go to die.** If something is truly important, fight to get it into Phase 1 or an early Phase 2 sprint with a committed date. A Phase 2 roadmap item without a date, budget, or team assigned is a gentle way of saying "no."
 
+- **Include a "What Happens After Launch" section in every option.** Architects love designing systems and stop at "go-live." But the client's question is "then what?" — who operates it, how do we get users, when do we iterate, what does the team do next month?
+
 ---
 
 ## 8. Delivery & Scope
@@ -152,6 +158,8 @@
 - **Parallel workstreams need integration checkpoints.** Two teams building independently for 3 months and then "integrating" in week 13 is a recipe for disaster. Schedule integration testing every 2 weeks. Discover misalignment early when it's cheap to fix.
 
 - **Definition of Done must include operability.** "Feature complete" is not done. Done means: deployed to staging, tested (unit + integration), documented (API + runbook), observable (logs + metrics + alerts), and reviewed. If your DoD doesn't include these, production incidents are a certainty.
+
+- **No testing strategy means no quality guarantee.** If your solution design doesn't specify how the system will be tested — unit coverage targets, integration test approach, load testing plan, security scan cadence — you're implicitly promising quality without a mechanism to deliver it. Testing strategy is an architecture concern, not a "dev team figures it out" concern.
 
 ---
 
@@ -185,6 +193,8 @@
 
 - **Your architecture diagram should fit on one screen.** If it requires scrolling or zooming, it has too much detail for that level of abstraction. Use C4's zoom levels: context (one screen), container (one screen), component (one screen). Never show everything at once.
 
+- **Tier your deliverables to match the commercial relationship stage.** A compact proposal for the pitch, a mid-depth solution design for the engagement, a full technical architecture for the delivery team. Giving the full technical document before the contract is signed means a competitor can undercut you with your own work. The compact version sells; the full version builds.
+
 - **Write the decision, not the journey.** ADRs should state what was decided and why, not narrate the 3-week deliberation process. "We chose PostgreSQL over MongoDB because our data is relational and we need strong consistency" — done. Save the debate for the Alternatives section.
 
 - **Update documents or delete them.** Stale documentation is actively harmful — it misleads new team members and creates false confidence. If you can't commit to maintaining a document, don't create it. A living wiki page beats a perfect PDF that's 6 months out of date.
@@ -200,6 +210,8 @@
 - **Never give a number without a scope attached.** "$400K" without context is ammunition for negotiation. "$400K for: auth, core API, mobile app, admin portal, CI/CD, 3-month warranty" is a defensible position.
 
 - **Contingency is not profit margin.** When the client asks to remove the contingency buffer, explain that it covers unknowns that exist in *every project*. Removing it doesn't reduce cost — it pushes the overrun to a change request later, which costs more because it disrupts planned work.
+
+- **Your solution design is intellectual property — protect it accordingly.** A detailed architecture document with diagrams, data models, cost breakdowns, and timelines is a complete implementation blueprint. Add a confidentiality notice. Consider what level of detail is appropriate for pre-engagement vs. post-contract deliverables. If someone can take your document and hand it to another vendor, you've given away your value for free.
 
 ---
 

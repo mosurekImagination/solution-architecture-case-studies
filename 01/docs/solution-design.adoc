@@ -139,6 +139,90 @@ Three options are presented, each building on the previous:
 |US + China + EU
 |===
 
+=== Cost Comparison
+
+.OPEX Comparison by Option
+[vegalite,cost-comparison,format=svg]
+....
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Monthly OPEX Comparison — TourLens Options",
+  "width": 450,
+  "height": 280,
+  "data": {
+    "values": [
+      {"option": "Option 1: MVP", "category": "Compute (ECS + Lambda)", "cost": 210},
+      {"option": "Option 1: MVP", "category": "Database + Cache", "cost": 275},
+      {"option": "Option 1: MVP", "category": "AI APIs", "cost": 180},
+      {"option": "Option 1: MVP", "category": "Storage + CDN", "cost": 75},
+      {"option": "Option 1: MVP", "category": "Other", "cost": 80},
+      {"option": "Option 2: Validate + Monetize", "category": "Compute (ECS + Lambda)", "cost": 155},
+      {"option": "Option 2: Validate + Monetize", "category": "Database + Cache", "cost": 250},
+      {"option": "Option 2: Validate + Monetize", "category": "AI APIs", "cost": 215},
+      {"option": "Option 2: Validate + Monetize", "category": "Storage + CDN", "cost": 75},
+      {"option": "Option 2: Validate + Monetize", "category": "Other", "cost": 90},
+      {"option": "Option 3: Full Platform", "category": "Compute (ECS + Lambda)", "cost": 1320},
+      {"option": "Option 3: Full Platform", "category": "Database + Cache", "cost": 2000},
+      {"option": "Option 3: Full Platform", "category": "AI APIs", "cost": 1000},
+      {"option": "Option 3: Full Platform", "category": "Storage + CDN", "cost": 350},
+      {"option": "Option 3: Full Platform", "category": "Other", "cost": 1880}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": -15}},
+    "y": {"field": "cost", "type": "quantitative", "title": "Monthly Cost ($)", "stack": true},
+    "color": {"field": "category", "type": "nominal", "title": "Cost Category",
+      "scale": {"range": ["#FF9900", "#1976D2", "#388E3C", "#E65100", "#7B1FA2"]}
+    },
+    "tooltip": [
+      {"field": "option", "type": "nominal", "title": "Option"},
+      {"field": "category", "type": "nominal", "title": "Category"},
+      {"field": "cost", "type": "quantitative", "title": "$/month"}
+    ]
+  }
+}
+....
+
+_Note: Option 2 costs are comparable to Option 1 at launch (~$785/mo vs ~$820/mo) due to consolidated single-task ECS and Cognito free tier. Option 3 jumps 8× due to microservices, multi-region, and analytics infrastructure._
+
+.CAPEX Comparison by Option
+[vegalite,capex-comparison,format=svg]
+....
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "CAPEX Comparison (incl. risk buffer) - TourLens Options",
+  "width": 450,
+  "height": 280,
+  "data": {
+    "values": [
+      {"option": "Option 1: MVP", "phase": "POC", "cost": 120000},
+      {"option": "Option 1: MVP", "phase": "MVP", "cost": 120000},
+      {"option": "Option 2: Validate + Monetize", "phase": "POC", "cost": 150000},
+      {"option": "Option 2: Validate + Monetize", "phase": "MVP", "cost": 150000},
+      {"option": "Option 2: Validate + Monetize", "phase": "Full", "cost": 243000},
+      {"option": "Option 3: Full Platform", "phase": "POC", "cost": 405600},
+      {"option": "Option 3: Full Platform", "phase": "MVP", "cost": 702000},
+      {"option": "Option 3: Full Platform", "phase": "Full", "cost": 546000}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": -15}},
+    "y": {"field": "cost", "type": "quantitative", "title": "CAPEX ($)", "stack": true},
+    "color": {"field": "phase", "type": "nominal", "title": "Phase",
+      "scale": {"domain": ["POC", "MVP", "Full"], "range": ["#BBDEFB", "#1976D2", "#0D47A1"]}
+    },
+    "tooltip": [
+      {"field": "option", "type": "nominal", "title": "Option"},
+      {"field": "phase", "type": "nominal", "title": "Phase"},
+      {"field": "cost", "type": "quantitative", "title": "$", "format": ",.0f"}
+    ]
+  }
+}
+....
+
+_CAPEX includes risk buffers (25-40%). Option 1 has no Full phase. Option 2 is 2.3x Option 1 but adds monetization. Option 3 is 6.9x Option 1 due to larger team (8-10 devs), higher rates, and multi-region scope._
 
 
 == Option 1: MVP — Validate the Core Concept
