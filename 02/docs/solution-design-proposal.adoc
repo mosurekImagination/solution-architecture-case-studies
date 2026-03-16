@@ -1,0 +1,328 @@
+= Data-Driven Customer Engagement Platform — Proposal
+:author: Solution Architect
+:revdate: 2026-03-16
+:status: Proposal
+:toc: left
+:toclevels: 2
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+// ============================================================================
+// LEVEL 1 PROPOSAL — Case Study 02
+// ============================================================================
+//
+// PURPOSE: Pre-engagement executive proposal. Audience: CEO, COO, Board sponsor.
+//   Covers WHAT the business problem is, WHAT we propose, HOW MUCH it costs,
+//   and WHY the investment is justified.
+//   Does NOT expose: technology stack, architecture diagrams, developer rates,
+//   or detailed implementation — those belong in solution-design.adoc (Level 2).
+//
+// READING TIME: ~10 minutes
+// MEETINGS: Suitable to share before or at a budget approval meeting
+//
+// DOCUMENT HIERARCHY:
+//   Level 1 — This document (proposal) ← YOU ARE HERE
+//   Level 2 — solution-design.adoc (full solution design, technical detail)
+//   Level 3 — architecture-design-option-2.adoc (engineering deep dive)
+//
+// ============================================================================
+
+== Executive Summary
+
+An established European international grocery webshop (15 years on the market,
+approximately 1 million daily visitors, 2 million mobile app users) has set a
+strategic goal to increase annual turnover by 20%. Today, customer data is
+scattered across disconnected systems — the web platform, the mobile app, and
+multiple wholesaler feeds are each isolated, making it impossible to understand
+customers as individuals or to deliver personalized experiences at scale.
+
+We propose building a **unified customer intelligence platform** that consolidates
+all customer data into a single, queryable layer and uses it to power personalized
+product suggestions — delivered via email and mobile push notification, every week,
+to every customer.
+
+The investment is ~$500K over 7 months. The first campaign goes live at month 5;
+full ROI is expected within approximately one year of go-live.
+
+== Business Challenge
+
+The following pressures are limiting revenue growth despite a loyal, growing
+customer base:
+
+* **Customer data is siloed.** Web, mobile, and supplier data live in separate
+  systems with no unified view of who a customer is, what they buy, or what they
+  are likely to buy next.
+
+* **Personalization is not possible at scale.** Every customer receives the same
+  marketing communication. Campaigns are broadcast, not targeted — relevant to
+  few, ignored by most.
+
+* **The marketing team operates on intuition.** Without consolidated data, campaign
+  decisions are based on experience and gut feel rather than evidence. There is no
+  feedback loop to measure what works.
+
+* **Revenue growth has plateaued.** With 1 million daily visitors already on the
+  platform, the next growth lever is not more traffic — it is a higher value per
+  visit. Personalization is the proven mechanism for this.
+
+* **GDPR compliance gaps create legal exposure.** Personal data flows across
+  systems without a centralized consent record, audit trail, or automated deletion
+  capability — a material regulatory risk.
+
+== Our Recommendation
+
+We recommend building a **unified customer intelligence platform** in three phases
+over 7 months.
+
+The platform consolidates customer data from the web shop, the mobile application,
+and wholesaler product catalogues into a single, governed data layer. An
+intelligence engine analyses purchase history and browsing behaviour to generate
+personalized product recommendations for every customer. Recommendations are
+delivered weekly via email to start, with the option to move to daily without
+rebuilding anything — the platform is designed for it from day one. Real-time
+triggers (such as a reminder after a customer browses without purchasing) are a
+later capability, once the weekly and daily patterns are established. Mobile push
+notifications to the 2 million app users follow in a subsequent phase.
+
+The first personalized email campaign goes live at month 5 — before the platform
+is fully complete. This is intentional: it creates an early revenue checkpoint and
+validates the recommendation model against real customer behaviour while the
+remainder of the platform is still being built.
+
+The platform is designed to be operated by the existing marketing team without a
+dedicated data team. Ongoing operation requires no engineering involvement for
+day-to-day tasks — the marketing team schedules campaigns, reviews performance
+dashboards, and adjusts segments through a self-service interface.
+
+[plantuml, case02-proposal-value-chain, svg]
+----
+@startuml
+skinparam defaultFontSize 13
+skinparam defaultFontName Arial
+skinparam ArrowColor #555555
+skinparam RoundCorner 8
+
+rectangle "Data Sources" as sources #E8F4FD {
+  rectangle "Web Shop\n(15 years of orders)" as web
+  rectangle "Mobile App\n(2M users)" as mobile
+  rectangle "Wholesaler\nCatalogues" as suppliers
+}
+
+rectangle "Customer\nIntelligence\nPlatform" as platform #D5E8D4
+
+rectangle "Personalised\nChannels" as channels #FFF2CC {
+  rectangle "Weekly Email\n(existing infra)" as email
+  rectangle "Mobile Push\n(Phase 3)" as push
+}
+
+rectangle "Business\nOutcome" as outcome #F8CECC {
+  rectangle "+20% Turnover\nTarget" as turnover
+}
+
+sources -right-> platform : Unified\ndata layer
+platform -right-> channels : Weekly\nrecommendations
+channels -right-> outcome : Higher basket\nper visit
+
+@enduml
+----
+
+== Expected Business Outcomes
+
+NOTE: Personalised recommendations increase *basket size per visit* for existing
+customers — not the number of new customers acquired. The scenarios below use an
+illustrative average basket of $15; projections scale proportionally to your
+actual average order value. Industry benchmarks for grocery e-commerce
+recommendation uplift: 5–15% basket size increase at *full platform maturity*
+(typically 12–18 months of operation) per
+link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey]
+and
+link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce].
+
+[cols="2,2,2,2", options="header"]
+|===
+|Scenario |Mechanism |Est. Monthly Uplift |Realistic Timeframe
+
+|**First campaign** _(month 5)_
+|Partial audience (validated emails + consent + sufficient history); model in learning phase
+|+$15K–$50K/month (est. 1–2%)
+|Month 5–6 post-kickoff
+
+|**Conservative** _(5% basket uplift)_
+|1M daily visitors × ~2% conversion × $15 avg basket × 5% = +$0.75/order
+|+$450K/month
+|12–18 months post-kickoff
+
+|**Target** _(20% basket uplift)_
+|1M daily visitors × ~2% conversion × $15 avg basket × 20% = +$3.00/order
+|+$1.8M/month
+|24–36 months post-kickoff
+|===
+
+_At the conservative maturity scenario (~12–18 months), the platform recovers its
+full development cost within approximately one year of go-live. Both the $15
+average basket and 2% conversion rate are illustrative; actual projections should
+be calibrated against current trading data early in the engagement._
+
+== Our Approach
+
+Four principles guide how this engagement is structured:
+
+. **Value before completion.** The first personalized email campaign goes live at
+month 5 — two months before the full platform is complete. This is not a
+compromise; it is risk management. Real campaign data validates the recommendation
+model early, so the final two months of delivery can incorporate what was learned
+rather than launching cold.
+
+. **Built for your team, not ours.** The platform is designed from the ground up
+for a non-technical marketing team to operate day-to-day. No specialist is needed
+to run weekly campaigns or read performance dashboards. A structured capability
+building programme, included in the engagement, transfers knowledge to the internal
+team over three months.
+
+. **No disruption to existing operations.** The web shop, mobile application, and
+wholesaler relationships are unchanged throughout delivery. The intelligence
+platform sits alongside existing systems — it reads from them, but does not replace
+or modify them. There is no migration, no downtime, and no risk to current
+operations.
+
+. **Privacy by design.** GDPR compliance is built into the data layer from day one —
+not added at the end. Customer consent is tracked as a first-class data attribute.
+Customers can request deletion of their data and it is actioned within 72 hours,
+automatically. A full audit trail of data access is maintained throughout.
+
+== Investment Summary
+
+[cols="2,3", options="header"]
+|===
+|Item |Detail
+
+|**Development investment (CAPEX)**
+|~$500K (inclusive of 17% risk buffer)
+
+|**Monthly infrastructure cost (OPEX)**
+|$6K–$16K/month (cloud services + tooling)
+
+|**3-year total cost of ownership**
+|~$760K–$1.08M (CAPEX $500K + 3 years OPEX at $6K–$16K/month)
+
+|**Go-live target**
+|April 2027
+
+|**Delivery timeline**
+|7 months across 3 phases
+
+|**Team**
+|5 specialists (data engineering, backend, machine learning, QA, architecture)
+
+|**Break-even (conservative scenario)**
+|~1 year post go-live (at 5% basket uplift maturity)
+|===
+
+_The $500K CAPEX fits within the confirmed budget envelope. Infrastructure costs
+thereafter are modest relative to the revenue uplift potential and can be absorbed
+into normal operating budgets._
+
+== Delivery Milestones
+
+. **Month 1 — Kickoff & Foundation:** Project kickoff, data audit, cloud platform
+  provisioned, vendor data access agreements confirmed.
+
+. **Month 3 — Data Pipeline Operational:** All customer data sources connected and
+  flowing into the unified data layer. Data quality baseline established. First
+  customer profiles built.
+
+. **Month 5 — First Campaign Live** _(revenue checkpoint):_ Personalised email
+  campaign sent to the full customer base. Open rates, click rates, and basket size
+  uplift measured against control group.
+
+. **Month 7 — Full Platform Go-Live:** Mobile push notification channel active,
+  wholesaler product catalogue integrated, recommendation model trained on 3 months
+  of real feedback data.
+
+. **Post go-live — Ongoing Operations:** Weekly recommendation refresh, monthly
+  performance reviews, quarterly platform review with the internal team. Platform
+  continues to improve as more customer interaction data accumulates.
+
+== Key Risks
+
+[cols="3,4", options="header"]
+|===
+|Risk |Mitigation
+
+|**Customer data quality lower than expected**
+|A dedicated data quality audit is the first deliverable of Phase 1. The email
+campaign at month 5 is gated on reaching a minimum data quality threshold — the
+timeline absorbs a quality remediation sprint without delaying go-live.
+
+|**Vendor coordination delays** (mobile app partner, wholesaler feeds)
+|Vendor engagement begins in Week 1 and is tracked as a critical path dependency.
+The mobile app vendor has confirmed data access is available on request. Wholesaler
+feeds start with the 1–2 most important suppliers; others are added incrementally.
+
+|**No internal team to own the platform long-term**
+|A 3-month capability building programme is included in Phase 3 scope. An
+operations manual, runbook, and dashboard are delivered at handover. The platform
+is explicitly designed to require no engineering involvement for routine operation.
+|===
+
+== Why Work With Us
+
+This proposal is the output of structured discovery — analysis of business context,
+your inputs, technical constraints, and commercial objectives — not a generic
+template. The architecture, phasing, and cost model are specific to this
+organisation's situation: 15 years of order history, an outsourced mobile vendor,
+non-standard wholesaler data formats, no internal data team, and a $500K confirmed
+budget.
+
+Our engagement model follows a documented methodology: Discovery → Architecture →
+Phased Delivery → Handover. Each stage produces reviewed artefacts that you own.
+The full solution design, cost breakdown by role, risk register, and technical
+architecture are available at the next stage — shared with the technical team once
+the engagement is agreed, not before.
+
+Post-launch is in scope, not an afterthought. The first two weeks after go-live
+include dedicated hypercare support. The capability building programme ensures the
+internal team can own the platform by the time our engagement ends. We do not
+disappear at deployment.
+
+== Next Steps
+
+[cols="1,3,2", options="header"]
+|===
+|Step |Action |Owner
+
+|1
+|Review and approve this proposal
+|Client Leadership
+
+|2
+|Confirm mobile app vendor data access negotiation is initiated
+|Client Contract Owner
+
+|3
+|Sign engagement agreement
+|Both parties
+
+|4
+|Phase 1 kickoff — target first available week after approval
+|Solution Architect + Client IT
+|===
+
+A detailed solution design document (Level 2) — covering the full technical
+architecture, functional requirements, risk register, and Gantt chart — is
+available for review by the technical team alongside or after this approval step.
+
+'''
+
+[.small]
+*Confidentiality Notice* +
+This document has been prepared exclusively for the intended recipient and contains
+proprietary methodology, commercial terms, and strategic analysis developed by the
+consulting team. It may not be reproduced, shared with third parties, or used to
+solicit competing proposals without the prior written consent of the originating
+firm. All financial projections are indicative and based on industry benchmarks and
+confirmed inputs as of the date of this document.

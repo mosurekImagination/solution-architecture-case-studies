@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./render.sh --pdf 02/docs/solution-design.adoc)",
+      "Bash(npm install:*)",
+      "WebSearch",
+      "Bash(find c:programmingsolution-architecture-case-studies01docs -type f -name *)",
+      "Bash(find c:programmingsolution-architecture-case-studies02docs -type f -name *)",
+      "Bash(find c:programmingsolution-architecture-case-studies -type f -name *template*)",
+      "Bash(./render.sh --pdf 02/docs/solution-design-proposal.adoc)",
+      "Bash(grep -ri \"basket\\\\|average order\\\\|AOV\\\\|order value\\\\|$15\\\\|revenue per\" c:/programming/solution-architecture-case-studies/02/ --include=\"*.md\" --include=\"*.adoc\" -l)"
+    ]
+  }
+}

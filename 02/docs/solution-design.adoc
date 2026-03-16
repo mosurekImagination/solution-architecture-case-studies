@@ -1,0 +1,1169 @@
+= Data-Driven Customer Engagement Platform — Solution Design
+:author: Solution Architect
+:revdate: 2026-03-15
+:status: Draft
+:toc: left
+:toclevels: 3
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+// ============================================================================
+// FULL SOLUTION DESIGN — Case Study 02
+// ============================================================================
+//
+// Enterprise international grocery webshop chain — data pipeline & personalized
+// product suggestion engine to increase daily turnover by 20%.
+//
+// ============================================================================
+
+== Glossary
+
+[cols="1,3", options="header"]
+|===
+|Term |Definition
+
+|Airflow |Apache Airflow — open-source workflow orchestration platform for scheduling and monitoring data pipelines
+|CAPEX |Capital Expenditure — one-time development and setup costs
+|CDC |Change Data Capture — technique to track and capture changes made to a database in real time
+|dbt |Data Build Tool — SQL-first transformation framework for analytics engineering
+|GDPR |General Data Protection Regulation — EU data privacy regulation requiring explicit consent for personal data use
+|ETL |Extract, Transform, Load — pattern for moving data from source systems into an analytical store
+|KPI |Key Performance Indicator — measurable value showing how effectively business objectives are being achieved
+|LTV |Lifetime Value — total revenue a business can expect from a customer over the course of the relationship
+|OLAP |Online Analytical Processing — database optimised for queries and analysis (e.g. Snowflake)
+|OLTP |Online Transactional Processing — database optimised for day-to-day transactions (e.g. WordPress MySQL)
+|OPEX |Operational Expenditure — ongoing monthly costs (infrastructure, licences, tooling)
+|SES |Simple Email Service — AWS managed email sending service
+|Snowflake |Cloud-based OLAP data warehouse — managed service on AWS, SQL-first, scales compute independently of storage
+|TCO |Total Cost of Ownership — full cost including development, infrastructure, and team over a given period
+|VPN |Virtual Private Network — encrypted tunnel between on-premises infrastructure and cloud
+|WBS |Work Breakdown Structure — hierarchical decomposition of project deliverables
+|===
+
+== Executive Summary
+
+=== Context
+
+Your organisation is an established European grocery and commodity webshop — 15 years on the market, ~1M daily visitors, 2M mobile app installs. The goal is to increase annual turnover by 20%. Today, customer data is scattered across isolated systems: the WordPress e-commerce platform, the mobile application, and wholesaler product feeds each operate independently, with no unified view of purchasing behaviour.
+
+This document proposes a unified data pipeline that consolidates customer, product, and wholesaler data into a single analytical layer — and uses it to deliver personalised product suggestions via email and mobile push notifications. The platform is designed to be owned and operated by your existing team, without requiring a dedicated data function.
+
+=== Recommendation at a Glance
+
+[cols="1,3"]
+|===
+|Aspect |Summary
+
+|**Recommended Option**
+|Option 2 — Snowflake Data Platform with Managed ETL
+
+|**Estimated CAPEX**
+|~$500K (within confirmed budget; incl. 17% risk buffer)
+
+|**Estimated OPEX**
+|$6K–$16K/month (Snowflake + AWS SES + MWAA + infrastructure)
+
+|**Timeline**
+|7 months (phased delivery)
+
+|**Team Size**
+|5 engineers: 2 Data Engineers + 1 Backend + 1 ML/Data Scientist + 1 QA + 0.5 SA
+
+|**Go-Live Target**
+|April 2027 (next fiscal year), with proved results before 2028
+|===
+
+=== Scope Boundary
+
+This engagement delivers: unified data pipeline (WordPress, mobile app, wholesalers), Snowflake analytical platform, customer segmentation and recommendation engine, email campaign delivery via AWS SES, mobile push notifications, and a self-service analytics dashboard.
+
+This engagement explicitly *does not* include: WordPress migration or re-platforming, new feature development for the mobile application, EDI or real-time API integration with wholesalers, real-time personalisation, or recruitment of a permanent data team. Any change to this scope is subject to a formal change request and re-estimation.
+
+== Problem Statement
+
+=== Current Pain Points
+
+[cols="1,3,2"]
+|===
+|# |Problem |Business Impact
+
+|1
+|Customer data scattered across isolated systems (WordPress DB, mobile app, wholesaler feeds) — no unified view
+|Cannot identify cross-channel buying patterns; personalisation impossible
+
+|2
+|No mechanism to proactively suggest products to existing customers
+|~1M daily visitors but no re-engagement; revenue limited to organic visits
+
+|3
+|Mobile app data accessible via vendor APIs, but 2M installs = primary channel data missing from analytics
+|Mobile customer behaviour invisible; cannot target 2M app users with personalised offers
+
+|4
+|15 years of accumulated customer emails — many stale or invalid (10-minute mailboxes)
+|Email marketing ROI degraded by poor deliverability
+
+|5
+|Internal team lacks data engineering expertise to build analytics capabilities
+|Data-driven decisions delayed; business relies on intuition over evidence
+|===
+
+=== Target State
+
+The enterprise has a unified data platform that continuously consolidates customer, product, and wholesaler data from all sources into a single analytical store. A personalised suggestion engine analyses buying patterns and matches customers with relevant products and deals, delivering timely recommendations via email and mobile push. The marketing team monitors campaign performance through self-service dashboards, and the platform is designed for the internal team to gradually take ownership with minimal external dependency.
+
+=== Business Goal Translation
+
+Your stated goal is "increase turnover by 20%." In technical terms this means:
+
+* **Unify** all customer data islands into a single source of truth
+* **Profile** customers based on purchase history, browsing behaviour, and preferences
+* **Recommend** products with the highest conversion probability per customer segment
+* **Deliver** recommendations through email (AWS SES) and mobile push (2M installs)
+* **Measure** uplift via campaign tracking and A/B testing in the analytics dashboard
+
+== Solution Options
+
+=== Side-by-Side Comparison
+
+[cols="2,1,1,1"]
+|===
+|Aspect |Option 1: Quick Win |Option 2: Snowflake Platform ✅ |Option 3: Databricks Full AI
+
+|**Scope**
+|WordPress data only + basic email suggestions via SQL segmentation
+|All data sources + Snowflake + ML-based suggestions + email & mobile
+|All sources + Databricks + custom AI model training + real-time streaming
+
+|**Data Sources**
+|WordPress DB only
+|WordPress + Mobile (API) + Wholesalers
+|All sources + real-time event streams
+
+|**AI Capability**
+|Rule-based (SQL queries)
+|ML-based segmentation (Snowflake ML or external)
+|Custom-trained recommendation models (Databricks MLflow)
+
+|**Team**
+|2 devs (1 Data Eng + 1 Backend)
+|5 devs (2 Data Eng + 1 Backend + 1 ML + 1 QA)
+|8+ devs (3 Data Eng + 2 ML + 1 Backend + 1 DevOps + 1 QA)
+
+|**Timeline**
+|3 months
+|7 months (phased)
+|12+ months
+
+|**CAPEX (incl. risk buffer)**
+|$80K–$150K
+|~$500K (within budget)
+|$800K–$1.5M
+
+|**OPEX / month**
+|$2K–$5K
+|$6K–$15K
+|$25K–$50K
+
+|**Risk**
+|Low (limited scope, fast delivery)
+|Medium (vendor negotiation, data quality)
+|High (complexity, team skill gap, long timeline)
+|===
+
+Option 1 scores better on cost and operational risk — a valid choice for an organisation prioritising simplicity over growth. Option 2 is recommended because your 20% turnover target requires ML-based segmentation, multi-source data consolidation, and multi-channel delivery that Option 1 cannot provide. Option 3 was not taken forward — at $800K–$1.5M it exceeds the confirmed $500K budget, and the additional AI capability it offers is not required for the current scope.
+
+=== Cost Comparison
+
+.Monthly OPEX by Option
+[vegalite,case02-cost-comparison,format=svg]
+....
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Monthly OPEX Comparison",
+  "width": 400,
+  "height": 250,
+  "data": {
+    "values": [
+      {"option": "Option 1: Quick Win", "category": "Data Platform", "cost": 500},
+      {"option": "Option 1: Quick Win", "category": "Compute / ETL", "cost": 800},
+      {"option": "Option 1: Quick Win", "category": "Email Service", "cost": 500},
+      {"option": "Option 1: Quick Win", "category": "Monitoring", "cost": 200},
+      {"option": "Option 2: Snowflake", "category": "Data Platform", "cost": 5000},
+      {"option": "Option 2: Snowflake", "category": "Compute / ETL", "cost": 3000},
+      {"option": "Option 2: Snowflake", "category": "Email Service", "cost": 2000},
+      {"option": "Option 2: Snowflake", "category": "Monitoring", "cost": 1000},
+      {"option": "Option 3: Databricks", "category": "Data Platform", "cost": 15000},
+      {"option": "Option 3: Databricks", "category": "Compute / ETL", "cost": 8000},
+      {"option": "Option 3: Databricks", "category": "Email Service", "cost": 3000},
+      {"option": "Option 3: Databricks", "category": "Monitoring", "cost": 2000}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": -15}},
+    "y": {"field": "cost", "type": "quantitative", "title": "Monthly Cost ($)", "stack": true},
+    "color": {"field": "category", "type": "nominal", "title": "Cost Category",
+      "scale": {"range": ["#1976D2", "#388E3C", "#E65100", "#7B1FA2"]}
+    }
+  }
+}
+....
+
+== Recommended Option: Snowflake Data Platform with Managed ETL
+
+=== System Context
+
+.System Context — Data-Driven Customer Engagement Platform
+[structurizr,case02-c4-context,format=svg,view-key=ctx]
+....
+workspace {
+
+  model {
+    customer = person "Customer" "Existing webshop customer (~1M daily, 2M mobile installs)" "Person"
+    marketing = person "Marketing Team" "Manages campaigns and reviews performance" "Person"
+    dataAnalyst = person "Data Analyst" "Queries analytical data, builds reports" "Person"
+
+    platform = softwareSystem "Customer Engagement Platform" "Unified data pipeline + personalised suggestion engine" {
+      ingestion = container "Data Ingestion Layer" "Extracts data from all sources" "Python / Connectors"
+      etlPipeline = container "ETL Pipeline" "Transforms and loads data into analytical store" "dbt / Airflow"
+      dataStore = container "Analytical Data Store" "Centralised OLAP database" "Snowflake" "database"
+      suggestionEngine = container "Suggestion Engine" "Customer profiling + product recommendations" "Python / SQL"
+      emailService = container "Email Delivery Service" "Composes and sends personalised emails" "ESP Integration"
+      dashboard = container "Analytics Dashboard" "Campaign performance and data quality monitoring" "Web App"
+    }
+
+    wordpress = softwareSystem "WordPress Webshop" "Existing e-commerce platform" "Existing System"
+    mobileApp = softwareSystem "Mobile App (Vendor)" "Outsourced mobile application (2M installs, APIs available)" "Existing System"
+    wholesalers = softwareSystem "Wholesaler Systems" "Multiple wholesaler data feeds (no standard format)" "Existing System"
+    esp = softwareSystem "AWS SES" "Email delivery service (already in use)" "Existing System"
+    pushService = softwareSystem "Push Notification Service" "Mobile push delivery (APNs/FCM)" "Existing System"
+
+    platform -> wordpress "Extracts customer & order data" "Nightly Table Export via S3"
+    platform -> mobileApp "Extracts mobile user data" "S3 Export or DB Access + delta API"
+    platform -> wholesalers "Ingests product & deal data" "S3 File Landing Zone"
+    platform -> esp "Sends personalised emails" "API"
+    platform -> pushService "Sends push notifications" "API"
+
+    customer -> wordpress "Browses & purchases" "HTTPS"
+    customer -> mobileApp "Browses & purchases" "HTTPS"
+    marketing -> platform "Manages campaigns, views dashboards" "HTTPS"
+    dataAnalyst -> platform "Queries data, builds reports" "SQL / HTTPS"
+  }
+
+  views {
+    systemContext platform "ctx" {
+      include *
+      autoLayout
+    }
+  }
+
+}
+....
+
+=== High-Level Architecture
+
+.Architecture — Option 2: Snowflake Data Platform
+[d2,case02-architecture,format=svg,layout=elk]
+....
+direction: right
+
+sources: Data Sources {
+  style.fill: "#E3F2FD"
+  wp: WordPress DB {
+    shape: cylinder
+  }
+  mobile: Mobile App Data (2M installs) {
+    shape: cylinder
+  }
+  wholesale: Wholesaler Feeds (no standard) {
+    shape: page
+  }
+}
+
+pipeline: Data Pipeline {
+  style.fill: "#E8F5E9"
+
+  ingestion: Ingestion Layer {
+    sqlExtractor: WP Export Processor
+    apiImporter: Mobile Export Processor
+    fileProcessor: Wholesaler File Processor
+  }
+
+  processing: Processing {
+    style.fill: "#FFF3E0"
+    etl: ETL / dbt
+    validation: Data Quality Checks
+    emailValidation: Email Validator
+  }
+}
+
+storage: Analytical Store {
+  style.fill: "#F3E5F5"
+  snowflake: Snowflake {
+    shape: cylinder
+  }
+  staging: Staging Area {
+    shape: cylinder
+  }
+}
+
+intelligence: Intelligence Layer {
+  style.fill: "#FFF9C4"
+  segmentation: Customer Segmentation
+  recommendations: Recommendation Engine
+  scoring: Engagement Scoring
+}
+
+delivery: Delivery Channels {
+  style.fill: "#FFCCBC"
+  email: Email Service
+  push: Mobile Push
+  dashboard: Analytics Dashboard
+}
+
+sources.wp -> pipeline.ingestion.sqlExtractor: Nightly full export → S3
+sources.mobile -> pipeline.ingestion.apiImporter: S3 Export (primary) / DB Access (fallback)
+sources.wholesale -> pipeline.ingestion.fileProcessor: File Drop (CSV/Excel/XML)
+
+pipeline.ingestion.sqlExtractor -> storage.staging
+pipeline.ingestion.apiImporter -> storage.staging
+pipeline.ingestion.fileProcessor -> storage.staging
+
+storage.staging -> pipeline.processing.etl
+pipeline.processing.etl -> pipeline.processing.validation
+pipeline.processing.validation -> storage.snowflake
+pipeline.processing.etl -> pipeline.processing.emailValidation
+
+storage.snowflake -> intelligence.segmentation
+intelligence.segmentation -> intelligence.recommendations
+intelligence.recommendations -> intelligence.scoring
+
+intelligence.scoring -> delivery.email: Personalised Suggestions
+intelligence.scoring -> delivery.push: Push Notifications
+storage.snowflake -> delivery.dashboard: Metrics & KPIs
+....
+
+=== What It Delivers
+
+* Unified analytical data store (Snowflake) consolidating WordPress, mobile, and wholesaler data
+* Automated ETL pipeline with data quality validation and email address verification
+* ML-based customer segmentation and personalised product recommendation engine
+* Personalised email campaign delivery via **AWS SES** (already in use)
+* Mobile push notification capability (Phase 2 — 2M installs makes this a **primary channel**)
+* Self-service analytics dashboard for marketing team (campaign performance, KPIs)
+* GDPR-compliant data processing with consent management and customer deletion support
+
+=== Pros & Cons
+
+[cols="1,1"]
+|===
+|Pros |Cons
+
+|Snowflake is mature, well-documented, popular on AWS — strong community and hiring pool
+|Snowflake licence cost scales with usage — unpredictable at high query volumes
+
+|Managed service reduces operational burden — fits non-technical internal team
+|Vendor lock-in risk — Snowflake is proprietary
+
+|Phased delivery reduces risk — email channel deliverable within 3-4 months
+|Mobile vendor cooperation is uncertain — Phase 2 may be delayed
+
+|Covers all three data sources — provides the unified view your organisation needs
+|Data quality of 15-year-old records is unknown — cleaning effort may be substantial
+
+|Extensible to AI/ML workloads in future (Snowpark, external ML tools)
+|Your team will need training to operate the platform: Snowflake (cost monitoring, queries), Airflow (pipeline status), Metabase (dashboards), email campaign workflow, and the GDPR deletion process. Training is included in scope.
+|===
+
+== Functional Requirements
+
+[cols="1,1,3,1"]
+|===
+|# |Priority (MoSCoW) |Requirement |Phase
+
+4+|**Epic 1 — Data Ingestion**
+
+|FR-01
+|Must
+|Extract customer and order data from WordPress MySQL DB via read-only SQL connection over VPN
+|1
+
+|FR-02
+|Must
+|Ingest mobile app customer data via vendor-managed S3 export (preferred) or direct read-only DB access (fallback); API for incremental delta sync only
+|2
+
+|FR-03
+|Should
+|Process wholesaler data files from S3 landing zone (CSV, Excel, XML — no fixed schema)
+|2
+
+4+|**Epic 2 — Data Quality & Processing**
+
+|FR-04
+|Must
+|Validate and deduplicate customer email addresses; flag known disposable/invalid emails
+|1
+
+|FR-05
+|Must
+|Apply dbt transformation models: staging → intermediate → mart layers
+|1
+
+|FR-06
+|Should
+|Monitor pipeline health: row counts, null rates, schema drift alerts
+|1
+
+4+|**Epic 3 — Customer Segmentation & Recommendations**
+
+|FR-07
+|Must
+|Build unified customer profiles from all ingested data sources
+|2
+
+|FR-08
+|Must
+|Generate personalised product recommendations per customer based on purchase history
+|2
+
+|FR-09
+|Should
+|Segment customers into cohorts (e.g. high-value, lapsed, seasonal)
+|2
+
+4+|**Epic 4 — Email Channel**
+
+|FR-10
+|Must
+|Compose and dispatch personalised recommendation emails via AWS SES
+|2
+
+|FR-11
+|Must
+|Track email delivery, open, and click events; store results in Snowflake
+|2
+
+|FR-12
+|Should
+|Support configurable send frequency (default: weekly)
+|2
+
+4+|**Epic 5 — Mobile Push Notifications**
+
+|FR-13
+|Should
+|Send personalised push notifications via APNs/FCM to mobile app users
+|3
+
+|FR-14
+|Could
+|Support event-triggered push (e.g. abandoned cart, price drop)
+|3
+
+4+|**Epic 6 — Analytics Dashboard**
+
+|FR-15
+|Must
+|Provide marketing team with campaign performance dashboard (open rate, click rate, conversions)
+|2
+
+|FR-16
+|Should
+|Provide data quality monitoring dashboard (pipeline status, email validity rates)
+|2
+
+4+|**Epic 7 — GDPR & Consent**
+
+|FR-17
+|Must
+|Respect GDPR consent flag — only process and contact customers with confirmed consent
+|1
+
+|FR-18
+|Must
+|Support customer data deletion (right to erasure) — anonymise records in Snowflake
+|1
+
+|FR-19
+|Should
+|Apply data retention policies: orders 7 years, recommendations 2 years
+|1
+|===
+
+== Non-Functional Requirements
+
+[cols="2,3,2"]
+|===
+|Quality Attribute |Requirement |Target
+
+|**Performance**
+|WordPress ingestion pipeline completes daily batch within scheduled window
+|≤ 4 hours end-to-end
+
+|**Recommendation Freshness**
+|Customer profiles and recommendations refreshed regularly
+|Weekly (daily in Phase 3)
+
+|**Scalability**
+|Platform handles current customer base and grows without re-architecture
+|1M customers now; 3M by 2029
+
+|**Email Deliverability**
+|Email bounce rate kept low to protect AWS SES sender reputation
+|< 2% hard bounce rate
+
+|**Pipeline Reliability**
+|Core ingestion and transformation jobs succeed without manual intervention
+|99.5% successful runs per month
+
+|**Security**
+|Data encrypted at rest and in transit; on-prem access via VPN only
+|AES-256 at rest, TLS 1.2+ in transit
+
+|**GDPR Compliance**
+|All processing respects consent flags; deletion requests actioned within regulatory deadline
+|72-hour deletion SLA (GDPR Art. 17)
+
+|**Operability**
+|Platform operable by non-data-engineers after handover; no 24/7 on-call required
+|Self-service dashboard; alerting via email/Slack
+|===
+
+== Cost Breakdown
+
+=== Development Investment (CAPEX)
+
+[cols="2,1,1,1,2,1"]
+|===
+|Role / Item |Count |Rate |Duration |Deliverable |Cost
+
+|Data Engineer
+|2
+|$15K/mo
+|6 months
+|ETL pipeline, ingestion connectors, Snowflake setup, dbt models
+|$180K
+
+|Backend Developer
+|1
+|$12K/mo
+|5 months
+|Suggestion engine, email integration, API layer, dashboard backend
+|$60K
+
+|ML / Data Scientist
+|1
+|$15K/mo
+|4 months
+|Customer segmentation models, recommendation algorithm
+|$60K
+
+|QA Engineer
+|1
+|$8K/mo
+|5 months
+|Pipeline testing, data quality validation, E2E email testing
+|$40K
+
+|Solution Architect
+|0.5
+|$18K/mo
+|7 months
+|Architecture, vendor coordination, knowledge transfer
+|$63K
+
+|Cloud Setup & CI/CD
+|—
+|—
+|—
+|Snowflake account, AWS infra, Terraform, environments
+|$15K
+
+|Training & Knowledge Transfer
+|—
+|—
+|—
+|Direct costs: materials, external workshops. Structured 3-month capability building programme delivered within Phase 3 team allocation — see Post-Launch Plan.
+|$10K
+
+|*Subtotal*
+|
+|
+|
+|
+|*$428K*
+
+|*Contingency (17%)*
+|—
+|—
+|—
+|_Mobile vendor delays, data quality unknowns, integration surprises_
+|*$72K*
+
+|*TOTAL CAPEX*
+|
+|
+|
+|
+|*~$500K (within budget)*
+|===
+
+=== Per-Phase Cost
+
+[cols="2,1,1,1"]
+|===
+|Phase |Duration |Team |Estimated Cost
+
+|Phase 1: Foundation & WordPress Pipeline
+|10 weeks
+|2 Data Eng + 0.5 SA + 0.5 QA
+|~$130K
+
+|Phase 2: Suggestion Engine & Email Channel
+|10 weeks _(2-week schedule buffer absorbed within contingency)_
+|1 Data Eng + 1 Backend + 1 ML + 1 QA + 0.5 SA
+|~$140K
+
+|Phase 3: Mobile & Wholesaler Expansion
+|10 weeks
+|1 Data Eng + 1 Backend + 1 QA + 0.5 SA
+|~$130K
+
+|Cloud Setup + Training
+|Throughout
+|—
+|$25K
+
+|Contingency
+|—
+|—
+|$75K
+
+|*TOTAL*
+|*~7 months*
+|
+|*~$500K*
+|===
+
+=== Operational Costs (OPEX)
+
+[cols="2,1,1"]
+|===
+|Service |Specification |Monthly Cost
+
+|Snowflake (Data Platform)
+|Standard tier, EU region, XS→S warehouse. Initial months: $500–$2K; scales to $3K–$8K as data and query volumes grow.
+|$3K–$8K
+
+|AWS Infrastructure
+|ECS (ETL compute), S3 (staging), VPN, networking
+|$1K–$3K
+
+|AWS SES (Email)
+|Already in use; ~1M emails/week
+|$100–$500
+
+|Monitoring / Alerting
+|CloudWatch + Airflow native UI
+|$500–$1K
+
+|AWS MWAA (Managed Airflow)
+|Managed orchestration service; avoids self-managing Airflow on ECS
+|$300–$1,500
+
+|Contingency (15%)
+|Spike compute, data growth, extra environments
+|$700–$2K
+
+|*TOTAL OPEX*
+|
+|*$6K–$16K/month*
+|===
+
+*Year 1 OPEX:* ~$70K–$190K
+*3-Year TCO:* $760K–$1.08M (CAPEX $500K + 3 years OPEX at $6K–$16K/month)
+
+=== Revenue & ROI Projection
+
+NOTE: Personalised recommendations primarily increase *basket size per visit* for existing customers — not the number of new customers acquired. The scenarios below use an illustrative average basket of $15; projections scale proportionally to the actual average order value. Industry benchmarks for grocery e-commerce recommendation uplift: 5–15% basket size increase at *full platform maturity* (typically 12–18 months of operation), per link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey] and link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce]. These projections are directional and should be validated against actual campaign data in Phase 2.
+
+[cols="2,2,2,2"]
+|===
+|Scenario |Assumption |Est. Monthly Revenue Uplift |Realistic Timeframe
+
+|**First campaign** _(Phase 2, month 5)_
+|Partial audience — validated emails + GDPR consent + sufficient order history; model in learning phase
+|+$15K–$50K/month (est. 1–2% uplift)
+|Month 5–6 post-kickoff
+
+|**Conservative** _(5% basket uplift)_
+|~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $15.75 (+$0.75/order)
+|+$15K/day → +$450K/month
+|12–18 months post-kickoff
+
+|**Target** _(20% basket uplift)_
+|~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $18 (+$3/order)
+|+$60K/day → +$1.8M/month
+|24–36 months post-kickoff
+|===
+
+_At the conservative maturity scenario (5% uplift, ~12–18 months), the platform cost (~$500K CAPEX) is recovered within months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
+
+== Storage Sizing
+
+[cols="2,2,2,2"]
+|===
+|Source |Raw Size |Compressed (S3) |Notes
+
+|WordPress analytical tables
+|90–270GB (10–30% of 900GB)
+|9–54GB per nightly dump
+|30-day S3 retention: 270GB–1.6TB. Snowflake columnar storage: ~20–90GB.
+
+|Mobile app data
+|~1–10GB per weekly export
+|~0.5–3GB compressed
+|Volume unconfirmed — depends on vendor export scope (profiles only vs. full event history). To be clarified in Phase 1.
+
+|Wholesaler feeds
+|~10–100MB per supplier per refresh
+|Negligible
+|Assumed 5–15 suppliers (unconfirmed). Even at 15 suppliers: <1.5GB total uncompressed.
+
+|Email events (SES webhooks)
+|~50MB/week at 1M emails
+|Negligible
+|Grows with campaign frequency; remains small relative to other sources.
+
+|*Total (S3 landing zone)*
+|
+|*~10–60GB/week ingested*
+|Storage is not a cost driver. Comfortably absorbed within the AWS Infrastructure OPEX line ($1K–$3K/month).
+|===
+
+== Risks & Assumptions
+
+=== Key Risks
+
+[cols="2,1,1,3"]
+|===
+|Risk |Likelihood |Impact |Mitigation
+
+|Mobile vendor refuses or delays data access
+|Low
+|High
+|DB access confirmed available on request; negotiate vendor-managed S3 export as primary (zero server load, no schema coupling). API auth method and rate limits unconfirmed — must be resolved in Phase 1 Week 1. API used for delta sync only, not full weekly scan of 2M records. **Critical path item.**
+
+|Customer email data quality is worse than expected (>50% invalid)
+|Medium
+|High
+|Run email validation in Phase 1 Week 2; adjust channel strategy if email reach is too low. Mobile push (2M installs) is a viable fallback.
+
+|WordPress 900GB heavily-customised schema — ETL requires custom extraction logic
+|High
+|High
+|No off-the-shelf connectors work for a heavily customised schema. Nightly mysqldump exports only the analytical subset (~10-30% of tables). Schema reverse-engineering and table inventory completed in Phase 1 Week 1 before the first export runs.
+
+|Snowflake costs exceed estimates at production data volumes
+|Low
+|Medium
+|Set usage alerts and budgets; optimise query patterns; configure Snowflake auto-suspend for non-peak hours.
+
+|Wholesaler data not available or inconsistent formats
+|High
+|Medium
+|Client confirmed "everything, no standard." S3 file landing zone with schema-on-read (Snowflake VARIANT columns) + per-supplier dbt models. Start with 1-2 wholesalers to validate the pattern.
+
+|No internal team to take ownership — capability building has no recipient
+|High
+|High
+|No data team, no plans, no expertise. Knowledge transfer must be embedded in every phase — not a two-week handover at the end. Identify internal owners before kickoff.
+
+|Scope creep — requests for WordPress migration or full platform rebuild beyond agreed scope
+|Medium
+|Medium
+|Clear scope boundary in contract. WordPress migration is a separate engagement. Redirect to future phase.
+
+|SA at 0.5× throughout — decision bottleneck at Phase 1 critical junctures (vendor negotiations, schema design, GDPR architecture)
+|Medium
+|Medium
+|SA attends all Phase 1 vendor calls; critical architecture decisions front-loaded to Phase 1 weeks 1–4; async design reviews for Phase 2–3.
+|===
+
+=== Key Assumptions
+
+* WordPress DB is MySQL, 900GB, heavily customised — nightly mysqldump of analytical tables pushed to S3; no live DB connection
+* Your organisation uses AWS for some services; WordPress is hosted on-premises — your IT team manages the scheduled export job
+* GDPR consent is confirmed (yes) — email campaigns can launch without a consent collection flow
+* The 20% turnover increase target is achievable with personalisation (needs market research validation in Phase 1)
+* No data team, no plans to hire — solution must include embedded capability building
+* Mobile vendor has APIs and DB available on request — API access terms need negotiation
+
+== Timeline & Team
+
+=== Project Timeline
+
+.Project Timeline — Option 2: Snowflake Data Platform
+[plantuml,case02-timeline,format=svg]
+....
+@startgantt
+title Data-Driven Customer Engagement Platform — 7 months, 5 devs
+printscale weekly zoom 2
+project starts 2026-10-01
+
+<style>
+ganttDiagram {
+  task {
+    FontSize 11
+  }
+  milestone {
+    FontSize 11
+    FontStyle bold
+    BackGroundColor OrangeRed
+    LineColor OrangeRed
+  }
+  separator {
+    FontSize 12
+    FontStyle bold
+    BackGroundColor #F0F0F0
+  }
+}
+</style>
+
+-- Phase 1: Foundation & WordPress Pipeline --
+[Discovery & Data Audit] starts 2026-10-01 and ends 2026-10-15
+[Discovery & Data Audit] is colored in #BBDEFB/#1976D2
+[Snowflake Setup & Infra] starts 2026-10-08 and ends 2026-10-31
+[Snowflake Setup & Infra] is colored in #BBDEFB/#1976D2
+[WordPress DB Extraction Pipeline] starts 2026-10-15 and ends 2026-11-15
+[WordPress DB Extraction Pipeline] is colored in #BBDEFB/#1976D2
+[ETL Pipeline (WordPress)] starts 2026-11-01 and ends 2026-12-01
+[ETL Pipeline (WordPress)] is colored in #BBDEFB/#1976D2
+[Email Validation Engine] starts 2026-11-15 and ends 2026-12-15
+[Email Validation Engine] is colored in #BBDEFB/#1976D2
+
+-- Phase 2: Suggestion Engine & Email Channel --
+[Customer Segmentation Model] starts 2026-12-01 and ends 2027-01-15
+[Customer Segmentation Model] is colored in #C8E6C9/#388E3C
+[Recommendation Engine] starts 2026-12-15 and ends 2027-01-29
+[Recommendation Engine] is colored in #C8E6C9/#388E3C
+[Email Campaign Integration] starts 2027-01-01 and ends 2027-02-13
+[Email Campaign Integration] is colored in #C8E6C9/#388E3C
+[Analytics Dashboard] starts 2027-01-01 and ends 2027-02-15
+[Analytics Dashboard] is colored in #C8E6C9/#388E3C
+
+-- Phase 3: Mobile & Wholesaler Expansion --
+[Mobile Vendor Data Integration] starts 2027-02-15 and ends 2027-03-15
+[Mobile Vendor Data Integration] is colored in #FFE0B2/#E65100
+[Wholesaler Data Connectors] starts 2027-03-01 and ends 2027-03-29
+[Wholesaler Data Connectors] is colored in #FFE0B2/#E65100
+[Mobile Push Notifications] starts 2027-03-15 and ends 2027-04-12
+[Mobile Push Notifications] is colored in #FFE0B2/#E65100
+[UAT & Optimisation] starts 2027-04-01 and ends 2027-04-30
+[UAT & Optimisation] is colored in #FFE0B2/#E65100
+
+-- Milestones --
+[Data Audit Complete] happens 2026-10-15
+[WordPress Pipeline Live] happens 2026-12-01
+[First Email Campaign Sent] happens 2027-02-15
+[Full Platform Go-Live] happens 2027-04-30
+
+legend right
+  |<#BBDEFB> Phase 1: Foundation |
+  |<#C8E6C9> Phase 2: Intelligence |
+  |<#FFE0B2> Phase 3: Expansion |
+  |<#OrangeRed> Milestone |
+end legend
+@endgantt
+....
+
+=== Team Allocation by Phase
+
+[cols="2,1,1,1,1"]
+|===
+|Role |Phase 1 (wk 1-10) |Phase 2 (wk 11-20) |Phase 3 (wk 21-30) |Total
+
+|Data Engineer ×2
+|Full
+|1× full
+|1× full
+|6 months total
+
+|Backend Developer
+|—
+|Full
+|Full
+|5 months total
+
+|ML / Data Scientist
+|—
+|Full
+|Part (0.5)
+|4 months total
+
+|QA Engineer
+|0.5
+|Full
+|Full
+|5 months total
+
+|Solution Architect
+|0.5
+|0.5
+|0.5
+|7 months total (0.5)
+|===
+
+== Key Dependencies
+
+[cols="2,2,2"]
+|===
+|Dependency |Owner |Needed By
+
+|AWS account — VPN/Direct Connect setup for on-prem → AWS
+|Client IT
+|Phase 1 kickoff
+
+|WordPress DB nightly export job configured (table list, schedule, S3 destination)
+|Client IT
+|Phase 1 Week 1
+
+|Mobile vendor API documentation, auth method, rate limits
+|Client (contract owner)
+|Phase 1 Week 2 — **critical path**
+
+|Wholesaler data sharing agreements + sample files (2-3 suppliers)
+|Client (wholesaler relationship manager)
+|Phase 2 start
+
+|Internal team members identified for knowledge transfer
+|Client Leadership
+|Phase 1 kickoff — **no data team exists; critical**
+|===
+
+== Architecture Decisions
+
+=== Decision 1: Data Platform — Snowflake + dbt + Airflow
+
+**Decision:** Snowflake is the analytical data platform. dbt handles SQL transformations. Airflow (AWS MWAA) handles orchestration.
+
+**Rationale:** Your team currently has no dedicated data engineering expertise, and there are no plans to hire. The platform must be SQL-first, managed, and operable by non-specialists. Snowflake auto-scales compute, suspends when idle (cost control), and runs in EU AWS regions (GDPR compliance). dbt provides version-controlled, testable transformations with a low learning curve. MWAA removes the operational burden of self-managing Airflow.
+
+[cols="2,3,3"]
+|===
+|Alternative |Why Considered |Why Not Chosen
+
+|Databricks (Data Lakehouse)
+|Raised during discovery; better for custom ML model training; supports real-time streaming
+|Over-engineered for Phase 1 scope; requires Spark expertise the team does not have; $800K+ cost exceeds confirmed $500K budget
+
+|Custom ETL + PostgreSQL / BigQuery
+|Lowest licence cost; no vendor lock-in
+|High operational burden contradicts the non-technical team profile; time-to-value significantly longer; ops cost offsets licence savings
+|===
+
+**Consequences:** Vendor lock-in to Snowflake SQL extensions and Snowpark. If advanced custom ML model training becomes necessary (Phase 4+), Databricks or SageMaker can be layered in without replacing Snowflake. Snowflake skills are widely available in the hiring market.
+
+---
+
+=== Decision 2: Data Ingestion Strategy
+
+**Decision:** Each source uses the lowest-complexity ingestion pattern that meets the analytical need.
+
+[cols="1,2,3"]
+|===
+|Source |Chosen Approach |Rationale
+
+|WordPress DB (900GB, heavily customised MySQL, on-prem)
+a|Two options depending on IT capability — confirmed in Phase 1:
+
+* **Option A: Nightly full export** (mysqldump → S3). Simple cron job, no DBA skills required. Full snapshot, not delta — sufficient for weekly recommendations. Storage: ~9–54GB/night compressed.
+* **Option B: MySQL read replica** (on-prem replica → delta SQL extraction → S3). Requires DBA to configure replication. Cleaner long-term — only changed rows transferred, smaller loads, standard incremental pattern.
+
+Default to Option A; upgrade to Option B if IT team can support replication or if daily refresh is required.
+|Both options avoid any connection to the live production database.
+
+|Mobile App Vendor (2M installs, external backend)
+|Primary: vendor-managed S3 export. Fallback: direct read-only DB access. API for delta sync only once auth and rate limits are confirmed.
+|Vendor-managed S3 avoids rate limits and schema coupling. DB access confirmed available on request. API paginating 2M records weekly is high-risk — restricted to delta sync only.
+
+|Wholesaler Feeds (no standard format — CSV, Excel, XML)
+|S3 file landing zone; Snowflake VARIANT columns for schema-on-read; per-supplier dbt models for normalisation.
+|No standard format makes a unified schema impossible at ingestion. Schema-on-read defers normalisation to dbt where it can be version-controlled and tested. Start with 1–2 suppliers to validate the pattern.
+
+|Internal Events (email delivery, opens, clicks)
+|AWS SES webhooks → S3 → dbt → `mart.email_events`.
+|Closes the recommendation feedback loop — open/click/convert data becomes the training signal for the Phase 3 ML model.
+|===
+
+**Convergence point:** All sources → S3 staging → Snowflake landing zone → dbt models → analytical mart.
+
+---
+
+=== Decision 3: Dashboard & BI Tooling — Metabase
+
+**Decision:** Metabase (self-hosted on ECS) as the analytics dashboard for the marketing team.
+
+**Rationale:** The marketing team has no SQL expertise. Metabase provides a point-and-click query builder, pre-built chart types, and scheduled email reports — no SQL required for dashboard consumers. Self-hosted on ECS eliminates the $500/month Metabase Cloud licence while keeping full control. Snowflake native connector is available and well-supported.
+
+[cols="2,3"]
+|===
+|Alternative |Why Not Chosen
+
+|Apache Superset
+|Better for SQL-fluent analyst teams; steeper UI for non-technical users; requires more setup and maintenance
+
+|Custom dashboard (React + charting library)
+|Expensive to build and maintain; no benefit over an off-the-shelf tool for standard marketing KPIs
+|===
+
+**Consequences:** Marketing team can self-serve campaign performance data without engineer involvement. Metabase version upgrades become a maintenance responsibility (low frequency, low risk). If analytical needs outgrow Metabase, migration to Superset or Tableau is straightforward — data stays in Snowflake.
+
+---
+
+=== Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline
+
+**Decision:** Phase 2 launches with a rule-based baseline (purchase frequency + category affinity). Phase 3 introduces item-based collaborative filtering trained on order history.
+
+**Rationale:** A rule-based baseline can be built entirely in SQL on Snowflake without a data scientist, delivers measurable uplift in Phase 2, and establishes the feedback loop (open rates, click rates, conversions) needed to validate and improve the ML model. Item-based collaborative filtering is the industry-standard starting point for grocery e-commerce — it handles the cold-start problem better than user-based CF for customers with sparse history.
+
+[cols="2,1,2"]
+|===
+|Approach |Phase |Minimum Data Requirement
+
+|Rule-based segmentation (purchase frequency, category affinity, recency)
+|Phase 2
+|≥3 months of order history per customer; ≥2 orders to classify as active
+
+|Item-based collaborative filtering (customers who bought X also bought Y)
+|Phase 3
+|≥50K customers with ≥2 orders; item co-occurrence matrix rebuilt weekly in Snowflake
+
+|Neural collaborative filtering / deep learning
+|Future (Phase 4+)
+|≥500K active customers; requires Databricks or SageMaker — separate decision
+|===
+
+**Output format:** Ranked list of up to 10 product IDs per `customer_id`, refreshed weekly, stored in the `mart.recommendations` Snowflake table. Cold-start customers (no purchase history) receive category bestsellers based on regional popularity.
+
+**Consequences:** Phase 2 email campaigns can launch without a trained ML model, reducing the dependency on a single ML engineer. The feedback data collected in Phase 2 (open, click, convert events) becomes the training signal for the Phase 3 model.
+
+== Post-Launch Plan
+
+=== Hypercare (Weeks 1-2 Post Go-Live)
+
+[cols="2,3"]
+|===
+|Area |Plan
+
+|Monitoring coverage
+|Solution Architect + Data Engineer on standby; daily pipeline health check; Slack alerts on failures
+
+|Incident escalation
+|Tier 1: Internal team (dashboard issues) → Tier 2: Data Engineer (pipeline failures) → Tier 3: SA (architecture-level)
+
+|SLA
+|P1 (pipeline down): 4h response. P2 (data quality issue): 24h. P3 (dashboard issue): 48h.
+
+|Success criteria
+|First email campaign dispatched, < 2% bounce rate, Snowflake queries within budget
+|===
+
+=== Ongoing Operations (Post-Handover)
+
+* **Airflow DAGs** — monitored by internal team via Airflow UI; alert emails on failure
+* **Snowflake** — marketing analyst queries dashboards; monthly cost review against budget
+* **Email campaigns** — marketing team schedules via dashboard; SA consulted for new segment logic
+* **Vendor coordination** — your team retains the relationship with the mobile vendor; API token rotation as needed
+
+=== Capability Building Roadmap
+
+[cols="2,3"]
+|===
+|Month |Milestone
+
+|Month 1-2 (Phase 1)
+|Internal team shadows Data Engineers; SQL fundamentals; understanding the data model
+
+|Month 3-4 (Phase 2)
+|Internal team writes first dbt model; understands Airflow DAG structure; reviews dashboards
+
+|Month 5-7 (Phase 3)
+|Internal team runs first independent campaign; owns Airflow monitoring; handles basic data quality issues
+
+|Post go-live (Month 8+)
+|Internal team fully owns platform; SA available on retainer for complex changes
+|===
+
+== Next Steps & Decisions Needed
+
+=== Immediate Actions
+
+[cols="1,3,2,2"]
+|===
+|# |Action |Owner |Status
+
+|1
+|Confirm budget ($500K) and approve Option 2 for detailed estimation
+|Client Sponsor
+|✅ Budget confirmed 2026-02-19
+
+|2
+|Negotiate mobile vendor data access: S3 export preferred; confirm API auth method, rate limits, and available endpoints; DB read-only access as fallback
+|Client Contract Owner
+|In progress — critical path
+
+|3
+|Provide WordPress DB read-only access for schema inventory
+|Client IT / DBA
+|Pending — needed Week 1
+
+|4
+|Set up VPN/Direct Connect between on-prem data centre and AWS VPC
+|Client IT + AWS
+|Pending — needed Week 1-2
+
+|5
+|~~Conduct GDPR consent audit~~ → RESOLVED (consent confirmed)
+|~~Client Legal / DPO~~
+|✅ Confirmed 2026-02-19
+
+|6
+|Identify 1-2 internal team members for knowledge transfer
+|Client Leadership
+|Pending — **critical: no data team exists**
+
+|7
+|Schedule discovery workshop (WordPress schema deep-dive, wholesaler landscape)
+|Solution Architect
+|Pending — Week 1
+|===
+
+=== What Happens After Approval
+
+. **Week 1-2** — Discovery workshop, WordPress schema deep-dive, export table inventory, Snowflake account provisioning
+. **Week 3-6** — WordPress nightly export pipeline live (S3 landing zone), initial data quality assessment
+. **Week 7-10** — ETL pipeline operational, email validation running, first data in Snowflake
+. **Month 3-4** — Customer segmentation model, recommendation engine prototype, first test campaign via AWS SES
+. **Month 5** — First production email campaign sent (Phase 2 milestone)
+. **Month 6-7** — Mobile vendor API + DB export integration, wholesaler file landing zone (1-2 initial suppliers)
+. **Month 7-10** — Full platform optimisation, mobile push notifications, UAT
+. **April 2027** — Full platform go-live + 2-week hypercare — within fiscal year deadline
+
+---
+
+[.text-center]
+_For technical deep-dive see the link:architecture-design-option-2.adoc[Architecture Design — Option 2]._
+
+---
+
+[.small]
+****
+*CONFIDENTIAL* — This document contains proprietary architecture and commercial information prepared by the Solution Architect for this engagement. It must not be shared with third parties, reused for other engagements, or published without written consent.
+****
