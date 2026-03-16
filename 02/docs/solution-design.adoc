@@ -63,7 +63,7 @@ This document proposes a unified data pipeline that consolidates customer, produ
 |Option 2 — Snowflake Data Platform with Managed ETL
 
 |**Estimated CAPEX**
-|~$500K (within confirmed budget; incl. 17% risk buffer)
+|~$493K (within confirmed budget; incl. 20% risk buffer)
 
 |**Estimated OPEX**
 |$6K–$16K/month (Snowflake + AWS SES + MWAA + infrastructure)
@@ -495,9 +495,18 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |72-hour deletion SLA (GDPR Art. 17)
 
 |**Operability**
-|Platform operable by non-data-engineers after handover; no 24/7 on-call required
-|Self-service dashboard; alerting via email/Slack
+|Platform operable by non-data-engineers after handover; no 24/7 on-call required. Airflow DAG failures trigger email/Slack alerts within 5 minutes. CloudWatch alarms active for ECS task errors and SES bounce rate spikes. Snowflake Query History used for cost and query performance monitoring. Structured pipeline logs include `run_id` for cross-system tracing.
+|Self-service dashboard; alerting via email/Slack; CloudWatch + Airflow UI
 |===
+
+=== Testing Approach
+
+* **Pipeline tests (dbt):** Row count assertions, null checks, referential integrity, and schema drift detection on every dbt model — run automatically on every DAG execution.
+* **Data quality gates:** Phase 1 email validation establishes a quality baseline. Recommendation runs are gated on minimum thresholds (e.g. ≥60% of customer profiles have a valid email before the first campaign is dispatched).
+* **Integration testing:** Each data source connection (WordPress export, mobile vendor, wholesaler files) verified end-to-end before the pipeline is marked complete in Phase 1.
+* **Email deliverability testing:** Test campaign (100–200 seed addresses) run before each production send. Bounce rate must be < 2% on the test batch before full dispatch.
+* **UAT:** End-to-end flow (data in → recommendations generated → email dispatched → event tracked back to Snowflake) tested with a real customer segment in Phase 3 before go-live.
+* **Performance:** Snowflake query time and nightly pipeline completion time monitored against NFR targets (≤4h end-to-end) throughout Phase 2 and Phase 3.
 
 == Cost Breakdown
 
@@ -531,16 +540,16 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |QA Engineer
 |1
 |$8K/mo
-|5 months
+|4 months
 |Pipeline testing, data quality validation, E2E email testing
-|$40K
+|$32K
 
 |Solution Architect
 |0.5
 |$18K/mo
-|7 months
+|6 months
 |Architecture, vendor coordination, knowledge transfer
-|$63K
+|$54K
 
 |Cloud Setup & CI/CD
 |—
@@ -561,28 +570,28 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |
 |
 |
-|*$428K*
+|*$411K*
 
-|*Contingency (17%)*
+|*Contingency (20%)*
 |—
 |—
 |—
 |_Mobile vendor delays, data quality unknowns, integration surprises_
-|*$72K*
+|*$82K*
 
 |*TOTAL CAPEX*
 |
 |
 |
 |
-|*~$500K (within budget)*
+|*~$493K (within budget)*
 |===
 
 === Cost Estimation Methodology
 
 * **Rate × time = cost.** Each line item reflects a market rate for the role multiplied by the months allocated. Rates reflect EU consulting market for specialist data engineering, ML, and architecture skills.
 * **Phases overlap.** The 7-month total is shorter than the sum of individual phase durations because Phase 2 begins before Phase 1 completes.
-* **17% contingency** is included to cover mobile vendor negotiation delays, WordPress schema complexity, and wholesaler format variability — the three highest-probability unknowns at this stage.
+* **20% contingency** is applied — the recommended minimum for data projects with significant unknowns. Achieved by trimming QA to 4 months (Phase 2 full + Phase 3 partial) and SA to 6 months (drops off in the final UAT month once architecture decisions are settled). Covers mobile vendor negotiation delays, WordPress schema complexity, and wholesaler format variability.
 * **Infrastructure lump sum ($15K)** covers Snowflake account setup, AWS environments (dev/staging/prod), Terraform provisioning, and CI/CD pipeline.
 
 === Per-Phase Cost
@@ -593,33 +602,33 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 
 |Phase 1: Foundation & WordPress Pipeline
 |10 weeks
-|2 Data Eng + 0.5 SA + 0.5 QA
-|~$130K
+|2 Data Eng + 0.5 SA + 0.25 QA
+|~$110K
 
 |Phase 2: Suggestion Engine & Email Channel
 |10 weeks _(2-week schedule buffer absorbed within contingency)_
 |1 Data Eng + 1 Backend + 1 ML + 1 QA + 0.5 SA
-|~$140K
+|~$145K
 
 |Phase 3: Mobile & Wholesaler Expansion
 |10 weeks
-|1 Data Eng + 1 Backend + 1 QA + 0.5 SA
-|~$130K
+|1 Data Eng + 1 Backend + 0.5 QA _(wk 21–26)_
+|~$74K
 
 |Cloud Setup + Training
 |Throughout
 |—
 |$25K
 
-|Contingency
+|Contingency (20%)
 |—
 |—
-|$75K
+|$82K
 
 |*TOTAL*
 |*~7 months*
 |
-|*~$500K*
+|*~$493K (within $500K budget)*
 |===
 
 === Operational Costs (OPEX)
@@ -657,8 +666,8 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |*$6K–$16K/month*
 |===
 
-*Year 1 OPEX:* ~$70K–$190K
-*3-Year TCO:* $760K–$1.08M (CAPEX $500K + 3 years OPEX at $6K–$16K/month)
+*Year 1 OPEX:* ~$67K–$192K
+*3-Year TCO:* ~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)
 
 === Revenue & ROI Projection
 
@@ -684,7 +693,7 @@ NOTE: Personalised recommendations primarily increase *basket size per visit* fo
 |24–36 months post-kickoff
 |===
 
-_At the conservative maturity scenario (5% uplift, ~12–18 months), the platform cost (~$500K CAPEX) is recovered within months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
+_At the conservative maturity scenario (5% uplift, ~12–18 months), the platform cost (~$493K CAPEX) is recovered within months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
 
 == Storage Sizing
 
@@ -899,16 +908,16 @@ end legend
 |4 months total
 
 |QA Engineer
-|0.5
+|0.25
 |Full
-|Full
-|5 months total
+|0.5 _(wk 21–26)_
+|4 months total
 
 |Solution Architect
 |0.5
 |0.5
-|0.5
-|7 months total (0.5)
+|—
+|6 months total (0.5)
 |===
 
 == Architecture Decisions

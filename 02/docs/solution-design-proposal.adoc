@@ -98,6 +98,11 @@ dedicated data team. Ongoing operation requires no engineering involvement for
 day-to-day tasks — the marketing team schedules campaigns, reviews performance
 dashboards, and adjusts segments through a self-service interface.
 
+This engagement does not include WordPress migration or re-platforming, new
+feature development for the mobile application, real-time personalisation, or
+recruitment of a permanent data team. Any capability beyond this scope is subject
+to a separate engagement and estimate.
+
 [plantuml, case02-proposal-value-chain, svg]
 ----
 @startuml
@@ -201,13 +206,13 @@ automatically. A full audit trail of data access is maintained throughout.
 |Item |Detail
 
 |**Development investment (CAPEX)**
-|~$500K (inclusive of 17% risk buffer)
+|~$493K (inclusive of 20% risk buffer)
 
 |**Monthly infrastructure cost (OPEX)**
 |$6K–$16K/month (cloud services + tooling)
 
 |**3-year total cost of ownership**
-|~$760K–$1.08M (CAPEX $500K + 3 years OPEX at $6K–$16K/month)
+|~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)
 
 |**Go-live target**
 |April 2027
