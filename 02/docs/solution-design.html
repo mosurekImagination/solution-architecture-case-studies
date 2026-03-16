@@ -2994,7 +2994,6 @@ span.footnote {
 <li class="toc-entry"><a href="#_solution_options">4. Solution Options</a>
 <li><ul class="sectlevel2">
 <li class="toc-entry"><a href="#_side_by_side_comparison">4.1. Side-by-Side Comparison</a></li>
-<li class="toc-entry"><a href="#_cost_comparison">4.2. Cost Comparison</a></li>
 </ul></li>
 </li>
 <li class="toc-entry"><a href="#_recommended_option_snowflake_data_platform_with_managed_etl">5. Recommended Option: Snowflake Data Platform with Managed ETL</a>
@@ -3010,9 +3009,10 @@ span.footnote {
 <li class="toc-entry"><a href="#_cost_breakdown">8. Cost Breakdown</a>
 <li><ul class="sectlevel2">
 <li class="toc-entry"><a href="#_development_investment_capex">8.1. Development Investment (CAPEX)</a></li>
-<li class="toc-entry"><a href="#_per_phase_cost">8.2. Per-Phase Cost</a></li>
-<li class="toc-entry"><a href="#_operational_costs_opex">8.3. Operational Costs (OPEX)</a></li>
-<li class="toc-entry"><a href="#_revenue_roi_projection">8.4. Revenue &amp; ROI Projection</a></li>
+<li class="toc-entry"><a href="#_cost_estimation_methodology">8.2. Cost Estimation Methodology</a></li>
+<li class="toc-entry"><a href="#_per_phase_cost">8.3. Per-Phase Cost</a></li>
+<li class="toc-entry"><a href="#_operational_costs_opex">8.4. Operational Costs (OPEX)</a></li>
+<li class="toc-entry"><a href="#_revenue_roi_projection">8.5. Revenue &amp; ROI Projection</a></li>
 </ul></li>
 </li>
 <li class="toc-entry"><a href="#_storage_sizing">9. Storage Sizing</a></li>
@@ -3028,26 +3028,25 @@ span.footnote {
 <li class="toc-entry"><a href="#_team_allocation_by_phase">11.2. Team Allocation by Phase</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_key_dependencies">12. Key Dependencies</a></li>
-<li class="toc-entry"><a href="#_architecture_decisions">13. Architecture Decisions</a>
+<li class="toc-entry"><a href="#_architecture_decisions">12. Architecture Decisions</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_decision_1_data_platform_snowflake_dbt_airflow">13.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</a></li>
-<li class="toc-entry"><a href="#_decision_2_data_ingestion_strategy">13.2. Decision 2: Data Ingestion Strategy</a></li>
-<li class="toc-entry"><a href="#_decision_3_dashboard_bi_tooling_metabase">13.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</a></li>
-<li class="toc-entry"><a href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline">13.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</a></li>
+<li class="toc-entry"><a href="#_decision_1_data_platform_snowflake_dbt_airflow">12.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</a></li>
+<li class="toc-entry"><a href="#_decision_2_data_ingestion_strategy">12.2. Decision 2: Data Ingestion Strategy</a></li>
+<li class="toc-entry"><a href="#_decision_3_dashboard_bi_tooling_metabase">12.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</a></li>
+<li class="toc-entry"><a href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline">12.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_post_launch_plan">14. Post-Launch Plan</a>
+<li class="toc-entry"><a href="#_post_launch_plan">13. Post-Launch Plan</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_hypercare_weeks_1_2_post_go_live">14.1. Hypercare (Weeks 1-2 Post Go-Live)</a></li>
-<li class="toc-entry"><a href="#_ongoing_operations_post_handover">14.2. Ongoing Operations (Post-Handover)</a></li>
-<li class="toc-entry"><a href="#_capability_building_roadmap">14.3. Capability Building Roadmap</a></li>
+<li class="toc-entry"><a href="#_hypercare_weeks_1_2_post_go_live">13.1. Hypercare (Weeks 1-2 Post Go-Live)</a></li>
+<li class="toc-entry"><a href="#_ongoing_operations_post_handover">13.2. Ongoing Operations (Post-Handover)</a></li>
+<li class="toc-entry"><a href="#_capability_building_roadmap">13.3. Capability Building Roadmap</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_next_steps_decisions_needed">15. Next Steps &amp; Decisions Needed</a>
+<li class="toc-entry"><a href="#_scaling_path">14. Scaling Path</a></li>
+<li class="toc-entry"><a href="#_next_steps">15. Next Steps</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_immediate_actions">15.1. Immediate Actions</a></li>
-<li class="toc-entry"><a href="#_what_happens_after_approval">15.2. What Happens After Approval</a></li>
+<li class="toc-entry"><a href="#_what_happens_after_approval">15.1. What Happens After Approval</a></li>
 </ul></li>
 </li>
 </ul></div>
@@ -3072,7 +3071,6 @@ span.footnote {
 <li class="toc-entry"><a href="#_solution_options">4. Solution Options</a>
 <li><ul class="sectlevel2">
 <li class="toc-entry"><a href="#_side_by_side_comparison">4.1. Side-by-Side Comparison</a></li>
-<li class="toc-entry"><a href="#_cost_comparison">4.2. Cost Comparison</a></li>
 </ul></li>
 </li>
 <li class="toc-entry"><a href="#_recommended_option_snowflake_data_platform_with_managed_etl">5. Recommended Option: Snowflake Data Platform with Managed ETL</a>
@@ -3088,9 +3086,10 @@ span.footnote {
 <li class="toc-entry"><a href="#_cost_breakdown">8. Cost Breakdown</a>
 <li><ul class="sectlevel2">
 <li class="toc-entry"><a href="#_development_investment_capex">8.1. Development Investment (CAPEX)</a></li>
-<li class="toc-entry"><a href="#_per_phase_cost">8.2. Per-Phase Cost</a></li>
-<li class="toc-entry"><a href="#_operational_costs_opex">8.3. Operational Costs (OPEX)</a></li>
-<li class="toc-entry"><a href="#_revenue_roi_projection">8.4. Revenue &amp; ROI Projection</a></li>
+<li class="toc-entry"><a href="#_cost_estimation_methodology">8.2. Cost Estimation Methodology</a></li>
+<li class="toc-entry"><a href="#_per_phase_cost">8.3. Per-Phase Cost</a></li>
+<li class="toc-entry"><a href="#_operational_costs_opex">8.4. Operational Costs (OPEX)</a></li>
+<li class="toc-entry"><a href="#_revenue_roi_projection">8.5. Revenue &amp; ROI Projection</a></li>
 </ul></li>
 </li>
 <li class="toc-entry"><a href="#_storage_sizing">9. Storage Sizing</a></li>
@@ -3106,26 +3105,25 @@ span.footnote {
 <li class="toc-entry"><a href="#_team_allocation_by_phase">11.2. Team Allocation by Phase</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_key_dependencies">12. Key Dependencies</a></li>
-<li class="toc-entry"><a href="#_architecture_decisions">13. Architecture Decisions</a>
+<li class="toc-entry"><a href="#_architecture_decisions">12. Architecture Decisions</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_decision_1_data_platform_snowflake_dbt_airflow">13.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</a></li>
-<li class="toc-entry"><a href="#_decision_2_data_ingestion_strategy">13.2. Decision 2: Data Ingestion Strategy</a></li>
-<li class="toc-entry"><a href="#_decision_3_dashboard_bi_tooling_metabase">13.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</a></li>
-<li class="toc-entry"><a href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline">13.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</a></li>
+<li class="toc-entry"><a href="#_decision_1_data_platform_snowflake_dbt_airflow">12.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</a></li>
+<li class="toc-entry"><a href="#_decision_2_data_ingestion_strategy">12.2. Decision 2: Data Ingestion Strategy</a></li>
+<li class="toc-entry"><a href="#_decision_3_dashboard_bi_tooling_metabase">12.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</a></li>
+<li class="toc-entry"><a href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline">12.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_post_launch_plan">14. Post-Launch Plan</a>
+<li class="toc-entry"><a href="#_post_launch_plan">13. Post-Launch Plan</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_hypercare_weeks_1_2_post_go_live">14.1. Hypercare (Weeks 1-2 Post Go-Live)</a></li>
-<li class="toc-entry"><a href="#_ongoing_operations_post_handover">14.2. Ongoing Operations (Post-Handover)</a></li>
-<li class="toc-entry"><a href="#_capability_building_roadmap">14.3. Capability Building Roadmap</a></li>
+<li class="toc-entry"><a href="#_hypercare_weeks_1_2_post_go_live">13.1. Hypercare (Weeks 1-2 Post Go-Live)</a></li>
+<li class="toc-entry"><a href="#_ongoing_operations_post_handover">13.2. Ongoing Operations (Post-Handover)</a></li>
+<li class="toc-entry"><a href="#_capability_building_roadmap">13.3. Capability Building Roadmap</a></li>
 </ul></li>
 </li>
-<li class="toc-entry"><a href="#_next_steps_decisions_needed">15. Next Steps &amp; Decisions Needed</a>
+<li class="toc-entry"><a href="#_scaling_path">14. Scaling Path</a></li>
+<li class="toc-entry"><a href="#_next_steps">15. Next Steps</a>
 <li><ul class="sectlevel2">
-<li class="toc-entry"><a href="#_immediate_actions">15.1. Immediate Actions</a></li>
-<li class="toc-entry"><a href="#_what_happens_after_approval">15.2. What Happens After Approval</a></li>
+<li class="toc-entry"><a href="#_what_happens_after_approval">15.1. What Happens After Approval</a></li>
 </ul></li>
 </li>
 </ul>
@@ -3151,32 +3149,40 @@ span.footnote {
 <td class="tableblock halign-left valign-top"><p class="tableblock">Apache Airflow — open-source workflow orchestration platform for scheduling and monitoring data pipelines</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">APNs/FCM</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Apple Push Notification service / Firebase Cloud Messaging — mobile push notification delivery services for iOS and Android</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CAPEX</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Capital Expenditure — one-time development and setup costs</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CDC</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Change Data Capture — technique to track and capture changes made to a database in real time</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DAG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Directed Acyclic Graph — the unit of work in Airflow; defines the sequence and dependencies of pipeline tasks</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dbt</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data Build Tool — SQL-first transformation framework for analytics engineering</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">GDPR</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">General Data Protection Regulation — EU data privacy regulation requiring explicit consent for personal data use</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ETL</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extract, Transform, Load — pattern for moving data from source systems into an analytical store</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GDPR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">General Data Protection Regulation — EU data privacy regulation requiring explicit consent for personal data use</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">KPI</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Key Performance Indicator — measurable value showing how effectively business objectives are being achieved</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">LTV</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lifetime Value — total revenue a business can expect from a customer over the course of the relationship</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MoSCoW</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prioritisation framework: Must have, Should have, Could have, Won&#8217;t have</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MWAA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon Managed Workflows for Apache Airflow — fully managed Airflow service on AWS; removes operational burden of self-hosting</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OLAP</p></td>
@@ -3205,10 +3211,6 @@ span.footnote {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">VPN</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Virtual Private Network — encrypted tunnel between on-premises infrastructure and cloud</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">WBS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Work Breakdown Structure — hierarchical decomposition of project deliverables</p></td>
 </tr>
 </tbody>
 </table>
@@ -3433,15 +3435,6 @@ span.footnote {
 <p>Option 1 scores better on cost and operational risk — a valid choice for an organisation prioritising simplicity over growth. Option 2 is recommended because your 20% turnover target requires ML-based segmentation, multi-source data consolidation, and multi-channel delivery that Option 1 cannot provide. Option 3 was not taken forward — at $800K–$1.5M it exceeds the confirmed $500K budget, and the additional AI capability it offers is not required for the current scope.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>4.2. Cost Comparison</h3>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/case02-cost-comparison-f2b53b32c84afd2ee73535de8f417eba4f78e1c9.svg" alt="Monthly OPEX by Option">
-</div>
-<div class="title">Figure 1. Monthly OPEX by Option</div>
-</div>
-</div>
 </div>
 </div>
 <div class="sect1">
@@ -3453,16 +3446,16 @@ span.footnote {
 <div class="content">
 <img src="diagrams/case02-c4-context-2b00ce94eac996bd06f671e983de531b4956321a.svg" alt="System Context — Data-Driven Customer Engagement Platform">
 </div>
-<div class="title">Figure 2. System Context — Data-Driven Customer Engagement Platform</div>
+<div class="title">Figure 1. System Context — Data-Driven Customer Engagement Platform</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>5.2. High-Level Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case02-architecture-95fdd491bc90ae0e4ea261489d997171b4b2a8da.svg" alt="Architecture — Option 2: Snowflake Data Platform">
+<img src="diagrams/case02-architecture-1de7060af80d546d7273ed4f2933c27ad9b67acb.svg" alt="Architecture — Option 2: Snowflake Data Platform">
 </div>
-<div class="title">Figure 3. Architecture — Option 2: Snowflake Data Platform</div>
+<div class="title">Figure 2. Architecture — Option 2: Snowflake Data Platform</div>
 </div>
 </div>
 <div class="sect2">
@@ -3525,7 +3518,7 @@ span.footnote {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extensible to AI/ML workloads in future (Snowpark, external ML tools)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Requires data engineering expertise — your team will need training (included in scope)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Your team will need training to operate the platform: Snowflake (cost monitoring, queries), Airflow (pipeline status), Metabase (dashboards), email campaign workflow, and the GDPR deletion process. Training is included in scope.</p></td>
 </tr>
 </tbody>
 </table>
@@ -3564,13 +3557,13 @@ span.footnote {
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-02</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Ingest mobile app customer data via vendor-managed S3 export (preferred) or direct read-only DB access (fallback); API for incremental delta sync only</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-03</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Process wholesaler data files from S3 landing zone (CSV, Excel, XML — no fixed schema)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="4"><p class="tableblock"><strong>Epic 2 — Data Quality &amp; Processing</strong></p></td>
@@ -3599,7 +3592,7 @@ span.footnote {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-07</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Build unified customer profiles from all ingested data sources</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Build unified customer profiles from available sources (WordPress in Phase 2; extended with mobile and wholesaler data in Phase 3)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
@@ -3860,7 +3853,26 @@ span.footnote {
 </table>
 </div>
 <div class="sect2">
-<h3 id="_per_phase_cost"><a class="anchor" href="#_per_phase_cost"></a>8.2. Per-Phase Cost</h3>
+<h3 id="_cost_estimation_methodology"><a class="anchor" href="#_cost_estimation_methodology"></a>8.2. Cost Estimation Methodology</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Rate × time = cost.</strong> Each line item reflects a market rate for the role multiplied by the months allocated. Rates reflect EU consulting market for specialist data engineering, ML, and architecture skills.</p>
+</li>
+<li>
+<p><strong>Phases overlap.</strong> The 7-month total is shorter than the sum of individual phase durations because Phase 2 begins before Phase 1 completes.</p>
+</li>
+<li>
+<p><strong>17% contingency</strong> is included to cover mobile vendor negotiation delays, WordPress schema complexity, and wholesaler format variability — the three highest-probability unknowns at this stage.</p>
+</li>
+<li>
+<p><strong>Infrastructure lump sum ($15K)</strong> covers Snowflake account setup, AWS environments (dev/staging/prod), Terraform provisioning, and CI/CD pipeline.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_per_phase_cost"><a class="anchor" href="#_per_phase_cost"></a>8.3. Per-Phase Cost</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
@@ -3917,7 +3929,7 @@ span.footnote {
 </table>
 </div>
 <div class="sect2">
-<h3 id="_operational_costs_opex"><a class="anchor" href="#_operational_costs_opex"></a>8.3. Operational Costs (OPEX)</h3>
+<h3 id="_operational_costs_opex"><a class="anchor" href="#_operational_costs_opex"></a>8.4. Operational Costs (OPEX)</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 50%;">
@@ -3975,7 +3987,7 @@ span.footnote {
 </div>
 </div>
 <div class="sect2">
-<h3 id="_revenue_roi_projection"><a class="anchor" href="#_revenue_roi_projection"></a>8.4. Revenue &amp; ROI Projection</h3>
+<h3 id="_revenue_roi_projection"><a class="anchor" href="#_revenue_roi_projection"></a>8.5. Revenue &amp; ROI Projection</h3>
 <div class="admonitionblock note">
 <table>
 <tr>
@@ -4189,9 +4201,9 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <h3 id="_project_timeline"><a class="anchor" href="#_project_timeline"></a>11.1. Project Timeline</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case02-timeline-b07af9cd95d8ba2369a6a349061fd19257b6cd1d.svg" alt="Project Timeline — Option 2: Snowflake Data Platform">
+<img src="diagrams/case02-timeline-02f545daaca4a02b6f9006b8d0c31f33e8007b4b.svg" alt="Project Timeline — Option 2: Snowflake Data Platform">
 </div>
-<div class="title">Figure 4. Project Timeline — Option 2: Snowflake Data Platform</div>
+<div class="title">Figure 3. Project Timeline — Option 2: Snowflake Data Platform</div>
 </div>
 </div>
 <div class="sect2">
@@ -4255,56 +4267,10 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 </div>
 </div>
 <div class="sect1">
-<h2 id="_key_dependencies"><a class="anchor" href="#_key_dependencies"></a>12. Key Dependencies</h2>
-<div class="sectionbody">
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Dependency</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Needed By</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS account — VPN/Direct Connect setup for on-prem → AWS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 kickoff</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">WordPress DB nightly export job configured (table list, schedule, S3 destination)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 Week 1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile vendor API documentation, auth method, rate limits</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client (contract owner)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 Week 2 — <strong>critical path</strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Wholesaler data sharing agreements + sample files (2-3 suppliers)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client (wholesaler relationship manager)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 2 start</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Internal team members identified for knowledge transfer</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Leadership</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 kickoff — <strong>no data team exists; critical</strong></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_architecture_decisions"><a class="anchor" href="#_architecture_decisions"></a>13. Architecture Decisions</h2>
+<h2 id="_architecture_decisions"><a class="anchor" href="#_architecture_decisions"></a>12. Architecture Decisions</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_decision_1_data_platform_snowflake_dbt_airflow"><a class="anchor" href="#_decision_1_data_platform_snowflake_dbt_airflow"></a>13.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</h3>
+<h3 id="_decision_1_data_platform_snowflake_dbt_airflow"><a class="anchor" href="#_decision_1_data_platform_snowflake_dbt_airflow"></a>12.1. Decision 1: Data Platform — Snowflake + dbt + Airflow</h3>
 <div class="paragraph">
 <p><strong>Decision:</strong> Snowflake is the analytical data platform. dbt handles SQL transformations. Airflow (AWS MWAA) handles orchestration.</p>
 </div>
@@ -4343,7 +4309,7 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <hr>
 </div>
 <div class="sect2">
-<h3 id="_decision_2_data_ingestion_strategy"><a class="anchor" href="#_decision_2_data_ingestion_strategy"></a>13.2. Decision 2: Data Ingestion Strategy</h3>
+<h3 id="_decision_2_data_ingestion_strategy"><a class="anchor" href="#_decision_2_data_ingestion_strategy"></a>12.2. Decision 2: Data Ingestion Strategy</h3>
 <div class="paragraph">
 <p><strong>Decision:</strong> Each source uses the lowest-complexity ingestion pattern that meets the analytical need.</p>
 </div>
@@ -4363,8 +4329,23 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">WordPress DB (900GB, heavily customised MySQL, on-prem)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Nightly full export of analytical tables (mysqldump → compressed CSV → S3). Approximately 10–30% of tables are relevant for analytics — not the full 900GB. Your IT team configures the cron job off-peak.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Full snapshot per night, not delta. Sufficient for a weekly recommendation refresh — Snowflake ingests the snapshot and dbt rebuilds the models from it. Delta extraction would require reliable <code>updated_at</code> columns across all tables (not guaranteed with a heavily customised schema) or CDC via MySQL binlog. Neither constraint applies to the weekly cadence.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Two options depending on IT capability — confirmed in Phase 1:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Option A: Nightly full export</strong> (mysqldump → S3). Simple cron job, no DBA skills required. Full snapshot, not delta — sufficient for weekly recommendations. Storage: ~9–54GB/night compressed.</p>
+</li>
+<li>
+<p><strong>Option B: MySQL read replica</strong> (on-prem replica → delta SQL extraction → S3). Requires DBA to configure replication. Cleaner long-term — only changed rows transferred, smaller loads, standard incremental pattern.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Default to Option A; upgrade to Option B if IT team can support replication or if daily refresh is required.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Both options avoid any connection to the live production database.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Mobile App Vendor (2M installs, external backend)</p></td>
@@ -4389,7 +4370,7 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <hr>
 </div>
 <div class="sect2">
-<h3 id="_decision_3_dashboard_bi_tooling_metabase"><a class="anchor" href="#_decision_3_dashboard_bi_tooling_metabase"></a>13.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</h3>
+<h3 id="_decision_3_dashboard_bi_tooling_metabase"><a class="anchor" href="#_decision_3_dashboard_bi_tooling_metabase"></a>12.3. Decision 3: Dashboard &amp; BI Tooling — Metabase</h3>
 <div class="paragraph">
 <p><strong>Decision:</strong> Metabase (self-hosted on ECS) as the analytics dashboard for the marketing team.</p>
 </div>
@@ -4424,7 +4405,7 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <hr>
 </div>
 <div class="sect2">
-<h3 id="_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline"><a class="anchor" href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline"></a>13.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</h3>
+<h3 id="_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline"><a class="anchor" href="#_decision_4_recommendation_algorithm_collaborative_filtering_with_rule_based_baseline"></a>12.4. Decision 4: Recommendation Algorithm — Collaborative Filtering with Rule-Based Baseline</h3>
 <div class="paragraph">
 <p><strong>Decision:</strong> Phase 2 launches with a rule-based baseline (purchase frequency + category affinity). Phase 3 introduces item-based collaborative filtering trained on order history.</p>
 </div>
@@ -4472,10 +4453,10 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 </div>
 </div>
 <div class="sect1">
-<h2 id="_post_launch_plan"><a class="anchor" href="#_post_launch_plan"></a>14. Post-Launch Plan</h2>
+<h2 id="_post_launch_plan"><a class="anchor" href="#_post_launch_plan"></a>13. Post-Launch Plan</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_hypercare_weeks_1_2_post_go_live"><a class="anchor" href="#_hypercare_weeks_1_2_post_go_live"></a>14.1. Hypercare (Weeks 1-2 Post Go-Live)</h3>
+<h3 id="_hypercare_weeks_1_2_post_go_live"><a class="anchor" href="#_hypercare_weeks_1_2_post_go_live"></a>13.1. Hypercare (Weeks 1-2 Post Go-Live)</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
@@ -4508,7 +4489,7 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ongoing_operations_post_handover"><a class="anchor" href="#_ongoing_operations_post_handover"></a>14.2. Ongoing Operations (Post-Handover)</h3>
+<h3 id="_ongoing_operations_post_handover"><a class="anchor" href="#_ongoing_operations_post_handover"></a>13.2. Ongoing Operations (Post-Handover)</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -4527,7 +4508,7 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 </div>
 </div>
 <div class="sect2">
-<h3 id="_capability_building_roadmap"><a class="anchor" href="#_capability_building_roadmap"></a>14.3. Capability Building Roadmap</h3>
+<h3 id="_capability_building_roadmap"><a class="anchor" href="#_capability_building_roadmap"></a>13.3. Capability Building Roadmap</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
@@ -4562,73 +4543,73 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 </div>
 </div>
 <div class="sect1">
-<h2 id="_next_steps_decisions_needed"><a class="anchor" href="#_next_steps_decisions_needed"></a>15. Next Steps &amp; Decisions Needed</h2>
+<h2 id="_scaling_path"><a class="anchor" href="#_scaling_path"></a>14. Scaling Path</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_immediate_actions"><a class="anchor" href="#_immediate_actions"></a>15.1. Immediate Actions</h3>
+<div class="paragraph">
+<p>The platform is designed for the current scope. The following triggers indicate when to invest in the next capability level:</p>
+</div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 12.5%;">
-<col style="width: 37.5%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">#</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Owner</th>
-<th class="tableblock halign-left valign-top">Status</th>
+<th class="tableblock halign-left valign-top">Trigger</th>
+<th class="tableblock halign-left valign-top">Next Capability</th>
+<th class="tableblock halign-left valign-top">Estimated Additional Investment</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Confirm budget ($500K) and approve Option 2 for detailed estimation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Sponsor</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">✅ Budget confirmed 2026-02-19</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Weekly recommendations drive measurable uplift; marketing team wants faster refresh</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Daily pipeline refresh — configuration change, no re-architecture</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Minimal — covered by existing Airflow + Snowflake setup</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Negotiate mobile vendor data access: S3 export preferred; confirm API auth method, rate limits, and available endpoints; DB read-only access as fallback</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Contract Owner</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">In progress — critical path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Push notification open rates exceed email; mobile channel becomes primary</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Real-time event triggers (browse abandonment, flash deals)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$80K–$120K — requires streaming layer (Kinesis or Kafka)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Provide WordPress DB read-only access for schema inventory</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT / DBA</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Pending — needed Week 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Item-based collaborative filtering reaches diminishing returns on recommendation quality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Neural collaborative filtering / deep learning (Phase 4+)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Separate engagement — requires Databricks or SageMaker; ~$200K+</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set up VPN/Direct Connect between on-prem data centre and AWS VPC</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT + AWS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Pending — needed Week 1-2</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~~Conduct GDPR consent audit~~ → RESOLVED (consent confirmed)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~~Client Legal / DPO~~</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">✅ Confirmed 2026-02-19</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Identify 1-2 internal team members for knowledge transfer</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Leadership</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Pending — <strong>critical: no data team exists</strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Schedule discovery workshop (WordPress schema deep-dive, wholesaler landscape)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Solution Architect</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Pending — Week 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Customer base grows 3× or query volumes spike significantly</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake warehouse tier upgrade (XS → S → M)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OPEX increase only — ~$2K–$5K/month additional</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>15. Next Steps</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Review and approve this solution design — <strong>Solution Architect + Client Leadership</strong></p>
+</li>
+<li>
+<p>Confirm mobile vendor data access negotiation — <strong>Client Contract Owner</strong></p>
+</li>
+<li>
+<p>Identify 1–2 internal team members for knowledge transfer — <strong>Client Leadership</strong></p>
+</li>
+<li>
+<p>Schedule Phase 1 discovery workshop (WordPress schema, wholesaler landscape) — <strong>Week 1 after approval</strong></p>
+</li>
+<li>
+<p>Sign engagement agreement and provision Snowflake account — <strong>Both parties</strong></p>
+</li>
+</ol>
+</div>
 <div class="sect2">
-<h3 id="_what_happens_after_approval"><a class="anchor" href="#_what_happens_after_approval"></a>15.2. What Happens After Approval</h3>
+<h3 id="_what_happens_after_approval"><a class="anchor" href="#_what_happens_after_approval"></a>15.1. What Happens After Approval</h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -4644,13 +4625,13 @@ Personalised recommendations primarily increase <strong>basket size per visit</s
 <p><strong>Month 3-4</strong> — Customer segmentation model, recommendation engine prototype, first test campaign via AWS SES</p>
 </li>
 <li>
-<p><strong>Month 5</strong> — First production email campaign sent (Phase 2 milestone)</p>
+<p><strong>Month 5</strong> — First production email campaign sent (Phase 2 milestone — end of month 5)</p>
 </li>
 <li>
-<p><strong>Month 6-7</strong> — Mobile vendor API + DB export integration, wholesaler file landing zone (1-2 initial suppliers)</p>
+<p><strong>Month 5-6</strong> — Mobile vendor S3 export integration, wholesaler file landing zone (1-2 initial suppliers)</p>
 </li>
 <li>
-<p><strong>Month 7-10</strong> — Full platform optimisation, mobile push notifications, UAT</p>
+<p><strong>Month 6-7</strong> — Mobile push notifications, UAT and optimisation</p>
 </li>
 <li>
 <p><strong>April 2027</strong> — Full platform go-live + 2-week hypercare — within fiscal year deadline</p>

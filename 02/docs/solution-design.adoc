@@ -27,13 +27,15 @@
 |Term |Definition
 
 |Airflow |Apache Airflow — open-source workflow orchestration platform for scheduling and monitoring data pipelines
+|APNs/FCM |Apple Push Notification service / Firebase Cloud Messaging — mobile push notification delivery services for iOS and Android
 |CAPEX |Capital Expenditure — one-time development and setup costs
-|CDC |Change Data Capture — technique to track and capture changes made to a database in real time
+|DAG |Directed Acyclic Graph — the unit of work in Airflow; defines the sequence and dependencies of pipeline tasks
 |dbt |Data Build Tool — SQL-first transformation framework for analytics engineering
-|GDPR |General Data Protection Regulation — EU data privacy regulation requiring explicit consent for personal data use
 |ETL |Extract, Transform, Load — pattern for moving data from source systems into an analytical store
+|GDPR |General Data Protection Regulation — EU data privacy regulation requiring explicit consent for personal data use
 |KPI |Key Performance Indicator — measurable value showing how effectively business objectives are being achieved
-|LTV |Lifetime Value — total revenue a business can expect from a customer over the course of the relationship
+|MoSCoW |Prioritisation framework: Must have, Should have, Could have, Won't have
+|MWAA |Amazon Managed Workflows for Apache Airflow — fully managed Airflow service on AWS; removes operational burden of self-hosting
 |OLAP |Online Analytical Processing — database optimised for queries and analysis (e.g. Snowflake)
 |OLTP |Online Transactional Processing — database optimised for day-to-day transactions (e.g. WordPress MySQL)
 |OPEX |Operational Expenditure — ongoing monthly costs (infrastructure, licences, tooling)
@@ -41,7 +43,6 @@
 |Snowflake |Cloud-based OLAP data warehouse — managed service on AWS, SQL-first, scales compute independently of storage
 |TCO |Total Cost of Ownership — full cost including development, infrastructure, and team over a given period
 |VPN |Virtual Private Network — encrypted tunnel between on-premises infrastructure and cloud
-|WBS |Work Breakdown Structure — hierarchical decomposition of project deliverables
 |===
 
 == Executive Summary
@@ -176,43 +177,6 @@ Your stated goal is "increase turnover by 20%." In technical terms this means:
 |===
 
 Option 1 scores better on cost and operational risk — a valid choice for an organisation prioritising simplicity over growth. Option 2 is recommended because your 20% turnover target requires ML-based segmentation, multi-source data consolidation, and multi-channel delivery that Option 1 cannot provide. Option 3 was not taken forward — at $800K–$1.5M it exceeds the confirmed $500K budget, and the additional AI capability it offers is not required for the current scope.
-
-=== Cost Comparison
-
-.Monthly OPEX by Option
-[vegalite,case02-cost-comparison,format=svg]
-....
-{
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "Monthly OPEX Comparison",
-  "width": 400,
-  "height": 250,
-  "data": {
-    "values": [
-      {"option": "Option 1: Quick Win", "category": "Data Platform", "cost": 500},
-      {"option": "Option 1: Quick Win", "category": "Compute / ETL", "cost": 800},
-      {"option": "Option 1: Quick Win", "category": "Email Service", "cost": 500},
-      {"option": "Option 1: Quick Win", "category": "Monitoring", "cost": 200},
-      {"option": "Option 2: Snowflake", "category": "Data Platform", "cost": 5000},
-      {"option": "Option 2: Snowflake", "category": "Compute / ETL", "cost": 3000},
-      {"option": "Option 2: Snowflake", "category": "Email Service", "cost": 2000},
-      {"option": "Option 2: Snowflake", "category": "Monitoring", "cost": 1000},
-      {"option": "Option 3: Databricks", "category": "Data Platform", "cost": 15000},
-      {"option": "Option 3: Databricks", "category": "Compute / ETL", "cost": 8000},
-      {"option": "Option 3: Databricks", "category": "Email Service", "cost": 3000},
-      {"option": "Option 3: Databricks", "category": "Monitoring", "cost": 2000}
-    ]
-  },
-  "mark": "bar",
-  "encoding": {
-    "x": {"field": "option", "type": "nominal", "title": "Option", "axis": {"labelAngle": -15}},
-    "y": {"field": "cost", "type": "quantitative", "title": "Monthly Cost ($)", "stack": true},
-    "color": {"field": "category", "type": "nominal", "title": "Cost Category",
-      "scale": {"range": ["#1976D2", "#388E3C", "#E65100", "#7B1FA2"]}
-    }
-  }
-}
-....
 
 == Recommended Option: Snowflake Data Platform with Managed ETL
 
@@ -396,12 +360,12 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |FR-02
 |Must
 |Ingest mobile app customer data via vendor-managed S3 export (preferred) or direct read-only DB access (fallback); API for incremental delta sync only
-|2
+|3
 
 |FR-03
 |Should
 |Process wholesaler data files from S3 landing zone (CSV, Excel, XML — no fixed schema)
-|2
+|3
 
 4+|**Epic 2 — Data Quality & Processing**
 
@@ -424,7 +388,7 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 
 |FR-07
 |Must
-|Build unified customer profiles from all ingested data sources
+|Build unified customer profiles from available sources (WordPress in Phase 2; extended with mobile and wholesaler data in Phase 3)
 |2
 
 |FR-08
@@ -613,6 +577,13 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 |
 |*~$500K (within budget)*
 |===
+
+=== Cost Estimation Methodology
+
+* **Rate × time = cost.** Each line item reflects a market rate for the role multiplied by the months allocated. Rates reflect EU consulting market for specialist data engineering, ML, and architecture skills.
+* **Phases overlap.** The 7-month total is shorter than the sum of individual phase durations because Phase 2 begins before Phase 1 completes.
+* **17% contingency** is included to cover mobile vendor negotiation delays, WordPress schema complexity, and wholesaler format variability — the three highest-probability unknowns at this stage.
+* **Infrastructure lump sum ($15K)** covers Snowflake account setup, AWS environments (dev/staging/prod), Terraform provisioning, and CI/CD pipeline.
 
 === Per-Phase Cost
 
@@ -836,48 +807,68 @@ ganttDiagram {
 }
 </style>
 
--- Phase 1: Foundation & WordPress Pipeline --
+-- Discovery --
 [Discovery & Data Audit] starts 2026-10-01 and ends 2026-10-15
-[Discovery & Data Audit] is colored in #BBDEFB/#1976D2
+[Discovery & Data Audit] is colored in #E0E0E0/#616161
+
+-- Platform & Infrastructure --
 [Snowflake Setup & Infra] starts 2026-10-08 and ends 2026-10-31
-[Snowflake Setup & Infra] is colored in #BBDEFB/#1976D2
+[Snowflake Setup & Infra] is colored in #BBDEFB/#1565C0
+
+-- WordPress Data Pipeline --
 [WordPress DB Extraction Pipeline] starts 2026-10-15 and ends 2026-11-15
-[WordPress DB Extraction Pipeline] is colored in #BBDEFB/#1976D2
-[ETL Pipeline (WordPress)] starts 2026-11-01 and ends 2026-12-01
-[ETL Pipeline (WordPress)] is colored in #BBDEFB/#1976D2
+[WordPress DB Extraction Pipeline] is colored in #B3E5FC/#0277BD
+[ETL Pipeline & dbt Models] starts 2026-11-01 and ends 2026-12-01
+[ETL Pipeline & dbt Models] is colored in #B3E5FC/#0277BD
+
+-- Data Quality --
 [Email Validation Engine] starts 2026-11-15 and ends 2026-12-15
-[Email Validation Engine] is colored in #BBDEFB/#1976D2
+[Email Validation Engine] is colored in #B2EBF2/#00838F
 
--- Phase 2: Suggestion Engine & Email Channel --
+-- Intelligence Layer --
 [Customer Segmentation Model] starts 2026-12-01 and ends 2027-01-15
-[Customer Segmentation Model] is colored in #C8E6C9/#388E3C
+[Customer Segmentation Model] is colored in #C8E6C9/#2E7D32
 [Recommendation Engine] starts 2026-12-15 and ends 2027-01-29
-[Recommendation Engine] is colored in #C8E6C9/#388E3C
-[Email Campaign Integration] starts 2027-01-01 and ends 2027-02-13
-[Email Campaign Integration] is colored in #C8E6C9/#388E3C
-[Analytics Dashboard] starts 2027-01-01 and ends 2027-02-15
-[Analytics Dashboard] is colored in #C8E6C9/#388E3C
+[Recommendation Engine] is colored in #C8E6C9/#2E7D32
 
--- Phase 3: Mobile & Wholesaler Expansion --
+-- Email Channel --
+[Email Campaign Integration] starts 2027-01-01 and ends 2027-02-13
+[Email Campaign Integration] is colored in #FFF9C4/#F57F17
+[Campaign Testing & Launch Prep] starts 2027-02-01 and ends 2027-02-21
+[Campaign Testing & Launch Prep] is colored in #FFF9C4/#F57F17
+
+-- Analytics Dashboard --
+[Analytics Dashboard (Metabase)] starts 2027-01-01 and ends 2027-02-15
+[Analytics Dashboard (Metabase)] is colored in #FFE0B2/#E65100
+
+-- Mobile & Wholesaler --
 [Mobile Vendor Data Integration] starts 2027-02-15 and ends 2027-03-15
-[Mobile Vendor Data Integration] is colored in #FFE0B2/#E65100
-[Wholesaler Data Connectors] starts 2027-03-01 and ends 2027-03-29
-[Wholesaler Data Connectors] is colored in #FFE0B2/#E65100
+[Mobile Vendor Data Integration] is colored in #F8BBD0/#AD1457
+[Wholesaler Data Connectors (1-2 suppliers)] starts 2027-03-01 and ends 2027-03-29
+[Wholesaler Data Connectors (1-2 suppliers)] is colored in #F8BBD0/#AD1457
 [Mobile Push Notifications] starts 2027-03-15 and ends 2027-04-12
-[Mobile Push Notifications] is colored in #FFE0B2/#E65100
+[Mobile Push Notifications] is colored in #F8BBD0/#AD1457
+
+-- QA & UAT --
 [UAT & Optimisation] starts 2027-04-01 and ends 2027-04-30
-[UAT & Optimisation] is colored in #FFE0B2/#E65100
+[UAT & Optimisation] is colored in #E1BEE7/#6A1B9A
 
 -- Milestones --
 [Data Audit Complete] happens 2026-10-15
 [WordPress Pipeline Live] happens 2026-12-01
-[First Email Campaign Sent] happens 2027-02-15
+[First Email Campaign Sent] happens 2027-02-28
 [Full Platform Go-Live] happens 2027-04-30
 
 legend right
-  |<#BBDEFB> Phase 1: Foundation |
-  |<#C8E6C9> Phase 2: Intelligence |
-  |<#FFE0B2> Phase 3: Expansion |
+  |<#E0E0E0> Discovery |
+  |<#BBDEFB> Platform & Infra |
+  |<#B3E5FC> WordPress Pipeline |
+  |<#B2EBF2> Data Quality |
+  |<#C8E6C9> Intelligence Layer |
+  |<#FFF9C4> Email Channel |
+  |<#FFE0B2> Analytics Dashboard |
+  |<#F8BBD0> Mobile & Wholesaler |
+  |<#E1BEE7> QA & UAT |
   |<#OrangeRed> Milestone |
 end legend
 @endgantt
@@ -918,33 +909,6 @@ end legend
 |0.5
 |0.5
 |7 months total (0.5)
-|===
-
-== Key Dependencies
-
-[cols="2,2,2"]
-|===
-|Dependency |Owner |Needed By
-
-|AWS account — VPN/Direct Connect setup for on-prem → AWS
-|Client IT
-|Phase 1 kickoff
-
-|WordPress DB nightly export job configured (table list, schedule, S3 destination)
-|Client IT
-|Phase 1 Week 1
-
-|Mobile vendor API documentation, auth method, rate limits
-|Client (contract owner)
-|Phase 1 Week 2 — **critical path**
-
-|Wholesaler data sharing agreements + sample files (2-3 suppliers)
-|Client (wholesaler relationship manager)
-|Phase 2 start
-
-|Internal team members identified for knowledge transfer
-|Client Leadership
-|Phase 1 kickoff — **no data team exists; critical**
 |===
 
 == Architecture Decisions
@@ -1101,49 +1065,38 @@ Default to Option A; upgrade to Option B if IT team can support replication or i
 |Internal team fully owns platform; SA available on retainer for complex changes
 |===
 
-== Next Steps & Decisions Needed
+== Scaling Path
 
-=== Immediate Actions
+The platform is designed for the current scope. The following triggers indicate when to invest in the next capability level:
 
-[cols="1,3,2,2"]
+[cols="2,2,2"]
 |===
-|# |Action |Owner |Status
+|Trigger |Next Capability |Estimated Additional Investment
 
-|1
-|Confirm budget ($500K) and approve Option 2 for detailed estimation
-|Client Sponsor
-|✅ Budget confirmed 2026-02-19
+|Weekly recommendations drive measurable uplift; marketing team wants faster refresh
+|Daily pipeline refresh — configuration change, no re-architecture
+|Minimal — covered by existing Airflow + Snowflake setup
 
-|2
-|Negotiate mobile vendor data access: S3 export preferred; confirm API auth method, rate limits, and available endpoints; DB read-only access as fallback
-|Client Contract Owner
-|In progress — critical path
+|Push notification open rates exceed email; mobile channel becomes primary
+|Real-time event triggers (browse abandonment, flash deals)
+|~$80K–$120K — requires streaming layer (Kinesis or Kafka)
 
-|3
-|Provide WordPress DB read-only access for schema inventory
-|Client IT / DBA
-|Pending — needed Week 1
+|Item-based collaborative filtering reaches diminishing returns on recommendation quality
+|Neural collaborative filtering / deep learning (Phase 4+)
+|Separate engagement — requires Databricks or SageMaker; ~$200K+
 
-|4
-|Set up VPN/Direct Connect between on-prem data centre and AWS VPC
-|Client IT + AWS
-|Pending — needed Week 1-2
-
-|5
-|~~Conduct GDPR consent audit~~ → RESOLVED (consent confirmed)
-|~~Client Legal / DPO~~
-|✅ Confirmed 2026-02-19
-
-|6
-|Identify 1-2 internal team members for knowledge transfer
-|Client Leadership
-|Pending — **critical: no data team exists**
-
-|7
-|Schedule discovery workshop (WordPress schema deep-dive, wholesaler landscape)
-|Solution Architect
-|Pending — Week 1
+|Customer base grows 3× or query volumes spike significantly
+|Snowflake warehouse tier upgrade (XS → S → M)
+|OPEX increase only — ~$2K–$5K/month additional
 |===
+
+== Next Steps
+
+. Review and approve this solution design — *Solution Architect + Client Leadership*
+. Confirm mobile vendor data access negotiation — *Client Contract Owner*
+. Identify 1–2 internal team members for knowledge transfer — *Client Leadership*
+. Schedule Phase 1 discovery workshop (WordPress schema, wholesaler landscape) — *Week 1 after approval*
+. Sign engagement agreement and provision Snowflake account — *Both parties*
 
 === What Happens After Approval
 
@@ -1151,9 +1104,9 @@ Default to Option A; upgrade to Option B if IT team can support replication or i
 . **Week 3-6** — WordPress nightly export pipeline live (S3 landing zone), initial data quality assessment
 . **Week 7-10** — ETL pipeline operational, email validation running, first data in Snowflake
 . **Month 3-4** — Customer segmentation model, recommendation engine prototype, first test campaign via AWS SES
-. **Month 5** — First production email campaign sent (Phase 2 milestone)
-. **Month 6-7** — Mobile vendor API + DB export integration, wholesaler file landing zone (1-2 initial suppliers)
-. **Month 7-10** — Full platform optimisation, mobile push notifications, UAT
+. **Month 5** — First production email campaign sent (Phase 2 milestone — end of month 5)
+. **Month 5-6** — Mobile vendor S3 export integration, wholesaler file landing zone (1-2 initial suppliers)
+. **Month 6-7** — Mobile push notifications, UAT and optimisation
 . **April 2027** — Full platform go-live + 2-week hypercare — within fiscal year deadline
 
 ---
