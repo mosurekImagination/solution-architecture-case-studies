@@ -19,7 +19,8 @@ roles = [
 ]
 
 # ── CAPEX: Lump sums ───────────────────────────────────────────────────────────
-cloud_and_infra = 15_000   # Snowflake account, AWS environments, Terraform, CI/CD
+cloud_and_infra = 15_000   # Snowflake account, AWS environments, Terraform, CI/CD,
+                            # VPN setup (on-prem → AWS, required for read replica DAGs)
 training        = 10_000   # Materials, external workshops
 
 # ── CAPEX: Contingency ─────────────────────────────────────────────────────────

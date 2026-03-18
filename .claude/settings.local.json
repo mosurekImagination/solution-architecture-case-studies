@@ -8,7 +8,16 @@
       "Bash(find c:programmingsolution-architecture-case-studies02docs -type f -name *)",
       "Bash(find c:programmingsolution-architecture-case-studies -type f -name *template*)",
       "Bash(./render.sh --pdf 02/docs/solution-design-proposal.adoc)",
-      "Bash(grep -ri \"basket\\\\|average order\\\\|AOV\\\\|order value\\\\|$15\\\\|revenue per\" c:/programming/solution-architecture-case-studies/02/ --include=\"*.md\" --include=\"*.adoc\" -l)"
+      "Bash(grep -ri \"basket\\\\|average order\\\\|AOV\\\\|order value\\\\|$15\\\\|revenue per\" c:/programming/solution-architecture-case-studies/02/ --include=\"*.md\" --include=\"*.adoc\" -l)",
+      "Bash(npx asciidoctor:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Read(//c/programming/solution-architecture-case-studies/**)",
+      "Bash(ls -lh output/02/docs/diagrams/case02-timeline*.svg)",
+      "Bash(wc -c output/02/docs/diagrams/case02-timeline*.svg)",
+      "Bash(docker-compose restart:*)",
+      "Bash(grep -r \"plantuml\\\\|mermaid\\\\|graphviz\\\\|ditaa\\\\|d2\" c:/programming/solution-architecture-case-studies/01/docs/*.adoc)",
+      "Bash(grep -B 2 \"gantt\\\\|timeline\\\\|schedule\" c:/programming/solution-architecture-case-studies/01/docs/*.adoc -i)"
     ]
   }
 }
