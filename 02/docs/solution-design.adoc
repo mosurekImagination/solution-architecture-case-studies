@@ -119,13 +119,17 @@ The enterprise has a unified data platform that continuously consolidates custom
 
 === Business Goal Translation
 
-Your stated goal is "increase turnover by 20%." In technical terms this means:
+Your stated goal is "increase turnover by 20%." A target of this scale will require multiple growth levers working together — personalised recommendations are the single largest lever available without acquiring new customers, but they are one component. Industry benchmarks for grocery e-commerce personalisation show 5–15% basket size uplift at full platform maturity. This platform delivers the foundational data infrastructure that makes every subsequent growth initiative (cross-sell campaigns, lapsed-customer reactivation, data-driven merchandising) measurable and scalable.
+
+In technical terms, this engagement delivers:
 
 * **Unify** all customer data islands into a single source of truth
 * **Profile** customers based on purchase history, browsing behaviour, and preferences
 * **Recommend** products with the highest conversion probability per customer segment
 * **Deliver** recommendations through email (AWS SES) and mobile push (2M installs)
 * **Measure** uplift via campaign tracking and A/B testing in the analytics dashboard
+
+The 20% target is achievable by combining personalisation uplift with additional initiatives — lapsed-customer reactivation, expanded channel coverage (mobile push to 2M users), and data-informed assortment decisions — all enabled by this platform but iterated upon post-launch.
 
 == Solution Options
 
@@ -167,7 +171,7 @@ Your stated goal is "increase turnover by 20%." In technical terms this means:
 
 |**OPEX / month**
 |$2K–$5K
-|$6K–$15K
+|$6K–$16K
 |$25K–$50K
 
 |**Risk**
@@ -671,7 +675,7 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 
 === Revenue & ROI Projection
 
-NOTE: Personalised recommendations primarily increase *basket size per visit* for existing customers — not the number of new customers acquired. The scenarios below use an illustrative average basket of $15; projections scale proportionally to the actual average order value. Industry benchmarks for grocery e-commerce recommendation uplift: 5–15% basket size increase at *full platform maturity* (typically 12–18 months of operation), per link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey] and link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce]. These projections are directional and should be validated against actual campaign data in Phase 2.
+NOTE: These projections cover *basket size uplift from personalised recommendations* — the most direct and measurable revenue impact of this platform. Additional uplift from reduced churn, improved email engagement, and data-informed merchandising is expected but not projected here, as it depends on how actively the marketing team uses the platform beyond automated recommendations. Industry benchmarks for grocery e-commerce recommendation uplift: 5–15% basket size increase at *full platform maturity* (typically 12–18 months of operation), per link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey] and link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce]. All projections are directional and should be validated against actual campaign data in Phase 2.
 
 [cols="2,2,2,2"]
 |===
@@ -682,18 +686,20 @@ NOTE: Personalised recommendations primarily increase *basket size per visit* fo
 |+$15K–$50K/month (est. 1–2% uplift)
 |Month 5–6 post-kickoff
 
-|**Conservative** _(5% basket uplift)_
+|**Conservative maturity** _(5% basket uplift)_
 |~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $15.75 (+$0.75/order)
 |+$15K/day → +$450K/month
 |12–18 months post-kickoff
 
-|**Target** _(20% basket uplift)_
-|~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $18 (+$3/order)
-|+$60K/day → +$1.8M/month
+|**Optimistic maturity** _(15% basket uplift)_
+|~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $17.25 (+$2.25/order)
+|+$45K/day → +$1.35M/month
 |24–36 months post-kickoff
 |===
 
-_At the conservative maturity scenario (5% uplift, ~12–18 months), the platform cost (~$493K CAPEX) is recovered within months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
+_At the conservative maturity scenario (5% uplift, ~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K CAPEX within approximately two months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
+
+_These projections represent basket uplift from personalisation alone. Reaching the full 20% turnover target requires combining this uplift with additional initiatives that the platform enables — lapsed-customer reactivation campaigns, data-driven assortment optimisation, and expanded mobile push coverage (2M app users). The unified data layer delivered here is the prerequisite for all of these levers._
 
 == Storage Sizing
 
@@ -743,7 +749,7 @@ _At the conservative maturity scenario (5% uplift, ~12–18 months), the platfor
 |Customer email data quality is worse than expected (>50% invalid)
 |Medium
 |High
-|Run email validation in Phase 1 Week 2; adjust channel strategy if email reach is too low. Mobile push (2M installs) is a viable fallback.
+|**Pre-engagement:** Validate a random 10K-address sample before contracts are signed (48-hour turnaround, <$100). This establishes a deliverability baseline and determines whether email is viable as the primary Phase 2 channel. **Go/no-go gate:** If valid email reach is below 60%, restructure the phase plan to elevate mobile push as the primary channel and move mobile vendor integration into Phase 2. **In-engagement:** Full email validation runs in Phase 1 Week 2; month 5 campaign launch is gated on deliverability threshold (< 2% hard bounce on a 200-address test batch).
 
 |WordPress 900GB heavily-customised schema — ETL requires custom extraction logic
 |High
@@ -781,7 +787,7 @@ _At the conservative maturity scenario (5% uplift, ~12–18 months), the platfor
 * WordPress DB is MySQL, 900GB, heavily customised — nightly mysqldump of analytical tables pushed to S3; no live DB connection
 * Your organisation uses AWS for some services; WordPress is hosted on-premises — your IT team manages the scheduled export job
 * GDPR consent is confirmed (yes) — email campaigns can launch without a consent collection flow
-* The 20% turnover increase target is achievable with personalisation (needs market research validation in Phase 1)
+* Personalisation is the largest single lever toward the 20% turnover target; the full 20% will require combining personalisation uplift with additional data-enabled initiatives (reactivation, merchandising, mobile push) — all enabled by this platform
 * No data team, no plans to hire — solution must include embedded capability building
 * Mobile vendor has APIs and DB available on request — API access terms need negotiation
 
@@ -1102,6 +1108,7 @@ The platform is designed for the current scope. The following triggers indicate 
 == Next Steps
 
 . Review and approve this solution design — *Solution Architect + Client Leadership*
+. **Pre-engagement email validation** — provide a random sample of 10K customer email addresses; we validate deliverability within 48 hours (<$100 cost). Result determines whether email or mobile push is the primary channel for the month 5 revenue checkpoint. — *Client IT + Solution Architect*
 . Confirm mobile vendor data access negotiation — *Client Contract Owner*
 . Identify 1–2 internal team members for knowledge transfer — *Client Leadership*
 . Schedule Phase 1 discovery workshop (WordPress schema, wholesaler landscape) — *Week 1 after approval*

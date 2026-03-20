@@ -42,11 +42,12 @@ customers as individuals or to deliver personalized experiences at scale.
 
 We propose building a **unified customer intelligence platform** that consolidates
 all customer data into a single, queryable layer and uses it to power personalized
-product suggestions — delivered via email and mobile push notification, every week,
-to every customer.
+product suggestions — delivered via email and mobile push notification, on a
+configurable schedule (daily or weekly), to every customer.
 
 The investment is ~$500K over 7 months. The first campaign goes live at month 5;
-full ROI is expected within approximately one year of go-live.
+at conservative maturity (5% basket uplift), the platform investment is recovered
+within approximately two months of reaching that level.
 
 == Business Challenge
 
@@ -82,10 +83,10 @@ The platform consolidates customer data from the web shop, the mobile applicatio
 and wholesaler product catalogues into a single, governed data layer. An
 intelligence engine analyses purchase history and browsing behaviour to generate
 personalized product recommendations for every customer. Recommendations are
-delivered weekly via email to start, with the option to move to daily without
-rebuilding anything — the platform is designed for it from day one. Real-time
-triggers (such as a reminder after a customer browses without purchasing) are a
-later capability, once the weekly and daily patterns are established. Mobile push
+delivered via email on a configurable schedule — daily or weekly — with no rebuild
+required to change cadence. Real-time triggers (such as a reminder after a customer
+browses without purchasing) are a later capability, once the regular cadence is
+established. Mobile push
 notifications to the 2 million app users follow in a subsequent phase.
 
 The first personalized email campaign goes live at month 5 — before the platform
@@ -120,7 +121,7 @@ rectangle "Data Sources" as sources #E8F4FD {
 rectangle "Customer\nIntelligence\nPlatform" as platform #D5E8D4
 
 rectangle "Personalised\nChannels" as channels #FFF2CC {
-  rectangle "Weekly Email\n(existing infra)" as email
+  rectangle "Personalised Email\n(daily capable)" as email
   rectangle "Mobile Push\n(Phase 3)" as push
 }
 
@@ -129,7 +130,7 @@ rectangle "Business\nOutcome" as outcome #F8CECC {
 }
 
 sources -right-> platform : Unified\ndata layer
-platform -right-> channels : Weekly\nrecommendations
+platform -right-> channels : Personalised\nrecommendations
 channels -right-> outcome : Higher basket\nper visit
 
 @enduml
@@ -137,15 +138,32 @@ channels -right-> outcome : Higher basket\nper visit
 
 == Expected Business Outcomes
 
-NOTE: Personalised recommendations increase *basket size per visit* for existing
-customers — not the number of new customers acquired. The scenarios below use an
-illustrative average basket of $15; projections scale proportionally to your
-actual average order value. Industry benchmarks for grocery e-commerce
-recommendation uplift: 5–15% basket size increase at *full platform maturity*
-(typically 12–18 months of operation) per
+=== How This Platform Contributes to the 20% Target
+
+Your stated goal — a 20% increase in annual turnover — is ambitious and will
+require multiple growth levers working in concert. Personalised recommendations
+are the *single largest lever* available without acquiring new customers, but they
+are one component of a broader growth programme. Industry benchmarks for grocery
+e-commerce recommendation engines show a 5–15% basket size increase at full
+platform maturity (typically 12–18 months of continuous operation), per
 link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey]
 and
 link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce].
+
+This platform delivers the foundational data infrastructure — unified customer
+profiles, behavioural analytics, and multi-channel delivery — that makes every
+subsequent growth initiative more effective: cross-sell and upsell campaigns,
+lapsed-customer reactivation, dynamic pricing, and targeted promotions. Without
+this foundation, none of these levers can operate at scale.
+
+The projections below focus on *basket size uplift from personalised
+recommendations* — the first and most direct revenue impact. Additional uplift
+from reduced churn, improved email engagement, and data-informed merchandising
+decisions is expected but not projected here, as it depends on how actively the
+marketing team uses the platform beyond automated recommendations.
+
+NOTE: The scenarios below use an illustrative average basket of $15; projections
+scale proportionally to your actual average order value.
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -156,21 +174,28 @@ link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Sa
 |+$15K–$50K/month (est. 1–2%)
 |Month 5–6 post-kickoff
 
-|**Conservative** _(5% basket uplift)_
+|**Conservative maturity** _(5% basket uplift)_
 |1M daily visitors × ~2% conversion × $15 avg basket × 5% = +$0.75/order
 |+$450K/month
 |12–18 months post-kickoff
 
-|**Target** _(20% basket uplift)_
-|1M daily visitors × ~2% conversion × $15 avg basket × 20% = +$3.00/order
-|+$1.8M/month
+|**Optimistic maturity** _(15% basket uplift)_
+|1M daily visitors × ~2% conversion × $15 avg basket × 15% = +$2.25/order
+|+$1.35M/month
 |24–36 months post-kickoff
 |===
 
-_At the conservative maturity scenario (~12–18 months), the platform recovers its
-full development cost within approximately one year of go-live. Both the $15
-average basket and 2% conversion rate are illustrative; actual projections should
-be calibrated against current trading data early in the engagement._
+_At the conservative maturity scenario (~12–18 months post-kickoff), the
++$450K/month uplift recovers the full ~$493K development cost within approximately
+two months of reaching that level. Both the $15 average basket and 2% conversion
+rate are illustrative; actual projections should be calibrated against current
+trading data early in the engagement._
+
+_Reaching the full 20% turnover target will require combining personalisation
+uplift with additional initiatives — such as lapsed-customer reactivation
+campaigns, data-driven assortment optimisation, and expanded channel coverage
+(mobile push to 2M app users) — all of which this platform enables but which are
+measured and iterated upon post-launch._
 
 == Our Approach
 
@@ -184,7 +209,7 @@ rather than launching cold.
 
 . **Built for your team, not ours.** The platform is designed from the ground up
 for a non-technical marketing team to operate day-to-day. No specialist is needed
-to run weekly campaigns or read performance dashboards. A structured capability
+to run campaigns or read performance dashboards. A structured capability
 building programme, included in the engagement, transfers knowledge to the internal
 team over three months.
 
@@ -224,7 +249,7 @@ automatically. A full audit trail of data access is maintained throughout.
 |5 specialists (data engineering, backend, machine learning, QA, architecture)
 
 |**Break-even (conservative scenario)**
-|~1 year post go-live (at 5% basket uplift maturity)
+|~2 months after reaching 5% basket uplift maturity (12–18 months post-kickoff)
 |===
 
 _The $500K CAPEX fits within the confirmed budget envelope. Infrastructure costs
@@ -248,7 +273,7 @@ into normal operating budgets._
   wholesaler product catalogue integrated, recommendation model trained on 3 months
   of real feedback data.
 
-. **Post go-live — Ongoing Operations:** Weekly recommendation refresh, monthly
+. **Post go-live — Ongoing Operations:** Recommendation refresh at the configured cadence (daily or weekly), monthly
   performance reviews, quarterly platform review with the internal team. Platform
   continues to improve as more customer interaction data accumulates.
 
@@ -258,10 +283,14 @@ into normal operating budgets._
 |===
 |Risk |Mitigation
 
-|**Customer data quality lower than expected**
-|A dedicated data quality audit is the first deliverable of Phase 1. The email
-campaign at month 5 is gated on reaching a minimum data quality threshold — the
-timeline absorbs a quality remediation sprint without delaying go-live.
+|**Customer email data quality lower than expected**
+|A pre-engagement email validation sample (10K addresses, 48-hour turnaround)
+establishes the baseline before contracts are signed. If valid email reach is below
+60%, the phase plan is restructured to elevate mobile push (2M installs) as the
+primary channel. Within the engagement, a full data quality audit is the first
+deliverable of Phase 1, and the month 5 email campaign is gated on a minimum
+deliverability threshold — the timeline absorbs a quality remediation sprint
+without delaying go-live.
 
 |**Vendor coordination delays** (mobile app partner, wholesaler feeds)
 |Vendor engagement begins in Week 1 and is tracked as a critical path dependency.
@@ -305,14 +334,18 @@ disappear at deployment.
 |Client Leadership
 
 |2
+|**Pre-engagement email validation** — provide a random sample of 10,000 customer email addresses (anonymised where possible). We validate deliverability within 48 hours. Result determines whether email remains the primary channel for the month 5 revenue checkpoint, or whether mobile push is elevated earlier. Cost: negligible (<$100). This step de-risks the entire engagement before contracts are signed.
+|Client IT + Solution Architect
+
+|3
 |Confirm mobile app vendor data access negotiation is initiated
 |Client Contract Owner
 
-|3
+|4
 |Sign engagement agreement
 |Both parties
 
-|4
+|5
 |Phase 1 kickoff — target first available week after approval
 |Solution Architect + Client IT
 |===

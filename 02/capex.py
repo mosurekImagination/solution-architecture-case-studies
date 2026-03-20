@@ -40,10 +40,10 @@ DAILY_VISITORS   = 1_000_000
 CONVERSION_RATE  = 0.02        # 2% of visitors make a purchase
 AVG_BASKET       = 15          # USD — illustrative; scale to actual AOV
 
-# Uplift scenarios (basket size increase)
+# Uplift scenarios (basket size increase from personalisation alone)
 scenarios = [
-    ("Conservative",  0.05),   #  5% basket uplift — 12–18 months post-kickoff
-    ("Target",        0.20),   # 20% basket uplift — 24–36 months post-kickoff
+    ("Conservative maturity",  0.05),   #  5% basket uplift — 12–18 months post-kickoff
+    ("Optimistic maturity",    0.15),   # 15% basket uplift — 24–36 months post-kickoff (upper industry benchmark)
 ]
 
 # ── TCO: Years to project ─────────────────────────────────────────────────────

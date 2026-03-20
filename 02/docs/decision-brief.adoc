@@ -1,6 +1,6 @@
 = Decision Brief — Data-Driven Customer Engagement Platform
 :author: Solution Architect
-:revdate: 2026-02-19
+:revdate: 2026-03-16
 :status: For Client Review
 :icons: font
 
@@ -24,10 +24,10 @@ A unified data platform that consolidates customer data from all your systems in
 [cols="1,2"]
 |===
 |Budget |$500K (confirmed)
-|Timeline |7–10 months, phased delivery
+|Timeline |7 months, 3 phases
 |Go-Live |April 2027
-|Team |4–6 engineers
-|Monthly Cost (post-launch) |$6K–$15K
+|Team |5 specialists (2 Data Eng + 1 Backend + 1 ML + 1 QA + 0.5 SA)
+|Monthly Cost (post-launch) |$6K–$16K
 |===
 
 == 2. Architecture Decisions Made
@@ -99,13 +99,17 @@ A unified data platform that consolidates customer data from all your systems in
 
 == 3. What We Need From You
 
-**6 questions — 3 blockers, 3 important.** We've minimized questions by making professional assumptions where possible (documented in ADR-002).
+**7 questions — 4 blockers, 3 important.** We've minimized questions by making professional assumptions where possible (documented in ADR-002).
 
 === Blockers (must answer before implementation starts)
 
 [cols="1,4,3"]
 |===
 |# |Question |Why It Matters
+
+|Q0
+|Provide a **random sample of 10K customer email addresses** for pre-engagement deliverability validation.
+|Email is the primary revenue channel for the month 5 checkpoint. If >40% of addresses are invalid, we restructure the phase plan to prioritise mobile push instead. This 48-hour validation (<$100 cost) de-risks the entire engagement before contracts are signed.
 
 |Q1
 |Can we get **read-only MySQL access** to inventory WordPress tables? (Schema structure only — not the data itself.)
@@ -172,7 +176,7 @@ WordPress timestamp columns, schema change frequency, API auth method, API rate 
 |Email data quality (stale addresses)
 |Medium
 |High
-|Validate early (Phase 1). Mobile push (2M installs) is fallback channel.
+|Pre-engagement 10K-sample validation establishes baseline before contracts. Go/no-go gate: if <60% valid, restructure phases to elevate mobile push. Full validation in Phase 1 Week 2.
 |===
 
 == 5. Cost at a Glance
@@ -182,13 +186,17 @@ WordPress timestamp columns, schema change frequency, API auth method, API rate 
 |Component |One-Time |Monthly
 
 |Snowflake (compute + storage) |— |$3K–$8K
-|AWS infrastructure (VPN, S3, Airflow) |$5K–$10K |$1.5K–$3K
-|AWS SES (email delivery) |— |$500–$2K
-|Monitoring |— |$500–$1K
-|Development (team of 5, 7 months) |$300K–$420K |—
-|Contingency (30%) |$80K–$130K |—
-|*TOTAL* |*$385K–$500K* |*$6K–$15K*
+|AWS infrastructure (ECS, S3, VPN, networking) |$15K (setup) |$1K–$3K
+|AWS MWAA (Managed Airflow) |— |$300–$1.5K
+|AWS SES (email delivery) |— |$100–$500
+|Monitoring / Alerting |— |$500–$1K
+|Development (team of 5, 7 months) |$411K |—
+|Contingency (20%) |$82K |—
+|*TOTAL CAPEX* |*~$493K* |
+|*TOTAL OPEX* | |*$6K–$16K*
 |===
+
+_3-Year TCO: ~$695K–$1.07M (CAPEX + 3 years OPEX)_
 
 == 6. Timeline
 
@@ -196,17 +204,17 @@ WordPress timestamp columns, schema change frequency, API auth method, API rate 
 |===
 |Phase |Duration |Key Deliverable
 
-|**Phase 1: Foundation**
-|10 weeks (Apr–Jun 2026)
+|**Phase 1: Foundation & WordPress Pipeline**
+|10 weeks (Oct–Dec 2026)
 |WordPress extraction pipeline live, data in Snowflake, email validation running
 
-|**Phase 2: Intelligence**
-|8 weeks (Jun–Aug 2026)
-|Customer segmentation, recommendation engine, first email campaign sent
+|**Phase 2: Suggestion Engine & Email Channel**
+|10 weeks (Dec 2026–Feb 2027)
+|Customer segmentation, recommendation engine, first email campaign sent (month 5 revenue checkpoint)
 
-|**Phase 3: Expansion**
-|10 weeks (Aug–Oct 2026)
-|Mobile vendor integration, wholesaler data, push notifications, full go-live
+|**Phase 3: Mobile & Wholesaler Expansion**
+|10 weeks (Feb–Apr 2027)
+|Mobile vendor integration, wholesaler data, push notifications, full platform go-live (April 2027)
 |===
 
 == 7. Decisions We Need From You
@@ -216,18 +224,22 @@ WordPress timestamp columns, schema change frequency, API auth method, API rate 
 |# |Decision |When
 
 |1
+|Provide 10K email sample for pre-engagement deliverability validation (Q0 above)
+|Immediately (48-hour turnaround)
+
+|2
 |Approve Snowflake platform + $500K budget envelope
 |Before Phase 1
 
-|2
-|Answer 6 discovery questions above (especially blockers Q1, Q4, Q6)
+|3
+|Answer discovery questions above (especially blockers Q1, Q4, Q6)
 |Immediately
 
-|3
+|4
 |Initiate mobile vendor negotiation (API docs + export agreement)
 |Immediately (critical path)
 
-|4
+|5
 |Identify 1-2 internal people for knowledge transfer
 |Before Phase 1
 |===
