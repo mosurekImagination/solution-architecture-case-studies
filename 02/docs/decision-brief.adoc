@@ -54,7 +54,7 @@ A unified data platform that consolidates customer data from all your systems in
 |**WordPress DB** (900GB, on-prem)
 |Direct SQL via VPN
 |Airflow DAGs run custom SQL queries over VPN, extract only analytically relevant tables (~10-30%), land in S3 → Snowflake. Read replica isolates production.
-|Nightly + weekly full refresh
+|Nightly delta + weekly full refresh
 
 |**Mobile App** (2M installs, external vendor)
 |API + periodic DB export (hybrid)
@@ -78,8 +78,8 @@ A unified data platform that consolidates customer data from all your systems in
 |===
 |Alternative |Why Not
 
-|Full MySQL → RDS replication (WordPress)
-|Replicates 900GB including irrelevant data. Cost: ~$600-800/mo. _Revisit if we need >80% of tables._
+|Full MySQL → AWS RDS managed replication (WordPress)
+|Replicates all 900GB to a managed RDS instance — including irrelevant tables. Cost: ~$600–800/mo. Not chosen: we extract only the 10–30% analytical subset via an on-prem read replica + Airflow DAGs, which costs nothing for the replica itself (client's own server) and avoids the 900GB replication overhead.
 
 |AWS DMS managed replication (WordPress)
 |Known issues with heavily-customized MySQL schemas. Direct SQL gives more control.
@@ -156,7 +156,7 @@ WordPress timestamp columns, schema change frequency, API auth method, API rate 
 |WordPress custom schema breaks extraction
 |High
 |High
-|Direct SQL extraction + dbt tests detect breakage. Schema assumed stable (15-year system). If needed: fallback to RDS replication.
+|Direct SQL extraction + dbt tests detect breakage. Schema assumed stable (15-year system). If needed: fallback to RDS managed replication (+$600–800/mo OPEX, pushing total OPEX to $6.6K–$16.8K/month).
 
 |Mobile vendor limits data access
 |Low

@@ -100,9 +100,9 @@ day-to-day tasks — the marketing team schedules campaigns, reviews performance
 dashboards, and adjusts segments through a self-service interface.
 
 This engagement does not include WordPress migration or re-platforming, new
-feature development for the mobile application, real-time personalisation, or
-recruitment of a permanent data team. Any capability beyond this scope is subject
-to a separate engagement and estimate.
+feature development for the mobile application, EDI or real-time integration with
+wholesaler systems, real-time personalisation, or recruitment of a permanent data
+team. Any capability beyond this scope is subject to a separate engagement and estimate.
 
 [plantuml, case02-proposal-value-chain, svg]
 ----
