@@ -9,15 +9,15 @@
       "Bash(find c:programmingsolution-architecture-case-studies -type f -name *template*)",
       "Bash(./render.sh --pdf 02/docs/solution-design-proposal.adoc)",
       "Bash(grep -ri \"basket\\\\|average order\\\\|AOV\\\\|order value\\\\|$15\\\\|revenue per\" c:/programming/solution-architecture-case-studies/02/ --include=\"*.md\" --include=\"*.adoc\" -l)",
-      "Bash(npx asciidoctor:*)",
+      "Bash(grep -n \"kroki-server-url\\\\|kroki-fetch-diagram\" /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/01/docs/*.adoc)",
+      "Bash(docker-compose -f /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/docker-compose.yml ps)",
       "Bash(docker-compose up:*)",
-      "Bash(curl -s http://localhost:8000/health)",
-      "Read(//c/programming/solution-architecture-case-studies/**)",
-      "Bash(ls -lh output/02/docs/diagrams/case02-timeline*.svg)",
-      "Bash(wc -c output/02/docs/diagrams/case02-timeline*.svg)",
-      "Bash(docker-compose restart:*)",
-      "Bash(grep -r \"plantuml\\\\|mermaid\\\\|graphviz\\\\|ditaa\\\\|d2\" c:/programming/solution-architecture-case-studies/01/docs/*.adoc)",
-      "Bash(grep -B 2 \"gantt\\\\|timeline\\\\|schedule\" c:/programming/solution-architecture-case-studies/01/docs/*.adoc -i)"
+      "Bash(curl -sf http://localhost:8000/health)",
+      "Bash(./render.sh 02)",
+      "Bash(find /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/02 -type f -name *.adoc -o -name *.md -o -name *.html -o -name *.txt -o -name *.json -o -name *.yaml -o -name *.yml)",
+      "Bash(python 02/capex.py)",
+      "Bash(python3 02/capex.py)",
+      "Bash(python3 /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/02/capex.py)"
     ]
   }
 }

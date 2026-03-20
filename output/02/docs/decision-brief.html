@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Solution Architect">
-<title>Data-Driven Customer Engagement Platform — Proposal</title>
+<title>Decision Brief — Data-Driven Customer Engagement Platform</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,7 +439,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Data-Driven Customer Engagement Platform — Proposal</h1>
+<h1>Decision Brief — Data-Driven Customer Engagement Platform</h1>
 <div class="details">
 <span id="author" class="author">Solution Architect</span><br>
 <span id="revdate">2026-03-16</span>
@@ -447,267 +447,151 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_executive_summary">1. Executive Summary</a></li>
-<li><a href="#_business_challenge">2. Business Challenge</a></li>
-<li><a href="#_our_recommendation">3. Our Recommendation</a></li>
-<li><a href="#_expected_business_outcomes">4. Expected Business Outcomes</a>
+<li><a href="#_1_what_were_building">1. What We&#8217;re Building</a></li>
+<li><a href="#_2_architecture_decisions_made">2. Architecture Decisions Made</a>
 <ul class="sectlevel2">
-<li><a href="#_how_this_platform_contributes_to_the_20_target">4.1. How This Platform Contributes to the 20% Target</a></li>
+<li><a href="#_adr_001_data_platform_snowflake_on_aws">ADR-001: Data Platform → Snowflake on AWS</a></li>
+<li><a href="#_adr_002_data_ingestion_strategy">ADR-002: Data Ingestion Strategy</a></li>
 </ul>
 </li>
-<li><a href="#_our_approach">5. Our Approach</a></li>
-<li><a href="#_investment_summary">6. Investment Summary</a></li>
-<li><a href="#_delivery_milestones">7. Delivery Milestones</a></li>
-<li><a href="#_key_risks">8. Key Risks</a></li>
-<li><a href="#_why_work_with_us">9. Why Work With Us</a></li>
-<li><a href="#_next_steps">10. Next Steps</a></li>
+<li><a href="#_3_what_we_need_from_you">3. What We Need From You</a>
+<ul class="sectlevel2">
+<li><a href="#_blockers_must_answer_before_implementation_starts">Blockers (must answer before implementation starts)</a></li>
+<li><a href="#_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy">Important (we can proceed with assumptions, but answers improve accuracy)</a></li>
+<li><a href="#_what_were_not_asking_handled_via_professional_assumptions">What We&#8217;re NOT Asking (handled via professional assumptions)</a></li>
+</ul>
+</li>
+<li><a href="#_4_risks_mitigations">4. Risks &amp; Mitigations</a></li>
+<li><a href="#_5_cost_at_a_glance">5. Cost at a Glance</a></li>
+<li><a href="#_6_timeline">6. Timeline</a></li>
+<li><a href="#_7_decisions_we_need_from_you">7. Decisions We Need From You</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_executive_summary"><a class="anchor" href="#_executive_summary"></a>1. Executive Summary</h2>
+<h2 id="_1_what_were_building"><a class="anchor" href="#_1_what_were_building"></a>1. What We&#8217;re Building</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>An established European international grocery webshop (15 years on the market,
-approximately 1 million daily visitors, 2 million mobile app users) has set a
-strategic goal to increase annual turnover by 20%. Today, customer data is
-scattered across disconnected systems — the web platform, the mobile app, and
-multiple wholesaler feeds are each isolated, making it impossible to understand
-customers as individuals or to deliver personalized experiences at scale.</p>
+<p>A unified data platform that consolidates customer data from all your systems into one analytical store, powering personalized product recommendations delivered via email and mobile push.</p>
 </div>
 <div class="paragraph">
-<p>We propose building a <strong>unified customer intelligence platform</strong> that consolidates
-all customer data into a single, queryable layer and uses it to power personalized
-product suggestions — delivered via email and mobile push notification, on a
-configurable schedule (daily or weekly), to every customer.</p>
-</div>
-<div class="paragraph">
-<p>The investment is ~$500K over 7 months. The first campaign goes live at month 5;
-at conservative maturity (5% basket uplift), the platform investment is recovered
-within approximately two months of reaching that level.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_business_challenge"><a class="anchor" href="#_business_challenge"></a>2. Business Challenge</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The following pressures are limiting revenue growth despite a loyal, growing
-customer base:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>Customer data is siloed.</strong> Web, mobile, and supplier data live in separate
-systems with no unified view of who a customer is, what they buy, or what they
-are likely to buy next.</p>
-</li>
-<li>
-<p><strong>Personalization is not possible at scale.</strong> Every customer receives the same
-marketing communication. Campaigns are broadcast, not targeted — relevant to
-few, ignored by most.</p>
-</li>
-<li>
-<p><strong>The marketing team operates on intuition.</strong> Without consolidated data, campaign
-decisions are based on experience and gut feel rather than evidence. There is no
-feedback loop to measure what works.</p>
-</li>
-<li>
-<p><strong>Revenue growth has plateaued.</strong> With 1 million daily visitors already on the
-platform, the next growth lever is not more traffic — it is a higher value per
-visit. Personalization is the proven mechanism for this.</p>
-</li>
-<li>
-<p><strong>GDPR compliance gaps create legal exposure.</strong> Personal data flows across
-systems without a centralized consent record, audit trail, or automated deletion
-capability — a material regulatory risk.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_our_recommendation"><a class="anchor" href="#_our_recommendation"></a>3. Our Recommendation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We recommend building a <strong>unified customer intelligence platform</strong> in three phases
-over 7 months.</p>
-</div>
-<div class="paragraph">
-<p>The platform consolidates customer data from the web shop, the mobile application,
-and wholesaler product catalogues into a single, governed data layer. An
-intelligence engine analyses purchase history and browsing behaviour to generate
-personalized product recommendations for every customer. Recommendations are
-delivered via email on a configurable schedule — daily or weekly — with no rebuild
-required to change cadence. Real-time triggers (such as a reminder after a customer
-browses without purchasing) are a later capability, once the regular cadence is
-established. Mobile push
-notifications to the 2 million app users follow in a subsequent phase.</p>
-</div>
-<div class="paragraph">
-<p>The first personalized email campaign goes live at month 5 — before the platform
-is fully complete. This is intentional: it creates an early revenue checkpoint and
-validates the recommendation model against real customer behaviour while the
-remainder of the platform is still being built.</p>
-</div>
-<div class="paragraph">
-<p>The platform is designed to be operated by the existing marketing team without a
-dedicated data team. Ongoing operation requires no engineering involvement for
-day-to-day tasks — the marketing team schedules campaigns, reviews performance
-dashboards, and adjusts segments through a self-service interface.</p>
-</div>
-<div class="paragraph">
-<p>This engagement does not include WordPress migration or re-platforming, new
-feature development for the mobile application, EDI or real-time integration with
-wholesaler systems, real-time personalisation, or recruitment of a permanent data
-team. Any capability beyond this scope is subject to a separate engagement and estimate.</p>
-</div>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/case02-proposal-value-chain-08271f1e3525108aa1587cb99330fc1200cfb7cd.svg" alt="case02-proposal-value-chain">
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_expected_business_outcomes"><a class="anchor" href="#_expected_business_outcomes"></a>4. Expected Business Outcomes</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_how_this_platform_contributes_to_the_20_target"><a class="anchor" href="#_how_this_platform_contributes_to_the_20_target"></a>4.1. How This Platform Contributes to the 20% Target</h3>
-<div class="paragraph">
-<p>Your stated goal — a 20% increase in annual turnover — is ambitious and will
-require multiple growth levers working in concert. Personalised recommendations
-are the <strong>single largest lever</strong> available without acquiring new customers, but they
-are one component of a broader growth programme. Industry benchmarks for grocery
-e-commerce recommendation engines show a 5–15% basket size increase at full
-platform maturity (typically 12–18 months of continuous operation), per
-<a href="https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it">McKinsey</a>
-and
-<a href="https://www.salesforce.com/resources/research-reports/state-of-commerce/">Salesforce State of Commerce</a>.</p>
-</div>
-<div class="paragraph">
-<p>This platform delivers the foundational data infrastructure — unified customer
-profiles, behavioural analytics, and multi-channel delivery — that makes every
-subsequent growth initiative more effective: cross-sell and upsell campaigns,
-lapsed-customer reactivation, dynamic pricing, and targeted promotions. Without
-this foundation, none of these levers can operate at scale.</p>
-</div>
-<div class="paragraph">
-<p>The projections below focus on <strong>basket size uplift from personalised
-recommendations</strong> — the first and most direct revenue impact. Additional uplift
-from reduced churn, improved email engagement, and data-informed merchandising
-decisions is expected but not projected here, as it depends on how actively the
-marketing team uses the platform beyond automated recommendations.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The scenarios below use an illustrative average basket of $15; projections
-scale proportionally to your actual average order value.
-</td>
-</tr>
-</table>
+<p><strong>Goal:</strong> Increase turnover by 20% through AI-driven personalization.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Budget</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500K (confirmed)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Timeline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 months, 3 phases</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Go-Live</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">April 2027</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 specialists (2 Data Eng + 1 Backend + 1 ML + 1 QA + 0.5 SA)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Monthly Cost (post-launch)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$6K–$16K</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_2_architecture_decisions_made"><a class="anchor" href="#_2_architecture_decisions_made"></a>2. Architecture Decisions Made</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_adr_001_data_platform_snowflake_on_aws"><a class="anchor" href="#_adr_001_data_platform_snowflake_on_aws"></a>ADR-001: Data Platform → Snowflake on AWS</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
 <col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Decision</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Snowflake</strong> on AWS EU region + dbt (transformation) + Apache Airflow (orchestration)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Best balance of capability, simplicity, and cost for a team with no data engineering experience</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why not Databricks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Exceeds budget ($800K+); requires Spark expertise the team lacks</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Why not custom/open-source</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operational burden contradicts non-technical team profile; slower time-to-value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Status</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Proposed — awaiting approval</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_adr_002_data_ingestion_strategy"><a class="anchor" href="#_adr_002_data_ingestion_strategy"></a>ADR-002: Data Ingestion Strategy</h3>
+<div class="paragraph">
+<p><strong>Four data sources, four ingestion paths — all converging on S3 → Snowflake.</strong></p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 16.6668%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Scenario</th>
-<th class="tableblock halign-left valign-top">Mechanism</th>
-<th class="tableblock halign-left valign-top">Est. Monthly Uplift</th>
-<th class="tableblock halign-left valign-top">Realistic Timeframe</th>
+<th class="tableblock halign-left valign-top">Source</th>
+<th class="tableblock halign-left valign-top">Strategy</th>
+<th class="tableblock halign-left valign-top">How It Works</th>
+<th class="tableblock halign-left valign-top">Schedule</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>First campaign</strong> <em>(month 5)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Partial audience (validated emails + consent + sufficient history); model in learning phase</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$15K–$50K/month (est. 1–2%)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Month 5–6 post-kickoff</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>WordPress DB</strong> (900GB, on-prem)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct SQL via VPN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Airflow DAGs run custom SQL queries over VPN, extract only analytically relevant tables (~10-30%), land in S3 → Snowflake. Read replica isolates production.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Nightly delta + weekly full refresh</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Conservative maturity</strong> <em>(5% basket uplift)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1M daily visitors × ~2% conversion × $15 avg basket × 5% = +$0.75/order</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$450K/month</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12–18 months post-kickoff</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Mobile App</strong> (2M installs, external vendor)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API + periodic DB export (hybrid)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vendor APIs for ongoing incremental data + periodic DB dump for backfill and data the API doesn&#8217;t expose. Both land in S3 → Snowflake.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Daily (API) + weekly (export)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Optimistic maturity</strong> <em>(15% basket uplift)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1M daily visitors × ~2% conversion × $15 avg basket × 15% = +$2.25/order</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$1.35M/month</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">24–36 months post-kickoff</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Wholesalers</strong> (multiple suppliers)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File landing zone</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Suppliers provide files in any format (CSV, Excel, XML). Files land in S3, Snowflake loads as semi-structured data, dbt transforms per supplier.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">On file arrival</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Customer Emails</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Part of WordPress extraction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not a separate pipeline. Extracted with WordPress data. Email validation and cleanup handled in dbt.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">With WordPress pipeline</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p><em>At the conservative maturity scenario (~12–18 months post-kickoff), the
-+$450K/month uplift recovers the full ~$493K development cost within approximately
-two months of reaching that level. Both the $15 average basket and 2% conversion
-rate are illustrative; actual projections should be calibrated against current
-trading data early in the engagement.</em></p>
+<p><strong>Key alternatives evaluated and rejected:</strong></p>
 </div>
-<div class="paragraph">
-<p><em>Reaching the full 20% turnover target will require combining personalisation
-uplift with additional initiatives — such as lapsed-customer reactivation
-campaigns, data-driven assortment optimisation, and expanded channel coverage
-(mobile push to 2M app users) — all of which this platform enables but which are
-measured and iterated upon post-launch.</em></p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_our_approach"><a class="anchor" href="#_our_approach"></a>5. Our Approach</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Four principles guide how this engagement is structured:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Value before completion.</strong> The first personalized email campaign goes live at
-month 5 — two months before the full platform is complete. This is not a
-compromise; it is risk management. Real campaign data validates the recommendation
-model early, so the final two months of delivery can incorporate what was learned
-rather than launching cold.</p>
-</li>
-<li>
-<p><strong>Built for your team, not ours.</strong> The platform is designed from the ground up
-for a non-technical marketing team to operate day-to-day. No specialist is needed
-to run campaigns or read performance dashboards. A structured capability
-building programme, included in the engagement, transfers knowledge to the internal
-team over three months.</p>
-</li>
-<li>
-<p><strong>No disruption to existing operations.</strong> The web shop, mobile application, and
-wholesaler relationships are unchanged throughout delivery. The intelligence
-platform sits alongside existing systems — it reads from them, but does not replace
-or modify them. There is no migration, no downtime, and no risk to current
-operations.</p>
-</li>
-<li>
-<p><strong>Privacy by design.</strong> GDPR compliance is built into the data layer from day one —
-not added at the end. Customer consent is tracked as a first-class data attribute.
-Customers can request deletion of their data and it is actioned within 72 hours,
-automatically. A full audit trail of data access is maintained throughout.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_investment_summary"><a class="anchor" href="#_investment_summary"></a>6. Investment Summary</h2>
-<div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 40%;">
@@ -715,150 +599,287 @@ automatically. A full audit trail of data access is maintained throughout.</p>
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Item</th>
-<th class="tableblock halign-left valign-top">Detail</th>
+<th class="tableblock halign-left valign-top">Alternative</th>
+<th class="tableblock halign-left valign-top">Why Not</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Development investment (CAPEX)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$493K (inclusive of 20% risk buffer)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full MySQL → AWS RDS managed replication (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replicates all 900GB to a managed RDS instance — including irrelevant tables. Cost: ~$600–800/mo. Not chosen: we extract only the 10–30% analytical subset via an on-prem read replica + Airflow DAGs, which costs nothing for the replica itself (client&#8217;s own server) and avoids the 900GB replication overhead.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Monthly infrastructure cost (OPEX)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$6K–$16K/month (cloud services + tooling)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS DMS managed replication (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Known issues with heavily-customized MySQL schemas. Direct SQL gives more control.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3-year total cost of ownership</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CDC with Debezium + Kafka (WordPress)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Team cannot operate Kafka. MSK costs ~$8-12K/mo. Real-time not requested.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Go-live target</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">April 2027</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">API-only for mobile (no DB export)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Risk: API may not expose all data needed for recommendations. Hybrid de-risks this.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Delivery timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months across 3 phases</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct DB access for mobile (no API)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Too fragile — vendor controls schema, can change without notice. No SLA.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5 specialists (data engineering, backend, machine learning, QA, architecture)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Break-even (conservative scenario)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~2 months after reaching 5% basket uplift maturity (12–18 months post-kickoff)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EDI for wholesalers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$50-100K+ setup. Designed for supply chain operations, not analytics.</p></td>
 </tr>
 </tbody>
 </table>
-<div class="paragraph">
-<p><em>The $500K CAPEX fits within the confirmed budget envelope. Infrastructure costs
-thereafter are modest relative to the revenue uplift potential and can be absorbed
-into normal operating budgets.</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_delivery_milestones"><a class="anchor" href="#_delivery_milestones"></a>7. Delivery Milestones</h2>
+<h2 id="_3_what_we_need_from_you"><a class="anchor" href="#_3_what_we_need_from_you"></a>3. What We Need From You</h2>
 <div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Month 1 — Kickoff &amp; Foundation:</strong> Project kickoff, data audit, cloud platform
-provisioned, vendor data access agreements confirmed.</p>
-</li>
-<li>
-<p><strong>Month 3 — Data Pipeline Operational:</strong> All customer data sources connected and
-flowing into the unified data layer. Data quality baseline established. First
-customer profiles built.</p>
-</li>
-<li>
-<p><strong>Month 5 — First Campaign Live</strong> <em>(revenue checkpoint):</em> Personalised email
-campaign sent to the full customer base. Open rates, click rates, and basket size
-uplift measured against control group.</p>
-</li>
-<li>
-<p><strong>Month 7 — Full Platform Go-Live:</strong> Mobile push notification channel active,
-wholesaler product catalogue integrated, recommendation model trained on 3 months
-of real feedback data.</p>
-</li>
-<li>
-<p><strong>Post go-live — Ongoing Operations:</strong> Recommendation refresh at the configured cadence (daily or weekly), monthly
-performance reviews, quarterly platform review with the internal team. Platform
-continues to improve as more customer interaction data accumulates.</p>
-</li>
-</ol>
+<div class="paragraph">
+<p><strong>7 questions — 4 blockers, 3 important.</strong> We&#8217;ve minimized questions by making professional assumptions where possible (documented in ADR-002).</p>
+</div>
+<div class="sect2">
+<h3 id="_blockers_must_answer_before_implementation_starts"><a class="anchor" href="#_blockers_must_answer_before_implementation_starts"></a>Blockers (must answer before implementation starts)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Question</th>
+<th class="tableblock halign-left valign-top">Why It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Provide a <strong>random sample of 10K customer email addresses</strong> for pre-engagement deliverability validation.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Email is the primary revenue channel for the month 5 checkpoint. If &gt;40% of addresses are invalid, we restructure the phase plan to prioritise mobile push instead. This 48-hour validation (&lt;$100 cost) de-risks the entire engagement before contracts are signed.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can we get <strong>read-only MySQL access</strong> to inventory WordPress tables? (Schema structure only — not the data itself.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Determines whether we extract 10-30% of tables (direct SQL, our recommendation) or replicate everything (RDS, more expensive). This single answer shapes the pipeline architecture.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can we get the <strong>mobile vendor&#8217;s API documentation</strong>? (Endpoints, auth, rate limits, available data.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Without this, we cannot design the mobile data pipeline. No assumption possible — vendor-specific.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>How many wholesalers</strong> provide data, and can we get <strong>2-3 sample files</strong>?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Need to see real formats to build the file processing pipeline. Number of suppliers determines scaling.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy"><a class="anchor" href="#_important_we_can_proceed_with_assumptions_but_answers_improve_accuracy"></a>Important (we can proceed with assumptions, but answers improve accuracy)</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Question</th>
+<th class="tableblock halign-left valign-top">Our Assumption If Unanswered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Is there an <strong>existing VPN or Direct Connect</strong> between on-prem and AWS?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No — we budget 2-4 weeks + $5-10K for setup.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can your infra team set up a <strong>MySQL read replica</strong>?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes — standard MySQL feature. Fallback: read-only user on production with query limits.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Q5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Would the mobile vendor provide <strong>periodic DB exports</strong> (e.g., weekly CSV to S3)?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes — low-effort ask for a vendor in 3-year maintenance contract. Fallback: API-only.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_what_were_not_asking_handled_via_professional_assumptions"><a class="anchor" href="#_what_were_not_asking_handled_via_professional_assumptions"></a>What We&#8217;re NOT Asking (handled via professional assumptions)</h3>
+<div class="paragraph">
+<p>WordPress timestamp columns, schema change frequency, API auth method, API rate limits, schema documentation, background job tooling, AWS SES config — all assumed with standard defaults and verified during PoC.</p>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_key_risks"><a class="anchor" href="#_key_risks"></a>8. Key Risks</h2>
+<h2 id="_4_risks_mitigations"><a class="anchor" href="#_4_risks_mitigations"></a>4. Risks &amp; Mitigations</h2>
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 42.8571%;">
-<col style="width: 57.1429%;">
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 42.8572%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Risk</th>
-<th class="tableblock halign-left valign-top">Mitigation</th>
+<th class="tableblock halign-left valign-top">Likelihood</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Our Plan</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Customer email data quality lower than expected</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A pre-engagement email validation sample (10K addresses, 48-hour turnaround)
-establishes the baseline before contracts are signed. If valid email reach is below
-60%, the phase plan is restructured to elevate mobile push (2M installs) as the
-primary channel. Within the engagement, a full data quality audit is the first
-deliverable of Phase 1, and the month 5 email campaign is gated on a minimum
-deliverability threshold — the timeline absorbs a quality remediation sprint
-without delaying go-live.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WordPress custom schema breaks extraction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direct SQL extraction + dbt tests detect breakage. Schema assumed stable (15-year system). If needed: fallback to RDS managed replication (+$600–800/mo OPEX, pushing total OPEX to $6.6K–$16.8K/month).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Vendor coordination delays</strong> (mobile app partner, wholesaler feeds)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Vendor engagement begins in Week 1 and is tracked as a critical path dependency.
-The mobile app vendor has confirmed data access is available on request. Wholesaler
-feeds start with the 1–2 most important suppliers; others are added incrementally.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile vendor limits data access</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hybrid approach (API + export) maximizes coverage. APIs confirmed. DB "available on request." Fallback: API-only.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>No internal team to own the platform long-term</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A 3-month capability building programme is included in Phase 3 scope. An
-operations manual, runbook, and dashboard are delivered at handover. The platform
-is explicitly designed to require no engineering involvement for routine operation.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Wholesaler format chaos</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake schema-on-read handles any format. Per-supplier dbt models. Start with 1-2 suppliers.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No internal team to own the platform</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Knowledge transfer built into every phase. Solution designed for SQL-proficient team (not Kafka/Spark experts).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Email data quality (stale addresses)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pre-engagement 10K-sample validation establishes baseline before contracts. Go/no-go gate: if &lt;60% valid, restructure phases to elevate mobile push. Full validation in Phase 1 Week 2.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_why_work_with_us"><a class="anchor" href="#_why_work_with_us"></a>9. Why Work With Us</h2>
+<h2 id="_5_cost_at_a_glance"><a class="anchor" href="#_5_cost_at_a_glance"></a>5. Cost at a Glance</h2>
 <div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Component</th>
+<th class="tableblock halign-left valign-top">One-Time</th>
+<th class="tableblock halign-left valign-top">Monthly</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake (compute + storage)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$3K–$8K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS infrastructure (ECS, S3, VPN, networking)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$15K (setup)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$1K–$3K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS MWAA (Managed Airflow)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$300–$1.5K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS SES (email delivery)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$100–$500</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Monitoring / Alerting</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$500–$1K</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Development (team of 5, 7 months)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$411K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Contingency (20%)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$82K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">—</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL CAPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$493K</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$6K–$16K</strong></p></td>
+</tr>
+</tbody>
+</table>
 <div class="paragraph">
-<p>This proposal is the output of structured discovery — analysis of business context,
-your inputs, technical constraints, and commercial objectives — not a generic
-template. The architecture, phasing, and cost model are specific to this
-organisation&#8217;s situation: 15 years of order history, an outsourced mobile vendor,
-non-standard wholesaler data formats, no internal data team, and a $500K confirmed
-budget.</p>
-</div>
-<div class="paragraph">
-<p>Our engagement model follows a documented methodology: Discovery → Architecture →
-Phased Delivery → Handover. Each stage produces reviewed artefacts that you own.
-The full solution design, cost breakdown by role, risk register, and technical
-architecture are available at the next stage — shared with the technical team once
-the engagement is agreed, not before.</p>
-</div>
-<div class="paragraph">
-<p>Post-launch is in scope, not an afterthought. The first two weeks after go-live
-include dedicated hypercare support. The capability building programme ensures the
-internal team can own the platform by the time our engagement ends. We do not
-disappear at deployment.</p>
+<p><em>3-Year TCO: ~$695K–$1.07M (CAPEX + 3 years OPEX)</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>10. Next Steps</h2>
+<h2 id="_6_timeline"><a class="anchor" href="#_6_timeline"></a>6. Timeline</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Phase</th>
+<th class="tableblock halign-left valign-top">Duration</th>
+<th class="tableblock halign-left valign-top">Key Deliverable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 1: Foundation &amp; WordPress Pipeline</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 weeks (Oct–Dec 2026)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WordPress extraction pipeline live, data in Snowflake, email validation running</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 2: Suggestion Engine &amp; Email Channel</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 weeks (Dec 2026–Feb 2027)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Customer segmentation, recommendation engine, first email campaign sent (month 5 revenue checkpoint)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 3: Mobile &amp; Wholesaler Expansion</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 weeks (Feb–Apr 2027)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mobile vendor integration, wholesaler data, push notifications, full platform go-live (April 2027)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_7_decisions_we_need_from_you"><a class="anchor" href="#_7_decisions_we_need_from_you"></a>7. Decisions We Need From You</h2>
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -868,60 +889,49 @@ disappear at deployment.</p>
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Step</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Owner</th>
+<th class="tableblock halign-left valign-top">#</th>
+<th class="tableblock halign-left valign-top">Decision</th>
+<th class="tableblock halign-left valign-top">When</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Review and approve this proposal</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Leadership</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Provide 10K email sample for pre-engagement deliverability validation (Q0 above)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Immediately (48-hour turnaround)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pre-engagement email validation</strong> — provide a random sample of 10,000 customer email addresses (anonymised where possible). We validate deliverability within 48 hours. Result determines whether email remains the primary channel for the month 5 revenue checkpoint, or whether mobile push is elevated earlier. Cost: negligible (&lt;$100). This step de-risks the entire engagement before contracts are signed.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT + Solution Architect</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Approve Snowflake platform + $500K budget envelope</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before Phase 1</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Confirm mobile app vendor data access negotiation is initiated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Contract Owner</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Answer discovery questions above (especially blockers Q1, Q4, Q6)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Immediately</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sign engagement agreement</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Both parties</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Initiate mobile vendor negotiation (API docs + export agreement)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Immediately (critical path)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 kickoff — target first available week after approval</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Solution Architect + Client IT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Identify 1-2 internal people for knowledge transfer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Before Phase 1</p></td>
 </tr>
 </tbody>
 </table>
-<div class="paragraph">
-<p>A detailed solution design document (Level 2) — covering the full technical
-architecture, functional requirements, risk register, and Gantt chart — is
-available for review by the technical team alongside or after this approval step.</p>
-</div>
 <hr>
-<div class="paragraph small">
-<p><strong>Confidentiality Notice</strong><br>
-This document has been prepared exclusively for the intended recipient and contains
-proprietary methodology, commercial terms, and strategic analysis developed by the
-consulting team. It may not be reproduced, shared with third parties, or used to
-solicit competing proposals without the prior written consent of the originating
-firm. All financial projections are indicative and based on industry benchmarks and
-confirmed inputs as of the date of this document.</p>
+<div class="paragraph">
+<p><em>This brief summarizes decisions from the full solution design and architecture decision records. For detailed analysis, alternatives comparison, and traceability, see the linked documents.</em></p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-03-20 10:01:56 +0100
+Last updated 2026-03-20 10:02:52 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

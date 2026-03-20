@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
-<meta name="author" content="Solution Architect">
-<title>Data-Driven Customer Engagement Platform — Proposal</title>
+<meta name="author" content="[Author Name]">
+<title>ADR-[NNN]: [Title of Decision]</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,489 +439,273 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Data-Driven Customer Engagement Platform — Proposal</h1>
+<h1>ADR-[NNN]: [Title of Decision]</h1>
 <div class="details">
-<span id="author" class="author">Solution Architect</span><br>
-<span id="revdate">2026-03-16</span>
+<span id="author" class="author">[Author Name]</span><br>
+<span id="revdate">[YYYY-MM-DD]</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_executive_summary">1. Executive Summary</a></li>
-<li><a href="#_business_challenge">2. Business Challenge</a></li>
-<li><a href="#_our_recommendation">3. Our Recommendation</a></li>
-<li><a href="#_expected_business_outcomes">4. Expected Business Outcomes</a>
+<li><a href="#_context">Context</a></li>
+<li><a href="#_decision">Decision</a></li>
+<li><a href="#_alternatives_considered">Alternatives Considered</a></li>
+<li><a href="#_consequences">Consequences</a>
 <ul class="sectlevel2">
-<li><a href="#_how_this_platform_contributes_to_the_20_target">4.1. How This Platform Contributes to the 20% Target</a></li>
+<li><a href="#_positive">Positive</a></li>
+<li><a href="#_negative">Negative</a></li>
+<li><a href="#_dependency_hiring_impact">Dependency &amp; Hiring Impact</a></li>
+<li><a href="#_neutral">Neutral</a></li>
 </ul>
 </li>
-<li><a href="#_our_approach">5. Our Approach</a></li>
-<li><a href="#_investment_summary">6. Investment Summary</a></li>
-<li><a href="#_delivery_milestones">7. Delivery Milestones</a></li>
-<li><a href="#_key_risks">8. Key Risks</a></li>
-<li><a href="#_why_work_with_us">9. Why Work With Us</a></li>
-<li><a href="#_next_steps">10. Next Steps</a></li>
+<li><a href="#_quality_attribute_impact">Quality Attribute Impact</a></li>
+<li><a href="#_follow_up_actions">Follow-Up Actions</a></li>
+<li><a href="#_references">References</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_executive_summary"><a class="anchor" href="#_executive_summary"></a>1. Executive Summary</h2>
+<h2 id="_context"><a class="anchor" href="#_context"></a>Context</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>An established European international grocery webshop (15 years on the market,
-approximately 1 million daily visitors, 2 million mobile app users) has set a
-strategic goal to increase annual turnover by 20%. Today, customer data is
-scattered across disconnected systems — the web platform, the mobile app, and
-multiple wholesaler feeds are each isolated, making it impossible to understand
-customers as individuals or to deliver personalized experiences at scale.</p>
-</div>
-<div class="paragraph">
-<p>We propose building a <strong>unified customer intelligence platform</strong> that consolidates
-all customer data into a single, queryable layer and uses it to power personalized
-product suggestions — delivered via email and mobile push notification, on a
-configurable schedule (daily or weekly), to every customer.</p>
-</div>
-<div class="paragraph">
-<p>The investment is ~$500K over 7 months. The first campaign goes live at month 5;
-at conservative maturity (5% basket uplift), the platform investment is recovered
-within approximately two months of reaching that level.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_business_challenge"><a class="anchor" href="#_business_challenge"></a>2. Business Challenge</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The following pressures are limiting revenue growth despite a loyal, growing
-customer base:</p>
+<p><strong>Relevant constraints:</strong></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Customer data is siloed.</strong> Web, mobile, and supplier data live in separate
-systems with no unified view of who a customer is, what they buy, or what they
-are likely to buy next.</p>
+<p>[Technical constraint — e.g., must integrate with existing SSO]</p>
 </li>
 <li>
-<p><strong>Personalization is not possible at scale.</strong> Every customer receives the same
-marketing communication. Campaigns are broadcast, not targeted — relevant to
-few, ignored by most.</p>
+<p>[Business constraint — e.g., team has no Go experience]</p>
 </li>
 <li>
-<p><strong>The marketing team operates on intuition.</strong> Without consolidated data, campaign
-decisions are based on experience and gut feel rather than evidence. There is no
-feedback loop to measure what works.</p>
+<p>[Timeline constraint — e.g., must be ready for Q3 launch]</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Related sections in Solution Design:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>[e.g., § System Context — shows where this component fits]</p>
 </li>
 <li>
-<p><strong>Revenue growth has plateaued.</strong> With 1 million daily visitors already on the
-platform, the next growth lever is not more traffic — it is a higher value per
-visit. Personalization is the proven mechanism for this.</p>
-</li>
-<li>
-<p><strong>GDPR compliance gaps create legal exposure.</strong> Personal data flows across
-systems without a centralized consent record, audit trail, or automated deletion
-capability — a material regulatory risk.</p>
+<p>[e.g., § Data Architecture — data model impacted by this choice]</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_our_recommendation"><a class="anchor" href="#_our_recommendation"></a>3. Our Recommendation</h2>
+<h2 id="_decision"><a class="anchor" href="#_decision"></a>Decision</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We recommend building a <strong>unified customer intelligence platform</strong> in three phases
-over 7 months.</p>
-</div>
-<div class="paragraph">
-<p>The platform consolidates customer data from the web shop, the mobile application,
-and wholesaler product catalogues into a single, governed data layer. An
-intelligence engine analyses purchase history and browsing behaviour to generate
-personalized product recommendations for every customer. Recommendations are
-delivered via email on a configurable schedule — daily or weekly — with no rebuild
-required to change cadence. Real-time triggers (such as a reminder after a customer
-browses without purchasing) are a later capability, once the regular cadence is
-established. Mobile push
-notifications to the 2 million app users follow in a subsequent phase.</p>
-</div>
-<div class="paragraph">
-<p>The first personalized email campaign goes live at month 5 — before the platform
-is fully complete. This is intentional: it creates an early revenue checkpoint and
-validates the recommendation model against real customer behaviour while the
-remainder of the platform is still being built.</p>
-</div>
-<div class="paragraph">
-<p>The platform is designed to be operated by the existing marketing team without a
-dedicated data team. Ongoing operation requires no engineering involvement for
-day-to-day tasks — the marketing team schedules campaigns, reviews performance
-dashboards, and adjusts segments through a self-service interface.</p>
-</div>
-<div class="paragraph">
-<p>This engagement does not include WordPress migration or re-platforming, new
-feature development for the mobile application, EDI or real-time integration with
-wholesaler systems, real-time personalisation, or recruitment of a permanent data
-team. Any capability beyond this scope is subject to a separate engagement and estimate.</p>
-</div>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/case02-proposal-value-chain-08271f1e3525108aa1587cb99330fc1200cfb7cd.svg" alt="case02-proposal-value-chain">
-</div>
+<p><strong>We will use [Technology / Pattern / Approach] because [primary reason].</strong></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_expected_business_outcomes"><a class="anchor" href="#_expected_business_outcomes"></a>4. Expected Business Outcomes</h2>
+<h2 id="_alternatives_considered"><a class="anchor" href="#_alternatives_considered"></a>Alternatives Considered</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 18.1818%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2728%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Alternative</th>
+<th class="tableblock halign-left valign-top">Pros</th>
+<th class="tableblock halign-left valign-top">Cons</th>
+<th class="tableblock halign-left valign-top">Why Not Chosen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 1]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 2]</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>[Alternative 3]</strong> (if applicable)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Pro 1, Pro 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Con 1, Con 2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Key reason for rejection]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_consequences"><a class="anchor" href="#_consequences"></a>Consequences</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_how_this_platform_contributes_to_the_20_target"><a class="anchor" href="#_how_this_platform_contributes_to_the_20_target"></a>4.1. How This Platform Contributes to the 20% Target</h3>
-<div class="paragraph">
-<p>Your stated goal — a 20% increase in annual turnover — is ambitious and will
-require multiple growth levers working in concert. Personalised recommendations
-are the <strong>single largest lever</strong> available without acquiring new customers, but they
-are one component of a broader growth programme. Industry benchmarks for grocery
-e-commerce recommendation engines show a 5–15% basket size increase at full
-platform maturity (typically 12–18 months of continuous operation), per
-<a href="https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it">McKinsey</a>
-and
-<a href="https://www.salesforce.com/resources/research-reports/state-of-commerce/">Salesforce State of Commerce</a>.</p>
+<h3 id="_positive"><a class="anchor" href="#_positive"></a>Positive</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Benefit 1 — e.g., reduces deployment time by 50%]</p>
+</li>
+<li>
+<p>[Benefit 2 — e.g., enables horizontal scaling]</p>
+</li>
+<li>
+<p>[Benefit 3 — e.g., leverages existing team expertise]</p>
+</li>
+</ul>
 </div>
-<div class="paragraph">
-<p>This platform delivers the foundational data infrastructure — unified customer
-profiles, behavioural analytics, and multi-channel delivery — that makes every
-subsequent growth initiative more effective: cross-sell and upsell campaigns,
-lapsed-customer reactivation, dynamic pricing, and targeted promotions. Without
-this foundation, none of these levers can operate at scale.</p>
 </div>
-<div class="paragraph">
-<p>The projections below focus on <strong>basket size uplift from personalised
-recommendations</strong> — the first and most direct revenue impact. Additional uplift
-from reduced churn, improved email engagement, and data-informed merchandising
-decisions is expected but not projected here, as it depends on how actively the
-marketing team uses the platform beyond automated recommendations.</p>
+<div class="sect2">
+<h3 id="_negative"><a class="anchor" href="#_negative"></a>Negative</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Trade-off 1 — e.g., increased operational complexity]</p>
+</li>
+<li>
+<p>[Trade-off 2 — e.g., vendor lock-in risk]</p>
+</li>
+<li>
+<p>[Trade-off 3 — e.g., learning curve for some team members]</p>
+</li>
+</ul>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The scenarios below use an illustrative average basket of $15; projections
-scale proportionally to your actual average order value.
-</td>
-</tr>
-</table>
 </div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Scenario</th>
-<th class="tableblock halign-left valign-top">Mechanism</th>
-<th class="tableblock halign-left valign-top">Est. Monthly Uplift</th>
-<th class="tableblock halign-left valign-top">Realistic Timeframe</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>First campaign</strong> <em>(month 5)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Partial audience (validated emails + consent + sufficient history); model in learning phase</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$15K–$50K/month (est. 1–2%)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Month 5–6 post-kickoff</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Conservative maturity</strong> <em>(5% basket uplift)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1M daily visitors × ~2% conversion × $15 avg basket × 5% = +$0.75/order</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$450K/month</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">12–18 months post-kickoff</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Optimistic maturity</strong> <em>(15% basket uplift)</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1M daily visitors × ~2% conversion × $15 avg basket × 15% = +$2.25/order</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+$1.35M/month</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">24–36 months post-kickoff</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><em>At the conservative maturity scenario (~12–18 months post-kickoff), the
-+$450K/month uplift recovers the full ~$493K development cost within approximately
-two months of reaching that level. Both the $15 average basket and 2% conversion
-rate are illustrative; actual projections should be calibrated against current
-trading data early in the engagement.</em></p>
+<div class="sect2">
+<h3 id="_dependency_hiring_impact"><a class="anchor" href="#_dependency_hiring_impact"></a>Dependency &amp; Hiring Impact</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Dependency accumulation risk:</strong> [Does this decision add a new runtime dependency, external service, or vendor relationship? What happens if that dependency is discontinued or changes pricing?]</p>
+</li>
+<li>
+<p><strong>Hiring impact:</strong> [Does this technology narrow or widen the hiring pool? Can the current team maintain this without the original author?]</p>
+</li>
+<li>
+<p><strong>Operational burden:</strong> [What new operational skills does this require? Monitoring, upgrades, security patches?]</p>
+</li>
+</ul>
 </div>
-<div class="paragraph">
-<p><em>Reaching the full 20% turnover target will require combining personalisation
-uplift with additional initiatives — such as lapsed-customer reactivation
-campaigns, data-driven assortment optimisation, and expanded channel coverage
-(mobile push to 2M app users) — all of which this platform enables but which are
-measured and iterated upon post-launch.</em></p>
+</div>
+<div class="sect2">
+<h3 id="_neutral"><a class="anchor" href="#_neutral"></a>Neutral</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>[Observation 1 — e.g., requires updating CI/CD pipeline]</p>
+</li>
+<li>
+<p>[Observation 2 — e.g., no impact on existing APIs]</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_our_approach"><a class="anchor" href="#_our_approach"></a>5. Our Approach</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Four principles guide how this engagement is structured:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Value before completion.</strong> The first personalized email campaign goes live at
-month 5 — two months before the full platform is complete. This is not a
-compromise; it is risk management. Real campaign data validates the recommendation
-model early, so the final two months of delivery can incorporate what was learned
-rather than launching cold.</p>
-</li>
-<li>
-<p><strong>Built for your team, not ours.</strong> The platform is designed from the ground up
-for a non-technical marketing team to operate day-to-day. No specialist is needed
-to run campaigns or read performance dashboards. A structured capability
-building programme, included in the engagement, transfers knowledge to the internal
-team over three months.</p>
-</li>
-<li>
-<p><strong>No disruption to existing operations.</strong> The web shop, mobile application, and
-wholesaler relationships are unchanged throughout delivery. The intelligence
-platform sits alongside existing systems — it reads from them, but does not replace
-or modify them. There is no migration, no downtime, and no risk to current
-operations.</p>
-</li>
-<li>
-<p><strong>Privacy by design.</strong> GDPR compliance is built into the data layer from day one —
-not added at the end. Customer consent is tracked as a first-class data attribute.
-Customers can request deletion of their data and it is actioned within 72 hours,
-automatically. A full audit trail of data access is maintained throughout.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_investment_summary"><a class="anchor" href="#_investment_summary"></a>6. Investment Summary</h2>
+<h2 id="_quality_attribute_impact"><a class="anchor" href="#_quality_attribute_impact"></a>Quality Attribute Impact</h2>
 <div class="sectionbody">
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 40%;">
-<col style="width: 60%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Item</th>
-<th class="tableblock halign-left valign-top">Detail</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Development investment (CAPEX)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$493K (inclusive of 20% risk buffer)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Monthly infrastructure cost (OPEX)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$6K–$16K/month (cloud services + tooling)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3-year total cost of ownership</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Go-live target</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">April 2027</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Delivery timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">7 months across 3 phases</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5 specialists (data engineering, backend, machine learning, QA, architecture)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Break-even (conservative scenario)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~2 months after reaching 5% basket uplift maturity (12–18 months post-kickoff)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><em>The $500K CAPEX fits within the confirmed budget envelope. Infrastructure costs
-thereafter are modest relative to the revenue uplift potential and can be absorbed
-into normal operating budgets.</em></p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_delivery_milestones"><a class="anchor" href="#_delivery_milestones"></a>7. Delivery Milestones</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Month 1 — Kickoff &amp; Foundation:</strong> Project kickoff, data audit, cloud platform
-provisioned, vendor data access agreements confirmed.</p>
-</li>
-<li>
-<p><strong>Month 3 — Data Pipeline Operational:</strong> All customer data sources connected and
-flowing into the unified data layer. Data quality baseline established. First
-customer profiles built.</p>
-</li>
-<li>
-<p><strong>Month 5 — First Campaign Live</strong> <em>(revenue checkpoint):</em> Personalised email
-campaign sent to the full customer base. Open rates, click rates, and basket size
-uplift measured against control group.</p>
-</li>
-<li>
-<p><strong>Month 7 — Full Platform Go-Live:</strong> Mobile push notification channel active,
-wholesaler product catalogue integrated, recommendation model trained on 3 months
-of real feedback data.</p>
-</li>
-<li>
-<p><strong>Post go-live — Ongoing Operations:</strong> Recommendation refresh at the configured cadence (daily or weekly), monthly
-performance reviews, quarterly platform review with the internal team. Platform
-continues to improve as more customer interaction data accumulates.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_key_risks"><a class="anchor" href="#_key_risks"></a>8. Key Risks</h2>
-<div class="sectionbody">
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 42.8571%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Risk</th>
-<th class="tableblock halign-left valign-top">Mitigation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Customer email data quality lower than expected</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A pre-engagement email validation sample (10K addresses, 48-hour turnaround)
-establishes the baseline before contracts are signed. If valid email reach is below
-60%, the phase plan is restructured to elevate mobile push (2M installs) as the
-primary channel. Within the engagement, a full data quality audit is the first
-deliverable of Phase 1, and the month 5 email campaign is gated on a minimum
-deliverability threshold — the timeline absorbs a quality remediation sprint
-without delaying go-live.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Vendor coordination delays</strong> (mobile app partner, wholesaler feeds)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Vendor engagement begins in Week 1 and is tracked as a critical path dependency.
-The mobile app vendor has confirmed data access is available on request. Wholesaler
-feeds start with the 1–2 most important suppliers; others are added incrementally.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>No internal team to own the platform long-term</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A 3-month capability building programme is included in Phase 3 scope. An
-operations manual, runbook, and dashboard are delivered at handover. The platform
-is explicitly designed to require no engineering involvement for routine operation.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_why_work_with_us"><a class="anchor" href="#_why_work_with_us"></a>9. Why Work With Us</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This proposal is the output of structured discovery — analysis of business context,
-your inputs, technical constraints, and commercial objectives — not a generic
-template. The architecture, phasing, and cost model are specific to this
-organisation&#8217;s situation: 15 years of order history, an outsourced mobile vendor,
-non-standard wholesaler data formats, no internal data team, and a $500K confirmed
-budget.</p>
-</div>
-<div class="paragraph">
-<p>Our engagement model follows a documented methodology: Discovery → Architecture →
-Phased Delivery → Handover. Each stage produces reviewed artefacts that you own.
-The full solution design, cost breakdown by role, risk register, and technical
-architecture are available at the next stage — shared with the technical team once
-the engagement is agreed, not before.</p>
-</div>
-<div class="paragraph">
-<p>Post-launch is in scope, not an afterthought. The first two weeks after go-live
-include dedicated hypercare support. The capability building programme ensures the
-internal team can own the platform by the time our engagement ends. We do not
-disappear at deployment.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>10. Next Steps</h2>
-<div class="sectionbody">
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
+<col style="width: 33.3333%;">
 <col style="width: 16.6666%;">
-<col style="width: 50%;">
-<col style="width: 33.3334%;">
+<col style="width: 50.0001%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Step</th>
-<th class="tableblock halign-left valign-top">Action</th>
-<th class="tableblock halign-left valign-top">Owner</th>
+<th class="tableblock halign-left valign-top">Quality Attribute</th>
+<th class="tableblock halign-left valign-top">Impact</th>
+<th class="tableblock halign-left valign-top">Explanation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Review and approve this proposal</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Leadership</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect performance?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pre-engagement email validation</strong> — provide a random sample of 10,000 customer email addresses (anonymised where possible). We validate deliverability within 48 hours. Result determines whether email remains the primary channel for the month 5 revenue checkpoint, or whether mobile push is elevated earlier. Cost: negligible (&lt;$100). This step de-risks the entire engagement before contracts are signed.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client IT + Solution Architect</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect security?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Confirm mobile app vendor data access negotiation is initiated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Client Contract Owner</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maintainability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect maintenance?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sign engagement agreement</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Both parties</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scalability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect scalability?]</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 kickoff — target first available week after approval</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Solution Architect + Client IT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Testability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[+/−/=]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[How does this decision affect testability?]</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>A detailed solution design document (Level 2) — covering the full technical
-architecture, functional requirements, risk register, and Gantt chart — is
-available for review by the technical team alongside or after this approval step.</p>
+<p><em>Impact: + improves, − degrades, = neutral</em></p>
 </div>
-<hr>
-<div class="paragraph small">
-<p><strong>Confidentiality Notice</strong><br>
-This document has been prepared exclusively for the intended recipient and contains
-proprietary methodology, commercial terms, and strategic analysis developed by the
-consulting team. It may not be reproduced, shared with third parties, or used to
-solicit competing proposals without the prior written consent of the originating
-firm. All financial projections are indicative and based on industry benchmarks and
-confirmed inputs as of the date of this document.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_follow_up_actions"><a class="anchor" href="#_follow_up_actions"></a>Follow-Up Actions</h2>
+<div class="sectionbody">
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-square-o"></i> [Action 1 — e.g., Update deployment scripts]</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> [Action 2 — e.g., Train team on new technology]</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> [Action 3 — e.g., Create monitoring dashboards]</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> [Action 4 — e.g., Update architecture diagrams]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>[Link to relevant documentation]</p>
+</li>
+<li>
+<p>[Link to benchmark results or PoC findings]</p>
+</li>
+<li>
+<p>[Link to related ADRs (superseded, related)]</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-03-20 10:01:56 +0100
+Last updated 2026-02-13 10:27:41 +0100
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
