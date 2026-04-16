@@ -107,9 +107,10 @@ team. Any capability beyond this scope is subject to a separate engagement and e
 [plantuml, case02-proposal-value-chain, svg]
 ----
 @startuml
-skinparam defaultFontSize 13
+skinparam defaultFontSize 16
 skinparam defaultFontName Arial
 skinparam ArrowColor #555555
+skinparam ArrowFontSize 14
 skinparam RoundCorner 8
 
 rectangle "Data Sources" as sources #E8F4FD {
@@ -138,32 +139,49 @@ channels -right-> outcome : Higher basket\nper visit
 
 == Expected Business Outcomes
 
-=== How This Platform Contributes to the 20% Target
+=== Paths to the 20% Turnover Target
 
-Your stated goal — a 20% increase in annual turnover — is ambitious and will
-require multiple growth levers working in concert. Personalised recommendations
-are the *single largest lever* available without acquiring new customers, but they
-are one component of a broader growth programme. Industry benchmarks for grocery
-e-commerce recommendation engines show a 5–15% basket size increase at full
-platform maturity (typically 12–18 months of continuous operation), per
-link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey]
-and
-link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce State of Commerce].
+A 20% increase in annual turnover at this scale requires multiple growth levers working in concert. Personalised recommendations are the single largest lever available without acquiring new customers — but they are one of several. This platform is the enabling foundation that makes each lever measurable and scalable. None of these levers can operate without a unified data layer; all of them become available once it exists.
 
-This platform delivers the foundational data infrastructure — unified customer
-profiles, behavioural analytics, and multi-channel delivery — that makes every
-subsequent growth initiative more effective: cross-sell and upsell campaigns,
-lapsed-customer reactivation, dynamic pricing, and targeted promotions. Without
-this foundation, none of these levers can operate at scale.
+[cols="2,3,2,2", options="header"]
+|===
+|Growth Lever |Mechanism |Estimated Contribution |Delivery Phase
 
-The projections below focus on *basket size uplift from personalised
-recommendations* — the first and most direct revenue impact. Additional uplift
-from reduced churn, improved email engagement, and data-informed merchandising
-decisions is expected but not projected here, as it depends on how actively the
-marketing team uses the platform beyond automated recommendations.
+|**Personalised product recommendations**
+|ML-driven suggestions matched to each customer's purchase history and browsing behaviour; delivered via email and mobile push on a configurable schedule
+|5–15% basket uplift at maturity — per link:https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-future-of-personalization-and-how-to-get-ready-for-it[McKinsey] and link:https://www.salesforce.com/resources/research-reports/state-of-commerce/[Salesforce] benchmarks for grocery e-commerce
+|Phase 2 — month 5 onward
 
-NOTE: The scenarios below use an illustrative average basket of $15; projections
-scale proportionally to your actual average order value.
+|**Lapsed customer reactivation**
+|Automated campaigns targeting customers inactive for 60–90 days; offer tailored to last purchase category and inferred preferences
+|5–12% reactivation rate (industry benchmark); recovers revenue from churned customers without additional acquisition spend
+|Phase 2, post first campaign
+
+|**Mobile push to 2M app users**
+|Push notifications reaching the full installed app base; typical open rates 20–40%, extending reach beyond email alone
+|Incremental uplift on top of email channel; particularly significant for the 2M installs who may not open marketing email
+|Phase 3
+
+|**Wholesaler-driven cross-sell**
+|Unified wholesaler catalogue data surfaces complementary products customers have not yet purchased; timed to purchasing patterns
+|Basket expansion beyond existing category habits; uplift depends on catalogue breadth and offer timing
+|Phase 3 onward
+
+|**Segmented promotions**
+|Data-informed targeted discounts to high-value or price-sensitive customer segments; replaces blanket promotional spend
+|Reduces discount waste; same promotional budget reaches customers with the highest purchase probability
+|Post go-live
+
+|**Frequency and loyalty nudges**
+|Identify customers approaching a natural reorder window; send personalised incentives at the right moment in the purchase cycle
+|Increases purchase frequency per customer, compounding basket uplift over time
+|Post go-live
+
+|===
+
+=== Revenue Scenarios from Personalised Recommendations
+
+The projections below focus on basket size uplift from personalised recommendations — the first and most direct impact of this platform. Additional uplift from reactivation, mobile push, and segmented promotions is not projected here, as it depends on how actively the team uses the platform beyond automated recommendations. The $15 average basket is illustrative; projections scale proportionally to your actual average order value, calibrated against trading data during the Investigation Period.
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -183,19 +201,9 @@ scale proportionally to your actual average order value.
 |1M daily visitors × ~2% conversion × $15 avg basket × 15% = +$2.25/order
 |+$1.35M/month
 |24–36 months post-kickoff
+
+4+|_At conservative maturity (~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K development cost within approximately two months of reaching that level. The $15 average basket and 2% conversion rate are calibrated against actual trading data during the Investigation Period. Activating the additional levers in the table above — reactivation, mobile push, segmented promotions — compounds this uplift toward the 20% annual target._
 |===
-
-_At the conservative maturity scenario (~12–18 months post-kickoff), the
-+$450K/month uplift recovers the full ~$493K development cost within approximately
-two months of reaching that level. Both the $15 average basket and 2% conversion
-rate are illustrative; actual projections should be calibrated against current
-trading data early in the engagement._
-
-_Reaching the full 20% turnover target will require combining personalisation
-uplift with additional initiatives — such as lapsed-customer reactivation
-campaigns, data-driven assortment optimisation, and expanded channel coverage
-(mobile push to 2M app users) — all of which this platform enables but which are
-measured and iterated upon post-launch._
 
 == Our Approach
 
@@ -224,6 +232,39 @@ not added at the end. Customer consent is tracked as a first-class data attribut
 Customers can request deletion of their data and it is actioned within 72 hours,
 automatically. A full audit trail of data access is maintained throughout.
 
+. **Investigate before we build.** The first 2–4 weeks after signing are dedicated
+to structured investigation — documenting your current workflows, validating data
+quality, identifying risks, and surfacing additional improvement opportunities.
+Nothing is committed to build until the investigation confirms the plan. This
+protects your investment and eliminates the largest source of project surprises.
+
+== Investigation Period
+
+Before development begins, the first 2–4 weeks of the engagement are dedicated to structured investigation. This is built into the scope and timeline — it begins on the first week after signing and carries no separate cost.
+
+[cols="2,3", options="header"]
+|===
+|Area of Investigation |Outcome
+
+|**Current workflow documentation**
+|We map your existing data flows, team responsibilities, and campaign processes. This surfaces manual workarounds and inefficiencies beyond the initial scope — additional improvement opportunities are documented and presented as options for your consideration.
+
+|**Data quality baseline**
+|A full audit of your customer email data and WordPress database schema establishes the actual quality level before any campaign planning. We validate a sample of customer email addresses and inspect the DB schema to confirm extraction complexity. This eliminates the largest source of budget uncertainty before the build phase begins.
+
+|**Risk identification and mitigation planning**
+|We surface and assess risks specific to your environment — vendor access terms, data completeness, schema complexity — and prepare mitigation options for each. You receive a risk register and validated Phase 1 plan, not a generic estimate.
+
+|**Mobile vendor data access**
+|We initiate the vendor negotiation and confirm the access method (S3 export vs. API) and data scope. This is a critical path item for Phase 3; resolving it early prevents delays in later delivery.
+
+|**Additional improvement opportunities**
+|Beyond the agreed scope, we identify other data-enabled improvements the business could pursue. These are presented as options with rough effort estimates at the end of the investigation — you decide which, if any, to include in subsequent phases.
+
+|===
+
+The investigation concludes with a written report: a validated Phase 1 plan (with any necessary adjustments), risk register, identified improvement opportunities, and a recommendation on whether email or mobile push should serve as the primary channel for the month 5 campaign. If the investigation surfaces a significant change to scope or approach, we present options before the build phase begins — you stay in control at every decision point.
+
 == Investment Summary
 
 [cols="2,3", options="header"]
@@ -250,11 +291,9 @@ automatically. A full audit trail of data access is maintained throughout.
 
 |**Break-even (conservative scenario)**
 |~2 months after reaching 5% basket uplift maturity (12–18 months post-kickoff)
-|===
 
-_The $500K CAPEX fits within the confirmed budget envelope. Infrastructure costs
-thereafter are modest relative to the revenue uplift potential and can be absorbed
-into normal operating budgets._
+2+|_The ~$493K CAPEX fits within the confirmed $500K budget envelope. Infrastructure costs thereafter are modest relative to the revenue uplift potential and can be absorbed into normal operating budgets._
+|===
 
 == Delivery Milestones
 
@@ -334,19 +373,15 @@ disappear at deployment.
 |Client Leadership
 
 |2
-|**Pre-engagement email validation** — provide a random sample of 10,000 customer email addresses (anonymised where possible). We validate deliverability within 48 hours. Result determines whether email remains the primary channel for the month 5 revenue checkpoint, or whether mobile push is elevated earlier. Cost: negligible (<$100). This step de-risks the entire engagement before contracts are signed.
-|Client IT + Solution Architect
-
-|3
-|Confirm mobile app vendor data access negotiation is initiated
-|Client Contract Owner
-
-|4
 |Sign engagement agreement
 |Both parties
 
-|5
-|Phase 1 kickoff — target first available week after approval
+|3
+|**Investigation Period begins** (Week 1 after signing) — structured 2–4 week discovery covering: customer email data quality audit, WordPress schema review, mobile vendor data access negotiation, current workflow documentation, and identification of additional improvement opportunities. Concludes with a written report and validated Phase 1 plan.
+|Solution Architect + Client IT + Client Leadership
+
+|4
+|Phase 1 build kickoff — first available week after investigation report is delivered
 |Solution Architect + Client IT
 |===
 

@@ -119,17 +119,13 @@ The enterprise has a unified data platform that continuously consolidates custom
 
 === Business Goal Translation
 
-Your stated goal is "increase turnover by 20%." A target of this scale will require multiple growth levers working together — personalised recommendations are the single largest lever available without acquiring new customers, but they are one component. Industry benchmarks for grocery e-commerce personalisation show 5–15% basket size uplift at full platform maturity. This platform delivers the foundational data infrastructure that makes every subsequent growth initiative (cross-sell campaigns, lapsed-customer reactivation, data-driven merchandising) measurable and scalable.
-
-In technical terms, this engagement delivers:
+For the full analysis of growth levers and revenue projections toward the 20% turnover target, refer to the proposal document. In technical terms, this engagement delivers:
 
 * **Unify** all customer data islands into a single source of truth
 * **Profile** customers based on purchase history, browsing behaviour, and preferences
 * **Recommend** products with the highest conversion probability per customer segment
 * **Deliver** recommendations through email (AWS SES) and mobile push (2M installs)
 * **Measure** uplift via campaign tracking and A/B testing in the analytics dashboard
-
-The 20% target is achievable by combining personalisation uplift with additional initiatives — lapsed-customer reactivation, expanded channel coverage (mobile push to 2M users), and data-informed assortment decisions — all enabled by this platform but iterated upon post-launch.
 
 == Solution Options
 
@@ -238,80 +234,93 @@ workspace {
 ....
 direction: right
 
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
 sources: Data Sources {
   style.fill: "#E3F2FD"
+  style.font-size: 18
   wp: WordPress DB {
     shape: cylinder
+    style.font-size: 16
   }
-  mobile: Mobile App Data (2M installs) {
+  mobile: Mobile App\n(2M users) {
     shape: cylinder
+    style.font-size: 16
   }
-  wholesale: Wholesaler Feeds (no standard) {
+  wholesale: Wholesaler Feeds {
     shape: page
+    style.font-size: 16
   }
 }
 
-pipeline: Data Pipeline {
+pipeline: ETL Pipeline {
   style.fill: "#E8F5E9"
-
-  ingestion: Ingestion Layer {
-    sqlExtractor: WP Export Processor
-    apiImporter: Mobile Export Processor
-    fileProcessor: Wholesaler File Processor
+  style.font-size: 18
+  s3: S3 Staging {
+    shape: cylinder
+    style.font-size: 16
   }
-
-  processing: Processing {
-    style.fill: "#FFF3E0"
-    etl: ETL / dbt
-    validation: Data Quality Checks
-    emailValidation: Email Validator
+  airflow: Airflow (MWAA) {
+    style.font-size: 16
+  }
+  dbt: dbt Transform {
+    style.font-size: 16
+  }
+  quality: Data Quality {
+    style.font-size: 16
   }
 }
 
-storage: Analytical Store {
+store: Snowflake DW {
+  shape: cylinder
   style.fill: "#F3E5F5"
-  snowflake: Snowflake {
-    shape: cylinder
-  }
-  staging: Staging Area {
-    shape: cylinder
-  }
+  style.font-size: 18
 }
 
 intelligence: Intelligence Layer {
   style.fill: "#FFF9C4"
-  segmentation: Customer Segmentation
-  recommendations: Recommendation Engine
-  scoring: Engagement Scoring
+  style.font-size: 18
+  segmentation: Segmentation {
+    style.font-size: 16
+  }
+  recommendations: Recommendations {
+    style.font-size: 16
+  }
 }
 
-delivery: Delivery Channels {
+delivery: Delivery {
   style.fill: "#FFCCBC"
-  email: Email Service
-  push: Mobile Push
-  dashboard: Analytics Dashboard
+  style.font-size: 18
+  email: Email (SES) {
+    style.font-size: 16
+  }
+  push: Mobile Push {
+    style.font-size: 16
+  }
+  dashboard: Analytics {
+    style.font-size: 16
+  }
 }
 
-sources.wp -> pipeline.ingestion.sqlExtractor: Read Replica → Delta SQL → S3
-sources.mobile -> pipeline.ingestion.apiImporter: S3 Export (primary) / DB Access (fallback)
-sources.wholesale -> pipeline.ingestion.fileProcessor: File Drop (CSV/Excel/XML)
+sources.wp -> pipeline.s3: Read Replica → S3
+sources.mobile -> pipeline.s3: S3 Export / API
+sources.wholesale -> pipeline.s3: File Drop
 
-pipeline.ingestion.sqlExtractor -> storage.staging
-pipeline.ingestion.apiImporter -> storage.staging
-pipeline.ingestion.fileProcessor -> storage.staging
+pipeline.s3 -> pipeline.airflow
+pipeline.airflow -> pipeline.dbt
+pipeline.dbt -> pipeline.quality
+pipeline.quality -> store
 
-storage.staging -> pipeline.processing.etl
-pipeline.processing.etl -> pipeline.processing.validation
-pipeline.processing.validation -> storage.snowflake
-pipeline.processing.etl -> pipeline.processing.emailValidation
-
-storage.snowflake -> intelligence.segmentation
+store -> intelligence.segmentation
 intelligence.segmentation -> intelligence.recommendations
-intelligence.recommendations -> intelligence.scoring
 
-intelligence.scoring -> delivery.email: Personalised Suggestions
-intelligence.scoring -> delivery.push: Push Notifications
-storage.snowflake -> delivery.dashboard: Metrics & KPIs
+intelligence.recommendations -> delivery.email: Suggestions
+intelligence.recommendations -> delivery.push: Notifications
+store -> delivery.dashboard: Metrics
 ....
 
 === Data Workflow — Nightly Pipeline Execution
@@ -323,6 +332,10 @@ storage.snowflake -> delivery.dashboard: Metrics & KPIs
 skinparam sequenceArrowType ortho
 skinparam backgroundColor #f5f5f5
 skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam sequenceArrowFontSize 13
+skinparam participantFontSize 14
+skinparam noteFontSize 13
 
 participant "WordPress\nRead Replica" as WP
 participant "Mobile Vendor\nAPI + Export" as Mobile
@@ -721,13 +734,18 @@ Airflow ->> Email: Nightly summary:\n"Ingested 45GB,\n150K customers updated"
 |Spike compute, data growth, extra environments
 |$700–$2K
 
-|*TOTAL OPEX*
+|*Total monthly OPEX*
 |
 |*$6K–$16K/month*
-|===
 
-*Year 1 OPEX:* ~$67K–$192K
-*3-Year TCO:* ~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)
+|*Year 1 OPEX*
+|
+|*~$67K–$192K*
+
+|*3-Year TCO*
+|CAPEX ~$493K + 3 years OPEX at $6K–$16K/month
+|*~$695K–$1.07M*
+|===
 
 === Revenue & ROI Projection
 
@@ -751,11 +769,9 @@ NOTE: These projections cover *basket size uplift from personalised recommendati
 |~1M daily visitors × ~2% conversion = ~20K purchasers/day × avg basket $15 → $17.25 (+$2.25/order)
 |+$45K/day → +$1.35M/month
 |24–36 months post-kickoff
+
+4+|_At conservative maturity (5% uplift, ~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K CAPEX within approximately two months of reaching that level. The $15 average basket and 2% conversion rate are illustrative; actual projections are calibrated against trading data during the Investigation Period. These projections represent basket uplift from personalisation alone — reaching the full 20% turnover target requires combining this with additional levers (reactivation, mobile push, segmented promotions) documented in the proposal and all enabled by this platform._
 |===
-
-_At the conservative maturity scenario (5% uplift, ~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K CAPEX within approximately two months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1._
-
-_These projections represent basket uplift from personalisation alone. Reaching the full 20% turnover target requires combining this uplift with additional initiatives that the platform enables — lapsed-customer reactivation campaigns, data-driven assortment optimisation, and expanded mobile push coverage (2M app users). The unified data layer delivered here is the prerequisite for all of these levers._
 
 == Storage Sizing
 
@@ -913,7 +929,7 @@ For the 2027–2029 roadmap, the platform strategy is **scale-up** (bigger machi
 
 Scaling costs grow sub-linearly:
 
-[cols="2,2,2"]
+[cols="2,2,2,1"]
 |===
 |Metric |At 1M Customers |At 3M Customers |Growth Factor
 
@@ -1011,22 +1027,22 @@ At 3x customer growth, total monthly operating cost increases by ~33% (not 300%)
 ....
 @startgantt
 title Data-Driven Customer Engagement Platform — Work Streams (7 months, 5 devs)
-printscale weekly zoom 2
+printscale weekly zoom 3
 project starts 2026-10-01
 
 <style>
 ganttDiagram {
   task {
-    FontSize 11
+    FontSize 13
   }
   milestone {
-    FontSize 11
+    FontSize 13
     FontStyle bold
     BackGroundColor OrangeRed
     LineColor OrangeRed
   }
   separator {
-    FontSize 12
+    FontSize 14
     FontStyle bold
     BackGroundColor #F0F0F0
   }

@@ -745,10 +745,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_business_goal_translation"><a class="anchor" href="#_business_goal_translation"></a>3.3. Business Goal Translation</h3>
 <div class="paragraph">
-<p>Your stated goal is "increase turnover by 20%." A target of this scale will require multiple growth levers working together — personalised recommendations are the single largest lever available without acquiring new customers, but they are one component. Industry benchmarks for grocery e-commerce personalisation show 5–15% basket size uplift at full platform maturity. This platform delivers the foundational data infrastructure that makes every subsequent growth initiative (cross-sell campaigns, lapsed-customer reactivation, data-driven merchandising) measurable and scalable.</p>
-</div>
-<div class="paragraph">
-<p>In technical terms, this engagement delivers:</p>
+<p>For the full analysis of growth levers and revenue projections toward the 20% turnover target, refer to the proposal document. In technical terms, this engagement delivers:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -768,9 +765,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>Measure</strong> uplift via campaign tracking and A/B testing in the analytics dashboard</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>The 20% target is achievable by combining personalisation uplift with additional initiatives — lapsed-customer reactivation, expanded channel coverage (mobile push to 2M users), and data-informed assortment decisions — all enabled by this platform but iterated upon post-launch.</p>
 </div>
 </div>
 </div>
@@ -865,7 +859,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>5.2. High-Level Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case02-architecture-34838742177daa6410eb147c84d422a0700f49fe.svg" alt="Architecture — Option 2: Snowflake Data Platform">
+<img src="diagrams/case02-architecture-53e366aa09ed99a72a8df2be67a57d6a86c8b7cd.svg" alt="Architecture — Option 2: Snowflake Data Platform">
 </div>
 <div class="title">Figure 2. Architecture — Option 2: Snowflake Data Platform</div>
 </div>
@@ -874,7 +868,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_data_workflow_nightly_pipeline_execution"><a class="anchor" href="#_data_workflow_nightly_pipeline_execution"></a>5.3. Data Workflow — Nightly Pipeline Execution</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case02-data-workflow-5ad07df60251574047a4db566d44b1ebb99d5271.svg" alt="Data Workflow: End-to-End Nightly Ingestion and Processing">
+<img src="diagrams/case02-data-workflow-0ee078f2d03d69f4565349e5d0ae6dfb5a2e283f.svg" alt="Data Workflow: End-to-End Nightly Ingestion and Processing">
 </div>
 <div class="title">Figure 3. Data Workflow: End-to-End Nightly Ingestion and Processing</div>
 </div>
@@ -1384,16 +1378,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">$700–$2K</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>TOTAL OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total monthly OPEX</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$6K–$16K/month</strong></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Year 1 OPEX</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$67K–$192K</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3-Year TCO</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CAPEX ~$493K + 3 years OPEX at $6K–$16K/month</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$695K–$1.07M</strong></p></td>
+</tr>
 </tbody>
 </table>
-<div class="paragraph">
-<p><strong>Year 1 OPEX:</strong> ~$67K–$192K
-<strong>3-Year TCO:</strong> ~$695K–$1.07M (CAPEX ~$493K + 3 years OPEX at $6K–$16K/month)</p>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_revenue_roi_projection"><a class="anchor" href="#_revenue_roi_projection"></a>8.5. Revenue &amp; ROI Projection</h3>
@@ -1443,14 +1443,11 @@ These projections cover <strong>basket size uplift from personalised recommendat
 <td class="tableblock halign-left valign-top"><p class="tableblock">+$45K/day → +$1.35M/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">24–36 months post-kickoff</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="4"><p class="tableblock"><em>At conservative maturity (5% uplift, ~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K CAPEX within approximately two months of reaching that level. The $15 average basket and 2% conversion rate are illustrative; actual projections are calibrated against trading data during the Investigation Period. These projections represent basket uplift from personalisation alone — reaching the full 20% turnover target requires combining this with additional levers (reactivation, mobile push, segmented promotions) documented in the proposal and all enabled by this platform.</em></p></td>
+</tr>
 </tbody>
 </table>
-<div class="paragraph">
-<p><em>At the conservative maturity scenario (5% uplift, ~12–18 months post-kickoff), the +$450K/month uplift recovers the full ~$493K CAPEX within approximately two months of reaching that level. Both the $15 average basket and 2% conversion rate are illustrative; actual projections should be calibrated against current trading data in Phase 1.</em></p>
-</div>
-<div class="paragraph">
-<p><em>These projections represent basket uplift from personalisation alone. Reaching the full 20% turnover target requires combining this uplift with additional initiatives that the platform enables — lapsed-customer reactivation campaigns, data-driven assortment optimisation, and expanded mobile push coverage (2M app users). The unified data layer delivered here is the prerequisite for all of these levers.</em></p>
-</div>
 </div>
 </div>
 </div>
@@ -1715,29 +1712,28 @@ These projections cover <strong>basket size uplift from personalised recommendat
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 14.2858%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Metric</th>
 <th class="tableblock halign-left valign-top">At 1M Customers</th>
 <th class="tableblock halign-left valign-top">At 3M Customers</th>
+<th class="tableblock halign-left valign-top">Growth Factor</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Growth Factor</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Snowflake OPEX</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$3K–$8K/month</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$4K–$10K/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">+1.3x (not 3x)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Airflow OPEX</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Airflow OPEX</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$300–$1.5K/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$500–$2K/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">+1.7x</p></td>
@@ -1746,11 +1742,13 @@ These projections cover <strong>basket size uplift from personalised recommendat
 <td class="tableblock halign-left valign-top"><p class="tableblock">AWS Infrastructure + SES</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$1.1K–$3.5K/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$1.2K–$4K/month</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+1.1x</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">+1.1x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$6K–$16K/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$8K–$20K/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>+1.3x</strong></p></td>
 </tr>
 </tbody>
 </table>
@@ -1869,7 +1867,7 @@ These projections cover <strong>basket size uplift from personalised recommendat
 <h3 id="_project_timeline_organized_by_work_streams"><a class="anchor" href="#_project_timeline_organized_by_work_streams"></a>12.1. Project Timeline — Organized by Work Streams</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case02-timeline-streams-eb4c6e5c38507528620488ffddfbb90147950a72.svg" alt="Project Timeline (Work Streams View) — 7 months, critical path highlighted">
+<img src="diagrams/case02-timeline-streams-e1bb17e11fea66b39716435eedb639a11632b88a.svg" alt="Project Timeline (Work Streams View) — 7 months, critical path highlighted">
 </div>
 <div class="title">Figure 4. Project Timeline (Work Streams View) — 7 months, critical path highlighted</div>
 </div>
@@ -2258,7 +2256,7 @@ These projections cover <strong>basket size uplift from personalised recommendat
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-03-20 10:03:08 +0100
+Last updated 2026-04-16 22:10:17 +0200
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

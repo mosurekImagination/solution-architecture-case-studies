@@ -123,6 +123,8 @@
 
 - **Watch what users do, not what they say they do.** If possible, observe the current workflow before designing the replacement. Users describe idealized processes; reality involves workarounds, spreadsheets, and "Dave knows how to fix that." Your design must accommodate reality.
 
+- **Run a structured investigation period before building anything.** The first 2–4 weeks after contract signing should be dedicated discovery: map current workflows, validate data quality assumptions, identify risks with mitigations, and surface improvement opportunities beyond the agreed scope. This is not overhead — it's the only way to validate your estimates before they become commitments. Proposals that ask for pre-signing investigation samples (data dumps, access credentials) before the contract is signed undermine trust. Build the investigation into the post-signing phase instead.
+
 ---
 
 ## 7. Options & Recommendations
@@ -134,6 +136,8 @@
 - **Use the decoy effect intentionally.** If you want the client to choose Option B, make Option C slightly more expensive with marginally more features. Option C makes Option B look like the smart choice. This is not manipulation — it's framing trade-offs clearly.
 
 - **Never let the client pick without a recommendation.** "Here are three options, you decide" is an abdication of your role as an architect. You were hired for your judgment. State your recommendation clearly: "I recommend Option B because..." If they disagree, great — now you're having a productive conversation about trade-offs.
+
+- **When the client states a revenue target, decompose it into multiple paths — don't just pick one lever.** "20% turnover increase" is rarely achievable through a single mechanism. Enumerate the available levers (personalisation, reactivation, cross-sell, mobile push, segmented promotions, frequency nudges), estimate each lever's realistic contribution, and show how they combine toward the target. This demonstrates strategic depth, gives the client a roadmap beyond the immediate engagement, and makes your recommendation stickier — because now the platform is the prerequisite for all the levers, not just the one you pitched.
 
 - **Present costs in total and broken down.** "$450K" triggers sticker shock. "$450K: $300K development over 6 months (4 developers × $12.5K/month) + $25K infrastructure setup + $125K first-year operational cost ($10.4K/month)" tells a story. Breakdown defuses shock.
 
