@@ -59,3 +59,18 @@ AI-assisted reviews, challenge documents, and self-assessments are stored in an 
 - Never place AI-generated content in `docs/` alongside client-facing solution designs.
 - Naming convention: `architecture-review.md`, `architecture-challenge.md`, `self-assessment.md`.
 - The author field should reflect the human author (`**Author:** <name>`), not a fictional reviewer role.
+
+## Project Numbers (financials.py)
+
+All project numbers — costs, durations, team sizes, phase milestones, and projections — must be calculated by a Python script in `<exercise>/scripts/financials.py` — never by mental arithmetic or LLM calculation. The script is the single source of truth.
+
+### Attribute-based workflow
+
+`financials.py` generates `financials-attrs.adoc` — an AsciiDoc attributes file. Documents include it via `include::../scripts/financials-attrs.adoc[]` and reference numbers as `{capex-approx}`, `{timeline-months}`, etc. This eliminates manual copy-paste of numbers.
+
+- Run `python financials.py` after any change to rates, durations, team composition, or phase structure.
+- The script writes `financials-attrs.adoc` automatically; then re-render the `.adoc` documents.
+- Never hardcode a financial figure, duration, team size, or milestone in a `.adoc` file — use `{attribute-name}` instead.
+- Attribute substitution works in paragraph text, table cells, and block titles — but **not** inside literal/source blocks (PlantUML, code fences).
+- Do not round or adjust attribute values — the script controls all formatting.
+- Timeline figures (e.g. "9.5 months") are computed from phase durations, not hardcoded.

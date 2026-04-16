@@ -107,5 +107,23 @@ Diagrams must be legible at standard A4/Letter width in PDF export.
   docs/               Client-facing deliverables (solution-design.adoc, domain-primer.adoc, etc.)
   ai-documents/       AI-assisted reviews and challenge documents (NOT client-facing)
   questionnaire/      Discovery questionnaires with pre-filled assumptions
+  scripts/            Python scripts — single source of truth for all project numbers (financials.py)
 template/             Reusable AsciiDoc and Markdown templates
 ```
+
+---
+
+## Project Numbers (financials.py)
+
+All project numbers — costs, durations, team sizes, phase milestones, and projections — must be calculated by a Python script in `<exercise>/scripts/financials.py` — never by mental arithmetic or LLM calculation. The script is the single source of truth.
+
+### Attribute-based workflow
+
+`financials.py` generates `financials-attrs.adoc` — an AsciiDoc attributes file. Documents include it via `include::../scripts/financials-attrs.adoc[]` and reference numbers as `{capex-approx}`, `{timeline-months}`, etc. This eliminates manual copy-paste of numbers.
+
+- Run `python financials.py` after any change to rates, durations, team composition, or phase structure.
+- The script writes `financials-attrs.adoc` automatically; then re-render the `.adoc` documents.
+- Never hardcode a financial figure, duration, team size, or milestone in a `.adoc` file — use `{attribute-name}` instead.
+- Attribute substitution works in paragraph text, table cells, and block titles — but **not** inside literal/source blocks (PlantUML, code fences).
+- Do not round or adjust attribute values — the script controls all formatting.
+- Timeline figures (e.g. "9.5 months") are computed from phase durations, not hardcoded.

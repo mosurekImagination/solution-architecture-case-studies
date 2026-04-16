@@ -442,8 +442,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>Reinsurance Reconciliation Platform — Solution Design</h1>
 <div class="details">
 <span id="author" class="author">Solution Architect</span><br>
-<span id="revnumber">version 0.1,</span>
-<span id="revdate">2026-04-14</span>
+<span id="revnumber">version 1.0,</span>
+<span id="revdate">2026-04-16</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -489,7 +489,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_data_model">6.7. Data Model</a></li>
 <li><a href="#_functional_requirements">6.8. Functional Requirements</a></li>
 <li><a href="#_non_functional_requirements">6.9. Non-Functional Requirements</a></li>
-<li><a href="#_testing_approach">6.10. Testing Approach</a></li>
+<li><a href="#_eligibility_engine_rule_schema">6.10. Eligibility Engine — Rule Schema</a></li>
+<li><a href="#_testing_approach">6.11. Testing Approach</a></li>
 </ul>
 </li>
 <li><a href="#_cost_breakdown">7. Cost Breakdown</a>
@@ -498,6 +499,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_operational_costs_opex">7.2. Operational Costs (OPEX)</a></li>
 <li><a href="#_phase_cost_summary">7.3. Phase Cost Summary</a></li>
 <li><a href="#_timeline">7.4. Timeline</a></li>
+<li><a href="#_phase_gates">7.5. Phase Gates</a></li>
 </ul>
 </li>
 <li><a href="#_option_3_event_sourced_architecture">8. Option 3: Event-Sourced Architecture</a>
@@ -510,7 +512,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_risks_assumptions">9. Risks &amp; Assumptions</a>
 <ul class="sectlevel2">
 <li><a href="#_key_risks">9.1. Key Risks</a></li>
-<li><a href="#_key_assumptions">9.2. Key Assumptions</a></li>
+<li><a href="#_regulatory_compliance_gap_analysis">9.2. Regulatory Compliance Gap Analysis</a></li>
+<li><a href="#_key_assumptions">9.3. Key Assumptions</a></li>
 </ul>
 </li>
 <li><a href="#_architecture_decisions">10. Architecture Decisions</a>
@@ -518,8 +521,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_adr_001_immutability_postgresql_hash_chain_audit_table">10.1. ADR-001: Immutability — PostgreSQL Hash-Chain Audit Table</a></li>
 <li><a href="#_adr_002_multi_tenancy_row_level_security">10.2. ADR-002: Multi-Tenancy — Row-Level Security</a></li>
 <li><a href="#_adr_003_approval_workflow_aws_step_functions_standard_workflows">10.3. ADR-003: Approval Workflow — AWS Step Functions Standard Workflows</a></li>
-<li><a href="#_adr_004_file_exchange_s3_pre_signed_urls_with_sftp_fallback">10.4. ADR-004: File Exchange — S3 Pre-Signed URLs with SFTP Fallback</a></li>
+<li><a href="#_adr_004_file_exchange_s3_pre_signed_urls_with_typed_multi_file_ingestion">10.4. ADR-004: File Exchange — S3 Pre-Signed URLs with Typed Multi-File Ingestion</a></li>
 <li><a href="#_adr_005_authentication_cognito_with_saml_federation">10.5. ADR-005: Authentication — Cognito with SAML Federation</a></li>
+<li><a href="#_adr_006_compute_aws_lambda_aurora_serverless_v2">10.6. ADR-006: Compute — AWS Lambda + Aurora Serverless v2</a></li>
+<li><a href="#_adr_007_contract_rules_structured_expression_tree">10.7. ADR-007: Contract Rules — Structured Expression Tree</a></li>
 </ul>
 </li>
 <li><a href="#_deployment_infrastructure">11. Deployment &amp; Infrastructure</a>
@@ -533,9 +538,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_post_launch_plan">12. Post-Launch Plan</a>
 <ul class="sectlevel2">
 <li><a href="#_hypercare_weeks_14_after_first_counterparty_go_live">12.1. Hypercare (Weeks 1–4 after First Counterparty Go-Live)</a></li>
-<li><a href="#_counterparty_onboarding_runbook">12.2. Counterparty Onboarding Runbook</a></li>
-<li><a href="#_audit_ledger_health">12.3. Audit Ledger Health</a></li>
-<li><a href="#_knowledge_transfer">12.4. Knowledge Transfer</a></li>
+<li><a href="#_counterparty_integration_tiers">12.2. Counterparty Integration Tiers</a></li>
+<li><a href="#_counterparty_onboarding_runbook">12.3. Counterparty Onboarding Runbook</a></li>
+<li><a href="#_audit_ledger_health">12.4. Audit Ledger Health</a></li>
+<li><a href="#_knowledge_transfer">12.5. Knowledge Transfer</a></li>
 </ul>
 </li>
 <li><a href="#_next_steps">13. Next Steps</a></li>
@@ -670,23 +676,23 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated CAPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$640K (8-month delivery; includes 20% contingency)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$758K (9.5-month delivery; includes 20% contingency)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$1,600–$2,500/month (AWS eu-west-2; scales sub-linearly with counterparty growth)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$985–$1,800/month (AWS eu-west-2; scales sub-linearly with counterparty growth)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months (4 phases); first counterparty live at end of Phase 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9.5 months (4 phases); first counterparty live at end of Phase 3</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Team Size</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">5 people: 1 Architect + 3 Senior Developers + 1 Security Engineer + 1 QA Engineer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6 people: 1 Architect + 3 Senior Developers + 1 Security Engineer + 1 QA Engineer</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key Differentiator</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SHA-256 hash-chain audit ledger provides Solvency II-grade tamper evidence without blockchain overhead; AWS Step Functions turns the approval chain into a queryable execution history</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SHA-256 hash-chain audit ledger provides Solvency II-grade tamper evidence without blockchain overhead; AWS Step Functions turns the multi-level approval chain into a queryable execution history; serverless infrastructure (Lambda + Aurora Serverless v2) minimises cost between monthly peaks; exact decimal arithmetic enforced as a language selection constraint</p></td>
 </tr>
 </tbody>
 </table>
@@ -694,7 +700,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_scope_boundary"><a class="anchor" href="#_scope_boundary"></a>2.3. Scope Boundary</h3>
 <div class="paragraph">
-<p>This engagement delivers: contract registry, counterparty file ingestion, eligibility engine, multi-step approval workflow, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, and regulatory export.</p>
+<p>This engagement delivers: contract registry with file type configuration, typed multi-file counterparty ingestion, expression tree-based eligibility engine with exact decimal arithmetic, multi-level approval workflow with counter-proposal support, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, data residency zone tracking, and regulatory export.</p>
 </div>
 <div class="paragraph">
 <p>This engagement explicitly <strong>does not</strong> include: payment service provider integration (B2B money settlement is handled outside the platform), blockchain infrastructure, historical Excel record migration (closed cycles remain in existing archives), consumer-facing functionality, or changes to the counterparties' internal systems.</p>
@@ -726,8 +732,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How to orchestrate the multi-step approval workflow</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions Standard Workflows with wait-for-callback</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How to orchestrate the multi-step, multi-level approval workflow</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions Standard Workflows with wait-for-callback; sub-workflows for each approval level</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium — Step Functions execution history is natively queryable</p></td>
 </tr>
 <tr>
@@ -745,8 +751,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">How counterparties exchange files with the platform</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">HTTPS web upload via S3 pre-signed URLs; SFTP available as fallback</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTPS web upload via S3 pre-signed URLs; SFTP available as fallback; typed multi-file ingestion per cycle</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Easy — adding new exchange channels does not change core processing</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How to handle compute for a monthly-peak workload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Lambda (API + eligibility) + Aurora Serverless v2; pay-per-use with automatic scaling</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — migration to ECS Fargate is straightforward if Lambda limits are exceeded</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How to express contract rules without per-contract code changes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Structured expression tree (AND/OR/range/tiered) evaluated by a generic engine; validated against versioned JSON Schema</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — rule schema is versioned; adding new node types is additive</p></td>
 </tr>
 </tbody>
 </table>
@@ -846,7 +864,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Approach</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Web portal + PostgreSQL audit triggers; manual approval via email prompts</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Workflow engine + append-only hash-chain ledger + automated approval state machine</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workflow engine + append-only hash-chain ledger + multi-level approval state machine; serverless compute (Lambda + Aurora Serverless v2); exact decimal arithmetic required for financial precision</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full event sourcing; every state transition stored as an immutable event; current state derived by replaying the event log</p></td>
 </tr>
 <tr>
@@ -882,19 +900,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CAPEX (incl. contingency)</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$165K</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$640K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$758K</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$1.1M</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$1,600–$2,500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$985–$1,800/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$4,500–$5,500</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9.5 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">13 months</p></td>
 </tr>
 <tr>
@@ -916,7 +934,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_cost_comparison"><a class="anchor" href="#_cost_comparison"></a>4.2. Cost Comparison</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-cost-comparison-3ee5eeedab9baf957019c64bbcc0eb393b124cd3.svg" alt="Cost Comparison — CAPEX and Year-1 OPEX by Option">
+<img src="diagrams/case03-cost-comparison-e30f707b04b1579a6a3092e8cf334d164d4926ef.svg" alt="Cost Comparison — CAPEX and Year-1 OPEX by Option">
 </div>
 <div class="title">Figure 2. Cost Comparison — CAPEX and Year-1 OPEX by Option</div>
 </div>
@@ -948,7 +966,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Team</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1 Architect + 2 Senior Developers + 1 QA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 Architect + 2 Developers + 1 QA</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Counterparty scale</p></td>
@@ -1029,7 +1047,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_container_diagram"><a class="anchor" href="#_container_diagram"></a>6.2. Container Diagram</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-c4-containers-f047e78f3eefa51dd31f320abbf5608c045c22af.svg" alt="Container Diagram — Reinsurance Reconciliation Platform">
+<img src="diagrams/case03-c4-containers-ba5a61dbf4a60cc7701b20cc7cabbedefe03f563.svg" alt="Container Diagram — Reinsurance Reconciliation Platform">
 </div>
 <div class="title">Figure 5. Container Diagram — Reinsurance Reconciliation Platform</div>
 </div>
@@ -1038,7 +1056,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>6.3. High-Level Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-option2-arch-313698099f3b2f4f7a40e93211f51f562d597f24.svg" alt="Architecture — Option 2: Full Platform">
+<img src="diagrams/case03-option2-arch-90476e113e7215d7d5cb1674d86a780f300e4750.svg" alt="Architecture — Option 2: Full Platform">
 </div>
 <div class="title">Figure 6. Architecture — Option 2: Full Platform</div>
 </div>
@@ -1047,16 +1065,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_reconciliation_cycle_flow"><a class="anchor" href="#_reconciliation_cycle_flow"></a>6.4. Reconciliation Cycle Flow</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-cycle-flow-dc1194c5700a5f99c7acb28cd6a76aa52af39c2b.svg" alt="Happy Path — Monthly Reconciliation Cycle">
+<img src="diagrams/case03-cycle-flow-8e454e0dce7bd5588c45f98f35f71633e8d144e0.svg" alt="Happy Path — Monthly Reconciliation Cycle">
 </div>
 <div class="title">Figure 7. Happy Path — Monthly Reconciliation Cycle</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_approval_workflow_state_machine"><a class="anchor" href="#_approval_workflow_state_machine"></a>6.5. Approval Workflow State Machine</h3>
+<div class="paragraph">
+<p>The approval model supports multi-round negotiation between the reinsurer and counterparty. Multiple reinsurer approvers can sign off in sequence (L1 reconciliation manager, L2 senior manager for cycles above a configurable threshold amount). The counterparty can submit revised data files at any point before the cycle is sealed — re-triggering a full eligibility recalculation — or issue a formal counter-proposal with their own eligibility calculation.</p>
+</div>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-state-machine-ea19f4726fc41c3e992ae4385cbf6a165fcbda02.svg" alt="Reconciliation Cycle — State Machine">
+<img src="diagrams/case03-state-machine-1c5b59be612185313a682567d0ee0046c563c6aa.svg" alt="Reconciliation Cycle — State Machine">
 </div>
 <div class="title">Figure 8. Reconciliation Cycle — State Machine</div>
 </div>
@@ -1064,7 +1085,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_audit_ledger_design"><a class="anchor" href="#_audit_ledger_design"></a>6.6. Audit Ledger Design</h3>
 <div class="paragraph">
-<p>The audit ledger is the platform&#8217;s trust anchor. It is a separate append-only schema (<code>audit</code>) within the same PostgreSQL RDS instance, with distinct privileges:</p>
+<p>The audit ledger is the platform&#8217;s trust anchor. It is a separate append-only schema (<code>audit</code>) within the same Aurora Serverless v2 instance, with distinct privileges:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1090,7 +1111,7 @@ CREATE TABLE audit.events (
     actor_id        UUID            NOT NULL,
     actor_type      TEXT            NOT NULL,  -- INTERNAL | COUNTERPARTY | SYSTEM
     payload         JSONB           NOT NULL,  -- event-specific data (file checksum, result summary, approval note, etc.)
-    previous_hash   TEXT            NOT NULL,  -- SHA-256 of the immediately preceding row (empty string for row 1)
+    previous_hash   TEXT            NOT NULL,  -- SHA-256 of the immediately preceding row for this tenant (genesis row stores KMS-signed anchor hash)
     event_hash      TEXT            NOT NULL,  -- SHA-256(previous_hash || event_type || actor_id || payload::text || created_at::text)
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT now()
 );
@@ -1103,18 +1124,30 @@ GRANT SELECT ON audit.events TO verify_role;
 -- Row-Level Security ensures tenants cannot read each other's audit records
 ALTER TABLE audit.events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON audit.events
-    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);</code></pre>
+    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- Per-tenant chain: each INSERT resolves previous_hash from the last row
+-- for the same tenant_id — not globally. This eliminates write contention
+-- when multiple tenants submit files simultaneously at month-end.
+-- Example: SELECT event_hash FROM audit.events
+--          WHERE tenant_id = $1 ORDER BY id DESC LIMIT 1</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p><strong>Tamper detection:</strong> A weekly Lambda job (<code>audit-verify</code>) recomputes every row&#8217;s <code>event_hash</code> and checks that each <code>previous_hash</code> matches the preceding row&#8217;s <code>event_hash</code>. Any discrepancy triggers an immediate alert to the compliance team via SNS.</p>
+<p><strong>Per-tenant hash chain:</strong> Each tenant has an independent chain. Row N&#8217;s <code>previous_hash</code> references the hash of the preceding event for the <strong>same</strong> <code>tenant_id</code>, not the globally preceding row. This allows concurrent month-end submissions from all counterparties without serialization contention.</p>
+</div>
+<div class="paragraph">
+<p><strong>KMS-signed genesis:</strong> When a tenant is provisioned, a genesis audit event (<code>TENANT_PROVISIONED</code>) is written whose <code>previous_hash</code> is a signature produced by AWS KMS (using a CMK dedicated to audit integrity). This anchors the chain cryptographically — an attacker who deletes and re-inserts all rows cannot forge the genesis signature without access to the KMS key, which is controlled by IAM policy and logged in CloudTrail.</p>
+</div>
+<div class="paragraph">
+<p><strong>Tamper detection:</strong> A Lambda job (<code>audit-verify</code>) recomputes each row&#8217;s <code>event_hash</code> and checks that each <code>previous_hash</code> matches the preceding row&#8217;s hash for that tenant. The job runs on every read of a sealed cycle (zero-cost at monthly reconciliation volume) and also on a weekly full-chain sweep. Any discrepancy triggers an immediate alert to the compliance team via SNS.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_data_model"><a class="anchor" href="#_data_model"></a>6.7. Data Model</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-data-model-f489e0549dbc22565f04bd42ec7192a4663ef260.svg" alt="Data Model — Core Entities">
+<img src="diagrams/case03-data-model-76508ff5f98c8c3741356c7deba4c549827c40c0.svg" alt="Data Model — Core Entities">
 </div>
 <div class="title">Figure 9. Data Model — Core Entities</div>
 </div>
@@ -1143,13 +1176,13 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-01</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Upload and version contract definitions; store rule metadata as structured JSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Upload and version contract definitions; store rule metadata as structured expression tree JSON validated against a versioned JSON Schema</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-02</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parse contract rules to drive eligibility engine input schema per counterparty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse contract rules to drive eligibility engine input schema per counterparty; define required file types per contract</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1164,7 +1197,13 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-04</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Accept counterparty data file upload via HTTPS (S3 pre-signed URL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Accept typed counterparty data file uploads via HTTPS (S3 pre-signed URL); each file tagged with its file type (PEOPLE_TABLE, MONEY_MOVEMENT, SPECIAL_CONDITIONS, ADJUSTMENT_RECORDS, CONTRACT_EXCEPTIONS)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-04a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Track per-cycle file readiness: the eligibility engine is triggered only when all required file types for the contract have been submitted</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1176,13 +1215,19 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-06</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Validate file structure against the contract-defined schema; reject malformed files with clear error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Validate file structure against the contract-defined schema for its file type; reject malformed files with clear error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-06a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deduplicate file submissions: reject a file if a submission for the same <code>(cycle_id, file_type)</code> already exists in any non-rejected state; return HTTP 409 with a reference to the existing submission</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-07</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Accept file submission via SFTP for counterparties requiring it (AWS Transfer Family)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Accept file submission via SFTP for counterparties requiring it (AWS Transfer Family, provisioned on-demand)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
@@ -1191,7 +1236,7 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-08</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apply contract rules to ingested data file; produce eligibility result and compensation proposal</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Evaluate contract expression tree rules against all typed data files for a cycle; produce eligibility result and compensation proposal using exact decimal arithmetic</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
@@ -1203,6 +1248,12 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-10</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support re-computation when a counterparty submits a revised file during negotiation (creates a new eligibility result version, preserving the prior result)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-10a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Support re-computation if contract rules are corrected (creates a new cycle version, not an overwrite)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
 </tr>
@@ -1212,19 +1263,31 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-11</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-step approval state machine: propose → reinsurer review → counterparty counter-sign → sealed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-level approval state machine: propose → L1 reinsurer review → L2 senior review (if amount exceeds threshold) → counterparty counter-sign → sealed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-11a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support counterparty counter-proposals: counterparty can submit an alternative eligibility calculation for reinsurer review</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-11b</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support counterparty file revision: counterparty can submit a revised data file at any point before cycle seal, re-triggering eligibility computation</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-12</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Support adjustment rounds within a cycle before final sign-off</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support multiple adjustment rounds within a cycle before final sign-off</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-13</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Record every approval and adjustment action as an immutable audit ledger event</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Record every approval, adjustment, counter-proposal, and file revision action as an immutable audit ledger event</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
@@ -1308,7 +1371,7 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-25</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Platform-mediated onboarding: tenant provisioning → contract upload → test cycle → UAT sign-off → live</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Platform-mediated onboarding: tenant provisioning (incl. data residency zone) → contract upload → file type configuration → test cycle → UAT sign-off → live</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1316,6 +1379,27 @@ CREATE POLICY tenant_isolation ON audit.events
 <td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Self-service tenant onboarding reducing reinsurer IT involvement</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="4"><p class="tableblock"><strong>Epic 9 — Data Residency</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-27</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Each tenant record includes a <code>data_residency_zone</code> field (<code>UK</code>, <code>EU</code>, <code>APAC</code>, <code>NA</code>); all tenant data stored exclusively in the designated zone</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-28</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support deploying additional regional stacks (same Terraform module, different AWS region) when a counterparty requires a non-UK/EU residency zone</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-29</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Should</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cross-cycle adjustment reporting: multi-generation adjustment chains are traceable from the current cycle back to the originating cycle via <code>root_cycle_id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 </tbody>
 </table>
@@ -1344,7 +1428,7 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data Durability</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Audit ledger must never lose a committed event</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RPO = 0 (PostgreSQL Multi-AZ synchronous replication)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RPO = 0 (Aurora Serverless v2 Multi-AZ synchronous replication)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Recovery Time</strong></p></td>
@@ -1385,20 +1469,108 @@ CREATE POLICY tenant_isolation ON audit.events
 </table>
 </div>
 <div class="sect2">
-<h3 id="_testing_approach"><a class="anchor" href="#_testing_approach"></a>6.10. Testing Approach</h3>
+<h3 id="_eligibility_engine_rule_schema"><a class="anchor" href="#_eligibility_engine_rule_schema"></a>6.10. Eligibility Engine — Rule Schema</h3>
+<div class="paragraph">
+<p>Contract rules are stored as structured expression trees validated against a versioned JSON Schema. The eligibility engine evaluates <code>eligibility_rule</code> as a boolean expression tree and <code>compensation_rule</code> as a computation tree — both without any contract-specific code. New field types (mortality rate lookup, annuity factor table) are added once to the evaluator, then usable across all contracts without per-contract changes.</p>
+</div>
+<div class="paragraph">
+<p>Each rule set contains a <code>schema_version</code> field so the engine knows which interpreter to use. Unknown node types are rejected at contract upload time. The <code>schema_version</code> field ensures older rule sets remain reproducible even as the evaluator gains new capabilities.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example contract rule JSON (expression tree structure)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "schema_version": "2.0",
+  "contract_ref": "CP-042-LR",
+  "effective_from": "2026-01-01",
+  "eligibility_rule": {
+    "type": "AND",
+    "conditions": [
+      { "type": "range", "field": "age", "min": 60, "max": 90 },
+      { "type": "in", "field": "policy_type", "values": ["annuity", "pension"] },
+      { "type": "not", "condition": { "type": "in", "field": "policy_type", "values": ["term_life"] } }
+    ]
+  },
+  "compensation_rule": {
+    "type": "tiered",
+    "tiers": [
+      { "age_max": 70, "rate_per_individual": 100.00 },
+      { "age_max": 80, "rate_per_individual": 120.00 },
+      { "age_max": 90, "rate_per_individual": 150.00 }
+    ],
+    "currency": "GBP"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Expression tree node types (initial set):</strong></p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Eligibility engine unit tests:</strong> Every contract rule has a corresponding test vector (input record → expected eligibility flag); side-by-side validation against existing Excel output used during Phase 1 workshops</p>
+<p><code>AND</code> / <code>OR</code> — logical combinators; evaluate child conditions</p>
+</li>
+<li>
+<p><code>NOT</code> — logical negation of a single child condition</p>
+</li>
+<li>
+<p><code>range</code> — field value within <code>[min, max]</code>; supports open-ended ranges</p>
+</li>
+<li>
+<p><code>in</code> — field value in a set of allowed values</p>
+</li>
+<li>
+<p><code>eq</code> — exact match on a single value</p>
+</li>
+<li>
+<p><code>tiered</code> — stepped rate table; selects rate based on the first matching tier</p>
+</li>
+<li>
+<p><code>flat</code> — fixed rate per individual (simplest case)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>New node types (e.g. <code>lookup</code> for mortality tables, <code>formula</code> for actuarial calculations) are added to the evaluator once and immediately usable in any contract definition without deployment changes.</p>
+</div>
+<div class="paragraph">
+<p><strong>Validation:</strong> The eligibility engine validates the rule JSON against a versioned JSON Schema at contract upload time. Unknown node types are rejected immediately with a clear validation error. All compensation amounts are computed using exact decimal arithmetic (no IEEE 754 floating-point) to prevent rounding artefacts.</p>
+</div>
+<div class="paragraph">
+<p><strong>Regression validation approach:</strong> During Phase 1, the eligibility engine is run against 12 months of historical Excel output for 2–3 representative counterparty contracts. A pass requires 100% agreement on eligibility flags and compensation amounts for all historical periods before the engine is used in production.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_testing_approach"><a class="anchor" href="#_testing_approach"></a>6.11. Testing Approach</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Expression tree evaluator unit tests:</strong> Every node type (AND, OR, range, tiered, flat, etc.) has a dedicated test suite; every contract rule has a corresponding test vector (input record → expected eligibility flag); side-by-side validation against existing Excel output used during Phase 1 workshops</p>
+</li>
+<li>
+<p><strong>Decimal precision tests:</strong> Verify compensation calculations produce exact decimal results matching Excel output to the penny; no IEEE 754 rounding artefacts</p>
+</li>
+<li>
+<p><strong>Eligibility regression tests:</strong> Engine output compared to 12 months of historical Excel results for 2–3 representative counterparties before Phase 2 go-ahead (Phase 1→2 gate)</p>
+</li>
+<li>
+<p><strong>Multi-file ingestion tests:</strong> Verify cycle readiness logic — eligibility engine only triggers when all required file types are present; partial submissions do not trigger premature calculations</p>
+</li>
+<li>
+<p><strong>Multi-level approval tests:</strong> Full cycle with L1 and L2 approvers; counter-proposal and revised file submission flows; verify all transitions produce correct audit events</p>
 </li>
 <li>
 <p><strong>RLS penetration tests:</strong> Automated suite that attempts cross-tenant data access via API and direct DB connection; runs on every deployment</p>
 </li>
 <li>
-<p><strong>Hash-chain integrity tests:</strong> Test suite that inserts events, tampers with one, and verifies the verification Lambda detects the break</p>
+<p><strong>Hash-chain integrity tests:</strong> Test suite that inserts events, tampers with one, and verifies the verification Lambda detects the break per tenant</p>
 </li>
 <li>
-<p><strong>Month-end load test:</strong> Concurrent file submission simulation (20 counterparties) run against staging before each Phase go-live</p>
+<p><strong>Lambda deployment tests:</strong> Verify all API endpoints respond correctly when deployed to Lambda; cold start latency within acceptable limits for portal interactions</p>
+</li>
+<li>
+<p><strong>Month-end load test:</strong> Concurrent file submission simulation (20 counterparties, multiple file types each) run against staging before each Phase go-live</p>
 </li>
 <li>
 <p><strong>Counterparty UAT:</strong> First counterparty completes a full test cycle with synthetic data before live cycle approval</p>
@@ -1434,50 +1606,50 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Solution Architect</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$15,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$120,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9.5 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$142,500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Architecture, ADRs, oversight</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Senior Developer (×3)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$12,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">8 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$288,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9.5 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$342,000</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">API, eligibility engine, portal, audit ledger</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Security / Compliance Engineer</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$13,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">6 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$78,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$91,000</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">RLS, Cognito, WAF, penetration tests</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">QA Engineer</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">$8,000</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">6 months</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$48,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$56,000</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Test suites, UAT coordination</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Subtotal</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$534,000</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>$631,500</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Contingency (20%)</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$106,800</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$126,300</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Risk buffer for integration unknowns</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total CAPEX</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$640,000</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$758K</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -1500,14 +1672,14 @@ CREATE POLICY tenant_isolation ON audit.events
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS PostgreSQL Multi-AZ (db.r6g.large, eu-west-2)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Serverless v2 (PostgreSQL-compatible, eu-west-2, 0.5–8 ACU)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Operational DB + Audit Ledger schema</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$480</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$200</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ECS Fargate (API Service + Eligibility Engine tasks)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Application compute</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$380</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda + API Gateway (API Service + Eligibility Engine)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application compute (pay-per-invocation)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$45</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">S3 (file storage + audit backups, ~500GB)</p></td>
@@ -1552,17 +1724,17 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX (base)</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$1,600/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$985/month</strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX (incl. DR replication to eu-west-1)</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$2,500/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$1,800/month</strong></p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p><em>Year-1 OPEX estimate: ~$20,000–$30,000. Three-year TCO (CAPEX + OPEX): ~$720,000–$730,000.</em></p>
+<p><em>Year-1 OPEX estimate: ~$11K–$21K. Three-year TCO (CAPEX + OPEX): ~$793K–$823K.</em></p>
 </div>
 </div>
 <div class="sect2">
@@ -1587,45 +1759,45 @@ CREATE POLICY tenant_isolation ON audit.events
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Infrastructure, Auth, Contract Registry, File Ingestion</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Infrastructure, Auth, Contract Registry, Multi-File Ingestion</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.5 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Architect + 2 Devs + Security</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$100K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$130K</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Eligibility Engine, Approval Workflow, Audit Ledger</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Eligibility Engine (expression tree), Multi-Level Approval Workflow, Audit Ledger</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.5 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full team</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$160K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$180K</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Multi-Tenant Portal, Notifications, First Counterparty Onboarding</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.5 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full team</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$160K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$180K</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Regulatory Reporting, Second Counterparty Batch, Performance Testing, Go-Live</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2 months</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Regulatory Reporting, Data Residency, Second Counterparty Batch, Performance Testing, Go-Live</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.0 months</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full team + QA</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$160K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$144K</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Contingency</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$60K</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$126K</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>8 months</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~9.5 months</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$640K</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$758K</strong></p></td>
 </tr>
 </tbody>
 </table>
@@ -1634,10 +1806,87 @@ CREATE POLICY tenant_isolation ON audit.events
 <h3 id="_timeline"><a class="anchor" href="#_timeline"></a>7.4. Timeline</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-gantt-bf745e67bd5ab7212dce954c081c1951ef20e9da.svg" alt="Project Timeline — 8-Month Delivery">
+<img src="diagrams/case03-gantt-2f3bbdb93b37473435343430aea8723d4bf3e6c8.svg" alt="Project Timeline — 9.5-Month Delivery">
 </div>
-<div class="title">Figure 10. Project Timeline — 8-Month Delivery</div>
+<div class="title">Figure 10. Project Timeline — 9.5-Month Delivery</div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_phase_gates"><a class="anchor" href="#_phase_gates"></a>7.5. Phase Gates</h3>
+<div class="paragraph">
+<p>A phase does not begin until its entry criteria are met. Unresolved gate items are tracked as blockers, not carried forward as open risks.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Gate</th>
+<th class="tableblock halign-left valign-top">Pass criteria (all must be met)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 1 → Phase 2</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>Eligibility engine reproduces 100% of historical Excel output for at least 3 representative contract types (validated side-by-side with reconciliation managers)</p>
+</li>
+<li>
+<p>Lambda deployment artefacts validated in staging; cold start latency acceptable for portal API interactions</p>
+</li>
+<li>
+<p>Multi-file ingestion model tested: typed file uploads trigger cycle readiness check; eligibility engine only starts when all required file types are present</p>
+</li>
+<li>
+<p>Compliance workshop complete; Solvency II Pillar III and GDPR handling confirmed in writing by compliance lead</p>
+</li>
+<li>
+<p>RLS policy deployed and automated isolation test suite passing in staging</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 2 → Phase 3</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>Multi-level approval state machine completes a full cycle end-to-end in staging (file upload → eligibility → L1 approval → L2 approval → counter-sign)</p>
+</li>
+<li>
+<p>Counter-proposal and revised file flows tested: counterparty file revision re-triggers eligibility computation</p>
+</li>
+<li>
+<p>Hash-chain tamper detection verified: verification Lambda detects a deliberately corrupted row in a synthetic 6-month dataset</p>
+</li>
+<li>
+<p>RLS penetration test passed: no cross-tenant data visible via API or direct DB query</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Phase 3 → Phase 4</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p>First counterparty UAT signed off by both the counterparty and reinsurer compliance lead</p>
+</li>
+<li>
+<p>Month-end cycle completed end-to-end in staging with synthetic month-end file volume (20 concurrent uploads)</p>
+</li>
+<li>
+<p>Audit ledger regulatory export tested and output reviewed by compliance team</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
@@ -1785,11 +2034,69 @@ CREATE POLICY tenant_isolation ON audit.events
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain knowledge extraction sprint in Phase 1 produces documented, version-controlled rule sets; the platform itself removes the dependency on individuals holding formula knowledge in private Excel files</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Duplicate file submission</strong> — a counterparty re-uploads a file for a period already in progress (network retry, human error)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-06a enforces a unique constraint on <code>(cycle_id, file_type)</code> before any S3 write or workflow start; the API returns HTTP 409 with a reference to the existing submission; prevents duplicate audit events for the same cycle</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Lambda 15-minute execution limit</strong> — eligibility computation for very large counterparty files (&gt;500K individuals) could exceed Lambda timeout</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Implement chunked processing: the eligibility engine splits input into batches, Step Functions fans out Lambda invocations and joins results; at initial scale (10–30 counterparties) a single invocation suffices</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Aurora Serverless v2 cold start</strong> — database may take several seconds to scale up from minimum ACU after idle period</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Minimum ACU set to 0.5 (database is never fully cold); Lambda provisioned concurrency on the API function keeps a warm connection pool; month-end peak is predictable — schedule a pre-warming Lambda 1 hour before expected submission window</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data residency enforcement</strong> — international counterparties may require data localisation in jurisdictions not covered by eu-west-2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data_residency_zone</code> field on tenants table; Phase 1 all tenants use UK zone; when a non-UK/EU zone is needed, deploy an additional regional stack using the same Terraform module; contract and audit data stored exclusively in the tenant&#8217;s zone</p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_key_assumptions"><a class="anchor" href="#_key_assumptions"></a>9.2. Key Assumptions</h3>
+<h3 id="_regulatory_compliance_gap_analysis"><a class="anchor" href="#_regulatory_compliance_gap_analysis"></a>9.2. Regulatory Compliance Gap Analysis</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 37.5%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Regulation</th>
+<th class="tableblock halign-left valign-top">Gap in current design</th>
+<th class="tableblock halign-left valign-top">Proposed handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Solvency II Pillar III — Article 259</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Article 259 requires a documented audit trail of actuarial computations, including calculation inputs and outputs. The hash-chain ledger provides tamper evidence but does not explicitly define the granularity of <code>ELIGIBILITY_COMPUTED</code> payload content.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The <code>ELIGIBILITY_COMPUTED</code> audit event payload must include: input file SHA-256, contract rule version, per-individual eligibility flags, and the total compensation amount. The exact schema is to be confirmed with the compliance team in the Phase 1 compliance workshop.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>FCA SYSC 9.1</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SYSC 9.1 requires records of all client-facing communications. The current design logs file submissions and approval actions but does not explicitly capture negotiation messages (adjustment requests and free-text responses) in the audit ledger.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ADJUSTMENT_REQUESTED</code> and <code>ADJUSTMENT_ACCEPTED</code> events must include the full adjustment note text in their <code>payload</code>. Free-text negotiation messages entered via the portal are appended to the audit ledger as <code>COMMUNICATION_RECORDED</code> events at send time.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>GDPR Article 17 — Right to Erasure</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The append-only audit ledger cannot delete records. If counterparty employees' personal data (names, email addresses) are stored inline in audit event payloads, a Right to Erasure request cannot be fulfilled without breaking the hash chain.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Personal identifiers (user name, email) are stored only in the mutable <code>users</code> table with a reference <code>actor_id</code> UUID. Audit event payloads contain only the UUID, never the raw personal data. On a Right to Erasure request, the user record is anonymised in the <code>users</code> table; the UUID reference in audit events remains intact and the chain is unaffected.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_key_assumptions"><a class="anchor" href="#_key_assumptions"></a>9.3. Key Assumptions</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -1802,10 +2109,16 @@ CREATE POLICY tenant_isolation ON audit.events
 <p>The reinsurer has an existing SAML 2.0-capable identity provider (Azure AD or equivalent) for internal user federation</p>
 </li>
 <li>
-<p>Budget is sufficient for Option 2 (~$640K CAPEX); client has confirmed budget is not the primary constraint for this innovation initiative</p>
+<p>Budget is sufficient for Option 2 (~$758K CAPEX, ~$793K–$823K 3-year TCO); client has confirmed budget is not the primary constraint for this innovation initiative</p>
 </li>
 <li>
-<p>Regulatory retention of 10 years satisfies the Solvency II run-off period for the contracts in scope — to be confirmed with the compliance team in Phase 1</p>
+<p>Regulatory retention of 10 years satisfies the Solvency II run-off period for the contracts in scope — to be validated with the compliance team during the Phase 1 compliance workshop</p>
+</li>
+<li>
+<p>The development team includes backend engineers with experience in a Lambda-deployable language that supports exact decimal arithmetic; specific language to be confirmed during the Investigation Period based on team capabilities</p>
+</li>
+<li>
+<p>All Phase 1 tenants are UK/EU-based; data residency zones beyond <code>UK</code> and <code>EU</code> are not needed until counterparty expansion to APAC or Americas</p>
 </li>
 </ul>
 </div>
@@ -1825,11 +2138,11 @@ CREATE POLICY tenant_isolation ON audit.events
 </div>
 <div class="paragraph">
 <p><strong>Rationale:</strong>
-* <strong>Blockchain</strong> rejected — the reinsurer is a single custodian; blockchain&#8217;s distributed consensus overhead solves a problem that does not exist here
-* <strong>AWS QLDB</strong> rejected — discontinued by AWS in 2025; long-term viability cannot be assured
-* <strong>immuDB</strong> rejected — consistency and transaction management issues emerged in production on a prior reinsurance-adjacent project when integrated from a non-Go application layer (mentor&#8217;s first-hand experience); migrating away required significant rework
-* <strong>Full event sourcing</strong> deferred — architecturally superior but adds significant complexity not justified by the initial counterparty volume
-* <strong>PostgreSQL hash chain</strong> chosen — battle-tested operationally; regulators can query it with standard SQL; SHA-256 verification is transparent; PostgreSQL extension ecosystem (pgaudit, temporal tables) adds defence-in-depth without operational risk</p>
+* <strong>Blockchain</strong> rejected — the reinsurer is the sole custodian of this platform; blockchain&#8217;s value is distributed consensus between mutually distrusting parties. A single custodian gains nothing from consensus overhead and inherits all of the governance and key-management complexity.
+* <strong>AWS QLDB</strong> rejected — discontinued by AWS in 2025; long-term viability cannot be assured. The underlying cryptographic model (hash chain over a Merkle tree) is sound, but the same model can be implemented directly in PostgreSQL without vendor lock-in.
+* <strong>immuDB</strong> rejected — despite sound architecture, consistency and transaction management issues emerged in a prior production project integrating from a non-Go application layer; migrating away required significant rework. The risk of opaque internals in a trust-critical system is not acceptable.
+* <strong>Full event sourcing</strong> deferred — architecturally superior for auditability but adds projection rebuild complexity and requires specialist knowledge the initial team does not have. Deferred to Option 3 migration when counterparty volume justifies it.
+* <strong>PostgreSQL hash chain</strong> chosen — regulators can query it with standard SQL; SHA-256 verification is transparent and reproducible by any auditor; the team already operates PostgreSQL; <code>pgaudit</code> adds DB-level statement logging as defence-in-depth. The chain is partitioned per tenant to eliminate write serialization at month-end; a KMS-signed genesis anchor prevents undetected chain reconstruction.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1838,34 +2151,43 @@ CREATE POLICY tenant_isolation ON audit.events
 <p><strong>Context:</strong> The platform serves multiple independent counterparty insurers who must be strictly isolated from each other. Options: schema-per-tenant, row-level security (RLS), separate databases per tenant.</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> PostgreSQL Row-Level Security enforced at the database layer; all tenants share a single schema; <code>app.current_tenant_id</code> session variable set by the API service on every connection.</p>
+<p><strong>Decision:</strong> PostgreSQL Row-Level Security enforced at the database layer; all tenants share a single schema; <code>app.current_tenant_id</code> set via <code>SET LOCAL</code> (transaction-scoped) by the API service at the start of every database transaction.</p>
 </div>
 <div class="paragraph">
 <p><strong>Rationale:</strong> Schema-per-tenant provides the strongest isolation but adds significant migration complexity as counterparty count grows (running schema migrations across 30 schemas is operationally painful). Separate databases per tenant would make cross-tenant admin queries (for the platform operator) impractical. RLS is the pragmatic middle ground — proven in multi-tenant SaaS at this scale, with the additional safety net of WAF rules and API-layer tenant checks.</p>
+</div>
+<div class="paragraph">
+<p><code>SET LOCAL</code> is used instead of <code>SET</code> so that the tenant context is transaction-scoped and automatically cleared when the transaction ends. This prevents the known production failure mode where a connection pool reuses a session before the session variable is cleared — which would silently expose the prior tenant&#8217;s data to the next request on that connection.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_adr_003_approval_workflow_aws_step_functions_standard_workflows"><a class="anchor" href="#_adr_003_approval_workflow_aws_step_functions_standard_workflows"></a>10.3. ADR-003: Approval Workflow — AWS Step Functions Standard Workflows</h3>
 <div class="paragraph">
-<p><strong>Context:</strong> The multi-step approval chain (propose → reinsurer review → adjustment rounds → counterparty counter-sign) needs durable state management with human-approval steps that can pause for hours or days.</p>
+<p><strong>Context:</strong> The multi-level approval chain (propose → L1 reinsurer review → L2 senior review → adjustment rounds → counterparty counter-proposal or revised file → counter-sign) needs durable state management with human-approval steps that can pause for hours or days. The workflow must support a chain of 2–4+ approvers per cycle and allow the counterparty to re-submit revised data files at any point before seal.</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> AWS Step Functions Standard Workflows with wait-for-callback task tokens.</p>
+<p><strong>Decision:</strong> AWS Step Functions Standard Workflows with wait-for-callback task tokens. Each approval level (L1, L2) is implemented as a sub-workflow so the number of levels is configurable per contract tier without changing the Step Functions definition.</p>
 </div>
 <div class="paragraph">
-<p><strong>Rationale:</strong> Step Functions Standard Workflows provide built-in execution history (up to 90 days, queryable via API) — this history is a natural secondary audit artifact alongside the hash-chain ledger. The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Step Functions' visual execution graph also simplifies debugging stalled approvals.</p>
+<p><strong>Rationale:</strong> The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Step Functions' visual execution graph simplifies debugging stalled approvals. Sub-workflows for approval levels allow a new tier to be added per contract without modifying the parent workflow.</p>
+</div>
+<div class="paragraph">
+<p>Step Functions is the <strong>workflow engine</strong>; the hash-chain audit ledger is the <strong>sole compliance archive</strong>. Step Functions execution history (retained for up to 90 days by default) is an operational debugging aid only — it is not a regulatory record and must not be treated as one. All compliance-relevant state transitions are written to the audit ledger by the API service, not derived from Step Functions history.</p>
+</div>
+<div class="paragraph">
+<p>Each workflow execution must be guarded by an idempotency key (<code>tenant_id + contract_id + period</code>) to prevent duplicate executions from generating conflicting audit events for the same reconciliation cycle.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_adr_004_file_exchange_s3_pre_signed_urls_with_sftp_fallback"><a class="anchor" href="#_adr_004_file_exchange_s3_pre_signed_urls_with_sftp_fallback"></a>10.4. ADR-004: File Exchange — S3 Pre-Signed URLs with SFTP Fallback</h3>
+<h3 id="_adr_004_file_exchange_s3_pre_signed_urls_with_typed_multi_file_ingestion"><a class="anchor" href="#_adr_004_file_exchange_s3_pre_signed_urls_with_typed_multi_file_ingestion"></a>10.4. ADR-004: File Exchange — S3 Pre-Signed URLs with Typed Multi-File Ingestion</h3>
 <div class="paragraph">
-<p><strong>Context:</strong> Counterparties need to submit monthly data files securely. Options: SFTP-only, web upload via S3 pre-signed URLs, API-based upload, email attachment (current state).</p>
+<p><strong>Context:</strong> Counterparties need to submit monthly data files securely. The requirements describe five distinct file types per reconciliation cycle (people tables, money movement tables, special condition tables, adjustment records, contract exceptions). Options: SFTP-only, web upload via S3 pre-signed URLs, API-based upload, email attachment (current state).</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> Web portal upload via S3 pre-signed URLs as the primary channel; AWS Transfer Family SFTP as an opt-in secondary channel for counterparties with existing SFTP tooling.</p>
+<p><strong>Decision:</strong> Web portal upload via S3 pre-signed URLs as the primary channel; AWS Transfer Family SFTP as an opt-in secondary channel. Each upload is tagged with a file type; the eligibility engine is triggered only when all required file types for a contract have been submitted (tracked via <code>cycle_readiness</code> view).</p>
 </div>
 <div class="paragraph">
-<p><strong>Rationale:</strong> Most counterparty contacts are non-technical users who interact with a web portal; SFTP-only would require client software and firewall coordination. Pre-signed URLs allow the browser to upload directly to S3 without proxying through the API service (better performance, lower cost, no file size limits from API gateway). SFTP is retained as a fallback to avoid blocking counterparties with legacy automation.</p>
+<p><strong>Rationale:</strong> Most counterparty contacts are non-technical users who interact with a web portal; SFTP-only would require client software and firewall coordination. Pre-signed URLs allow the browser to upload directly to S3 without proxying through the API service (better performance, lower cost, no file size limits from API gateway). SFTP is retained as a fallback to avoid blocking counterparties with legacy automation. The typed ingestion model matches real-world practice where counterparties submit different file types at different times during the month — a generic single-file upload would either trigger incomplete calculations or force counterparties to bundle all file types into one upload.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1874,10 +2196,66 @@ CREATE POLICY tenant_isolation ON audit.events
 <p><strong>Context:</strong> The platform serves two user populations: internal reinsurer staff (who have a corporate identity provider) and external counterparty administrators (who do not have a shared IdP).</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> AWS Cognito User Pool for external counterparty users (MFA enforced, email-based registration); Cognito + SAML 2.0 identity federation for internal reinsurer users (federated from the corporate IdP).</p>
+<p><strong>Decision:</strong> A single AWS Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users, and SAML 2.0 federation from the corporate IdP for internal reinsurer users. Both paths issue JWTs from one issuer; a <code>custom:user_type</code> claim (<code>INTERNAL</code> or <code>COUNTERPARTY</code>) drives RBAC in the API service.</p>
 </div>
 <div class="paragraph">
-<p><strong>Rationale:</strong> A single Cognito deployment covers both populations with different authentication paths. Cognito MFA is mandatory for all users out of the box. SAML federation removes the need to manage internal user credentials separately from the corporate directory. Building a custom auth layer would require significant security investment with no advantage over a managed service.</p>
+<p><strong>Rationale:</strong> Two separate User Pools would mean two JWT issuers, two sets of token validation logic, two audit surfaces, and double the Cognito configuration to maintain — with no architectural benefit. A single pool with two identity providers achieves the same authentication model at half the operational complexity. Cognito MFA is enforced for all users. SAML federation removes the need to manage internal user credentials separately from the corporate directory.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_adr_006_compute_aws_lambda_aurora_serverless_v2"><a class="anchor" href="#_adr_006_compute_aws_lambda_aurora_serverless_v2"></a>10.6. ADR-006: Compute — AWS Lambda + Aurora Serverless v2</h3>
+<div class="paragraph">
+<p><strong>Context:</strong> The workload is monthly peaks with near-zero baseline between reconciliation cycles (a few portal logins per week). Options: ECS Fargate (always-running containers), Lambda + API Gateway (pay-per-invocation), EKS (Kubernetes).</p>
+</div>
+<div class="paragraph">
+<p><strong>Decision:</strong> AWS Lambda + API Gateway for all compute; Aurora Serverless v2 for the database.</p>
+</div>
+<div class="paragraph">
+<p><strong>Rationale:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>ECS Fargate</strong> rejected — cost is dominated by idle time between month-end peaks. Always-running containers (2+ tasks) cost ~$380/month even when serving near-zero traffic. Lambda charges only for invocations, reducing API compute to ~$40/month at this request volume.</p>
+</li>
+<li>
+<p><strong>Aurora Serverless v2</strong> chosen over RDS fixed-instance — scales to near-zero ACUs (0.5 ACU minimum ≈ 1 GB RAM) between peaks. At month-end, it scales automatically to handle concurrent eligibility computations without any capacity planning. RLS, pgaudit, and the hash-chain audit ledger work identically on Aurora PostgreSQL-compatible. Monthly cost: ~$200 vs ~$480 for RDS db.r6g.large.</p>
+</li>
+<li>
+<p><strong>Lambda 15-minute limit</strong> mitigated — eligibility computation for typical counterparty files (10K–100K individuals) completes within minutes. For very large files (&gt;500K), the engine splits input into batches and Step Functions fans out parallel Lambda invocations. At initial scale, a single invocation suffices.</p>
+</li>
+<li>
+<p><strong>EKS</strong> rejected — operational overhead of managing a Kubernetes cluster is not justified for a 6-person team with a monthly-peak workload.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_adr_007_contract_rules_structured_expression_tree"><a class="anchor" href="#_adr_007_contract_rules_structured_expression_tree"></a>10.7. ADR-007: Contract Rules — Structured Expression Tree</h3>
+<div class="paragraph">
+<p><strong>Context:</strong> The platform must accept contract definitions as structured metadata without constraining contract authors to a rigid schema that breaks when a new contract type is introduced. Options: flat JSON with code-per-contract, expression tree with generic evaluator, embedded DSL (e.g. SpEL/MVEL), Rete-based rule engine.</p>
+</div>
+<div class="paragraph">
+<p><strong>Decision:</strong> Contract rules stored as a structured expression tree (AND/OR/range/tiered/flat node types) evaluated by a generic engine. Validated against a versioned JSON Schema at upload time.</p>
+</div>
+<div class="paragraph">
+<p><strong>Rationale:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Flat JSON</strong> rejected — the initial <code>min_age</code>, <code>base_rate_per_individual</code> schema works for simple contracts but breaks the moment a contract has stepped rates by age band, multi-condition eligibility, or annuity factor tables. Every new contract type would require a code change and deployment.</p>
+</li>
+<li>
+<p><strong>Expression tree</strong> chosen — the engine evaluates <code>eligibility_rule</code> as a boolean tree and <code>compensation_rule</code> as a computation tree without any contract-specific code. New node types (e.g. <code>lookup</code> for mortality tables) are added once to the evaluator, then usable across all contracts. The <code>schema_version</code> field ensures older rule sets remain reproducible.</p>
+</li>
+<li>
+<p><strong>Embedded DSL (SpEL/MVEL)</strong> rejected — powerful but creates a security risk (arbitrary code execution in rule definitions) and makes audit reproducibility harder (DSL version changes could alter evaluation semantics). The expression tree is a constrained subset that is fully auditable.</p>
+</li>
+<li>
+<p><strong>Rete-based rule engine (Drools)</strong> rejected — operational overhead for this scale; the expression tree provides sufficient flexibility for the known contract types while remaining transparent and debuggable.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -1889,7 +2267,7 @@ CREATE POLICY tenant_isolation ON audit.events
 <h3 id="_aws_architecture_eu_west_2_london"><a class="anchor" href="#_aws_architecture_eu_west_2_london"></a>11.1. AWS Architecture (eu-west-2 — London)</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-infra-352bee79d8efd46df3953fa9b541efd2580242a5.svg" alt="Infrastructure Topology — AWS eu-west-2">
+<img src="diagrams/case03-infra-86a68d3d88c0e3bbad2b1173f0d9034bb0d0f662.svg" alt="Infrastructure Topology — AWS eu-west-2">
 </div>
 <div class="title">Figure 11. Infrastructure Topology — AWS eu-west-2</div>
 </div>
@@ -1915,19 +2293,19 @@ CREATE POLICY tenant_isolation ON audit.events
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Development</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Feature development and unit testing</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Single-AZ RDS; Fargate min 1 task</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Serverless v2 (min ACU); Lambda functions</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Synthetic contract and file data; no PII</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Staging</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Pre-production validation; counterparty UAT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Production-like; Multi-AZ RDS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Production-like; Aurora Serverless v2 Multi-AZ</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Anonymised sample data per contract; counterparty UAT with synthetic data</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Production</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Live reconciliation platform</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Full Multi-AZ; Fargate auto-scaling</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full Multi-AZ Aurora Serverless v2; Lambda with provisioned concurrency for API</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Real contract and counterparty data; encrypted at rest; RLS enforced</p></td>
 </tr>
 </tbody>
@@ -1948,12 +2326,8 @@ CREATE POLICY tenant_isolation ON audit.events
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Authentication (external users)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cognito User Pool; MFA enforced (TOTP or SMS); Cognito Hosted UI or custom UI backed by Cognito</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Authentication (internal users)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cognito + SAML 2.0 federation from corporate IdP; MFA enforced at IdP level</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authentication (all users)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Single Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users; SAML 2.0 federation from corporate IdP for internal users. <code>custom:user_type</code> claim drives RBAC. MFA enforced for all users.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Authorisation</p></td>
@@ -1961,27 +2335,27 @@ CREATE POLICY tenant_isolation ON audit.events
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data isolation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">PostgreSQL RLS enforces tenant isolation at DB layer; API layer sets session variable; WAF rate limiting on API</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PostgreSQL RLS enforces tenant isolation at DB layer; API service sets <code>app.current_tenant_id</code> via <code>SET LOCAL</code> (transaction-scoped) to prevent connection-pool session bleed; WAF rate limiting on API</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Encryption at rest</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS: AES-256 (AWS KMS); S3: SSE-S3 (AES-256); KMS CMK for audit-critical data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Serverless v2: AES-256 (AWS KMS); S3: SSE-S3 (AES-256); KMS CMK for audit-critical data</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Encryption in transit</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.2+ enforced at CloudFront and ALB; internal ECS-to-RDS and ECS-to-S3 communication within VPC</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TLS 1.2+ enforced at CloudFront and API Gateway; Lambda-to-Aurora and Lambda-to-S3 communication within VPC</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Network security</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ECS tasks in private subnets; RDS not publicly accessible; Security Groups restrict inter-service traffic; WAF OWASP managed rule group on CloudFront</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda functions in private subnets; Aurora not publicly accessible; Security Groups restrict inter-service traffic; WAF OWASP managed rule group on CloudFront</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Audit logging</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CloudTrail for all AWS API calls; RDS pgaudit for all DB statements; application audit ledger for all business events</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CloudTrail for all AWS API calls; Aurora pgaudit for all DB statements; application audit ledger for all business events</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Break-glass access</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDS superuser access requires IAM role assumption logged in CloudTrail; documented procedure; alerts on assumption</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora superuser access requires IAM role assumption logged in CloudTrail; documented procedure; alerts on assumption</p></td>
 </tr>
 </tbody>
 </table>
@@ -1994,13 +2368,16 @@ CREATE POLICY tenant_isolation ON audit.events
 <p><strong>Strategy:</strong> Active-passive; primary in eu-west-2 (London); DR in eu-west-1 (Ireland)</p>
 </li>
 <li>
-<p><strong>RDS:</strong> Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)</p>
+<p><strong>Aurora Serverless v2:</strong> Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)</p>
 </li>
 <li>
 <p><strong>S3:</strong> Cross-Region Replication to eu-west-1 with 15-minute SLA; versioning enabled in both regions</p>
 </li>
 <li>
-<p><strong>Audit Ledger:</strong> PostgreSQL Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure)</p>
+<p><strong>Audit Ledger:</strong> Aurora Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure)</p>
+</li>
+<li>
+<p><strong>Lambda:</strong> Stateless — no DR concern for compute; function deployment is region-scoped; DR region can be provisioned from the same CI/CD pipeline</p>
 </li>
 <li>
 <p><strong>RTO target:</strong> &lt; 1 hour for full region failover; documented DR runbook tested quarterly</p>
@@ -2033,20 +2410,68 @@ CREATE POLICY tenant_isolation ON audit.events
 </div>
 </div>
 <div class="sect2">
-<h3 id="_counterparty_onboarding_runbook"><a class="anchor" href="#_counterparty_onboarding_runbook"></a>12.2. Counterparty Onboarding Runbook</h3>
+<h3 id="_counterparty_integration_tiers"><a class="anchor" href="#_counterparty_integration_tiers"></a>12.2. Counterparty Integration Tiers</h3>
+<div class="paragraph">
+<p>Counterparties vary in technical capability. The platform supports three integration tiers; the tier is agreed during onboarding and can be upgraded at any time.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5715%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Tier</th>
+<th class="tableblock halign-left valign-top">Profile</th>
+<th class="tableblock halign-left valign-top">Authentication</th>
+<th class="tableblock halign-left valign-top">File Exchange</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tier 1 — Federated</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Large insurer with corporate SSO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SAML 2.0 federation from counterparty IdP into the platform Cognito User Pool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Web portal upload via S3 pre-signed URLs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tier 2 — Portal</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Smaller insurer; no corporate IdP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cognito-native email/password with mandatory MFA (TOTP or SMS)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Web portal upload via S3 pre-signed URLs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tier 3 — File-based</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Legacy counterparty with existing SFTP automation; no portal adoption</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Service account credentials for SFTP; no portal login required</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Transfer Family SFTP (provisioned on-demand for this counterparty only)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_counterparty_onboarding_runbook"><a class="anchor" href="#_counterparty_onboarding_runbook"></a>12.3. Counterparty Onboarding Runbook</h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Provision tenant (ID, name, country code) in platform admin portal</p>
+<p>Agree integration tier with counterparty technical contact; provision any required IdP federation or SFTP endpoint</p>
 </li>
 <li>
-<p>Upload contract definition (rules JSON) and verify parsing</p>
+<p>Provision tenant (ID, name, country code, data residency zone) in platform admin portal</p>
 </li>
 <li>
-<p>Provision counterparty administrator user (Cognito invite email + MFA setup)</p>
+<p>Upload contract definition (expression tree rules JSON) and configure required file types per contract</p>
 </li>
 <li>
-<p>Run synthetic test cycle: counterparty uploads sample file → validate eligibility output against contract rules</p>
+<p>Verify rule parsing and file type configuration; validate expression tree against JSON Schema</p>
+</li>
+<li>
+<p>Provision counterparty administrator user (Cognito invite email + MFA setup, or SFTP service account)</p>
+</li>
+<li>
+<p>Run synthetic test cycle: counterparty uploads all required file types → verify cycle readiness trigger → validate eligibility output against contract rules</p>
 </li>
 <li>
 <p>UAT sign-off (counterparty + reinsurer compliance lead)</p>
@@ -2061,23 +2486,26 @@ CREATE POLICY tenant_isolation ON audit.events
 </div>
 </div>
 <div class="sect2">
-<h3 id="_audit_ledger_health"><a class="anchor" href="#_audit_ledger_health"></a>12.3. Audit Ledger Health</h3>
+<h3 id="_audit_ledger_health"><a class="anchor" href="#_audit_ledger_health"></a>12.4. Audit Ledger Health</h3>
 <div class="ulist">
 <ul>
 <li>
-<p>Weekly Lambda job (<code>audit-verify</code>) recomputes hash chain for all events in the last 7 days; alerts compliance team on any discrepancy via SNS → email</p>
+<p><strong>On every sealed-cycle read:</strong> hash chain recomputed for that tenant&#8217;s cycle events at query time; any discrepancy returns an error before the data is returned</p>
 </li>
 <li>
-<p>Monthly full-chain verification for regulatory assurance</p>
+<p><strong>Weekly full-chain sweep:</strong> Lambda job (<code>audit-verify</code>) recomputes all events per tenant for the rolling 7-day window; alerts compliance team via SNS on any discrepancy</p>
 </li>
 <li>
-<p>Quarterly compliance report: cycle count, event count, verification pass rate, any anomalies</p>
+<p><strong>Monthly full-chain verification</strong> for regulatory assurance; output archived as compliance evidence</p>
+</li>
+<li>
+<p><strong>Quarterly compliance report:</strong> cycle count, event count, verification pass rate, any anomalies</p>
 </li>
 </ul>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_knowledge_transfer"><a class="anchor" href="#_knowledge_transfer"></a>12.4. Knowledge Transfer</h3>
+<h3 id="_knowledge_transfer"><a class="anchor" href="#_knowledge_transfer"></a>12.5. Knowledge Transfer</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
@@ -2105,6 +2533,18 @@ CREATE POLICY tenant_isolation ON audit.events
 <td class="tableblock halign-left valign-top"><p class="tableblock">Guided demo + recorded video</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Reconciliation Managers</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3, week before go-live</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-file upload and cycle readiness</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Guided demo + recorded video</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counterparty Administrators</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3, week before go-live</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expression tree contract rule authoring</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workshop (half day)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reconciliation Managers + Platform Admins</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 2</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Compliance audit log queries</p></td>
@@ -2141,19 +2581,25 @@ CREATE POLICY tenant_isolation ON audit.events
 <p>Validate audit ledger design against Solvency II Article 259 record-keeping requirements with the compliance team — confirm 10-year retention period and acceptable format for regulatory submissions</p>
 </li>
 <li>
-<p>Schedule domain knowledge extraction workshops with reconciliation managers in Phase 1, Week 1 — identify the 3 most common contract types and build rule sets with side-by-side Excel validation</p>
+<p>Schedule domain knowledge extraction workshops with reconciliation managers in Phase 1, Week 1 — identify the 3 most common contract types and build expression tree rule sets with side-by-side Excel validation</p>
 </li>
 <li>
-<p>Confirm first counterparty for onboarding pilot and identify their technical contact</p>
+<p>Confirm first counterparty for onboarding pilot and identify their technical contact; document which of the five file types (people tables, money movement, special conditions, adjustment records, contract exceptions) they submit and in what sequence</p>
 </li>
 <li>
 <p>Procure AWS accounts (separate accounts for dev/staging/production recommended); set up AWS Organizations and Control Tower baseline</p>
+</li>
+<li>
+<p>Evaluate backend language options during the Investigation Period — confirm a Lambda-deployable language with native exact decimal arithmetic support based on team capabilities; finalise the choice before Phase 1 sprint planning</p>
 </li>
 <li>
 <p>Obtain SAML metadata from the reinsurer&#8217;s identity provider (Azure AD or equivalent) for Cognito federation setup</p>
 </li>
 <li>
 <p>Review and sign Data Processing Agreements (DPAs) with each counterparty before their data is processed on the platform (GDPR requirement for EU-based counterparties)</p>
+</li>
+<li>
+<p>Confirm data residency requirements for all launch counterparties; assign residency zones (<code>UK</code> or <code>EU</code> for Phase 1)</p>
 </li>
 </ol>
 </div>
@@ -2166,8 +2612,8 @@ CREATE POLICY tenant_isolation ON audit.events
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.1<br>
-Last updated 2026-04-15 00:25:04 +0200
+Version 1.0<br>
+Last updated 2026-04-17 00:33:34 +0200
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

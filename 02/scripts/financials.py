@@ -5,7 +5,7 @@ Single source of truth for all numbers in:
   - 02/docs/solution-design.adoc
   - 02/docs/solution-design-proposal.adoc
 
-Edit values here, run:  python capex.py
+Edit values here, run:  python financials.py
 Then copy the printed numbers into both documents.
 """
 
