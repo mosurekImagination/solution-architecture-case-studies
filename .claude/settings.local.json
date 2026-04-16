@@ -17,7 +17,9 @@
       "Bash(find /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/02 -type f -name *.adoc -o -name *.md -o -name *.html -o -name *.txt -o -name *.json -o -name *.yaml -o -name *.yml)",
       "Bash(python 02/capex.py)",
       "Bash(python3 02/capex.py)",
-      "Bash(python3 /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/02/capex.py)"
+      "Bash(python3 /Users/tomaszmosur/home/projekty/solution-architecture-case-studies/02/capex.py)",
+      "Bash(./render.sh 03)",
+      "Bash(curl -s http://localhost:8000/health)"
     ]
   }
 }

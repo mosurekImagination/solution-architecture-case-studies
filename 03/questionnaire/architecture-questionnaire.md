@@ -3,7 +3,7 @@
 > **Purpose:** Gather requirements and context before creating a solution design.
 > Answers feed directly into the [Solution Design Template](../../template/solution-design-template.adoc).
 >
-> **⚠️ Pre-Fill Status:** Pre-filled with assumptions from initial client meeting (VTT transcription).
+> **⚠️ Pre-Fill Status:** Pre-filled with assumptions from initial client meeting
 > Items marked with ❓ require client validation. Items marked with `TBD` need further discovery.
 >
 > **Priority Tags:**
@@ -109,7 +109,7 @@ Based on the meeting, the following principles are assumed:
 - [x] **Simplicity over Novelty** — blockchain and exotic databases have been explicitly ruled out; prefer battle-tested solutions (PostgreSQL + extensions) over specialist tooling _(explicitly confirmed in meeting)_
 - [x] **Contract-Driven Flexibility** — the platform is schema-agnostic per contract; contract definitions drive file parsing rules dynamically
 - [ ] API-First — ❓ TBD; file-based exchange may be primary initially, with API integration as a later phase
-- [ ] Cloud-Native — ❓ TBD — cloud provider not confirmed; likely AWS given UK enterprise context
+- [x] **Cloud-Native (AWS)** — AWS confirmed as cloud infrastructure provider
 - [ ] Observability by Default — ❓ not discussed; assumed required given regulatory context
 
 **Are there any existing organizational architecture principles that must be followed?**
@@ -251,8 +251,8 @@ Based on the meeting, the following principles are assumed:
   - Core data store: PostgreSQL recommended (battle-tested, strong extension ecosystem for immutability and temporal queries)
   - Immutability approach: PostgreSQL + audit extension (pgaudit, temporal tables, or application-level append-only pattern) preferred over specialized DBs such as immuDB (operational complexity at scale) or AWS QLDB (discontinued)
   - ❓ Consider: separate append-only audit ledger vs. integrated immutability within primary database
-- **Cloud provider preference:** ❓ TBD — likely AWS given UK enterprise context; confirm with client
-- **Containerization:** ❓ TBD — Kubernetes or ECS likely; enables multi-tenant isolation and deployment repeatability
+- **Cloud provider preference:** **AWS** — confirmed
+- **Containerization:** ❓ TBD — ECS (Fargate) or EKS likely; enables multi-tenant isolation and deployment repeatability
 
 ### 5.2 Integration Requirements
 
@@ -359,7 +359,7 @@ Based on the meeting, the following principles are assumed:
 > → Maps to: **§16 Deployment & Infrastructure**, **§6.3 Deployment Diagram**
 
 ### 7.1 Deployment Model
-- **Deployment environment:** ❓ TBD — cloud-hosted (likely AWS UK region); no on-premises component expected for the new platform
+- **Deployment environment:** AWS — confirmed; eu-west-2 (London) as primary region; no on-premises component expected for the new platform
 - **Deployment strategy:** ❓ TBD — blue/green or rolling deployment; month-end blackout windows likely required
 - **CI/CD requirements:** ❓ TBD
 - **Infrastructure as Code tool:** ❓ TBD — Terraform likely
@@ -476,7 +476,7 @@ Based on the meeting, the following principles are assumed:
 - **Technical assumptions:**
   - PostgreSQL with audit extensions is sufficient for the immutability requirement (validated by mentor based on production experience)
   - File exchange will be HTTPS-based (web upload or API); SFTP as a fallback for counterparties with legacy systems
-  - Cloud deployment on AWS UK region (to be confirmed)
+  - Cloud deployment on AWS UK region (eu-west-2 London) — confirmed
   - Eligibility calculations can be expressed as structured rule sets derived from contract metadata — they do not require arbitrary code execution
 
 - **Business assumptions:**
@@ -547,14 +547,13 @@ Based on the meeting, the following principles are assumed:
 |---|----------|---------|----------------|---------------------|
 | 1 | 🔴 | How many active counterparty contracts does the reinsurer currently have? | ❓ Tens, not hundreds | Directly sizes the platform; more contracts = more complex multi-tenancy |
 | 2 | 🔴 | What is the target go-live date or phase timeline? | ❓ No constraint stated | Determines phasing and MVP scope |
-| 3 | 🔴 | What cloud provider does the reinsurer use for other systems? | AWS assumed | May change infrastructure choices; Azure or GCP would shift tooling |
-| 4 | 🔴 | Does the reinsurer have an existing identity provider for SSO? | ❓ Assumed yes (Azure AD or similar) | No IdP = must provision auth from scratch; adds scope |
-| 5 | 🔴 | What data residency jurisdiction is required for counterparty PII? | UK; EU for EU counterparties | Cross-border data flows significantly complicate architecture |
-| 6 | 🟡 | What is the typical size of a monthly counterparty data file? | Thousands of records, < 100MB | Very large files change ingestion architecture |
-| 7 | 🟡 | Are counterparties expected to integrate via API or manually upload files? | Manual upload initially | API-first requires earlier investment in integration spec |
-| 8 | 🟡 | Does the client have a preferred file format standard (CSV, XLSX, XML, JSON)? | ❓ Varies per contract | Mixed formats require a more flexible ingestion parser |
-| 9 | 🟡 | What is the reinsurer's internal IT team size and technical stack? | ❓ Unknown | Small IT team favors managed services and lower operational complexity |
-| 10 | 🟢 | Is there a requirement for counterparties to export their reconciliation records in a specific format? | ❓ Not discussed | Custom export formats add scope to the reporting service |
+| 3 | 🔴 | Does the reinsurer have an existing identity provider for SSO? | ❓ Assumed yes (Azure AD or similar) | No IdP = must provision auth from scratch; adds scope |
+| 4 | 🔴 | What data residency jurisdiction is required for counterparty PII? | UK; EU for EU counterparties | Cross-border data flows significantly complicate architecture |
+| 5 | 🟡 | What is the typical size of a monthly counterparty data file? | Thousands of records, < 100MB | Very large files change ingestion architecture |
+| 6 | 🟡 | Are counterparties expected to integrate via API or manually upload files? | Manual upload initially | API-first requires earlier investment in integration spec |
+| 7 | 🟡 | Does the client have a preferred file format standard (CSV, XLSX, XML, JSON)? | ❓ Varies per contract | Mixed formats require a more flexible ingestion parser |
+| 8 | 🟡 | What is the reinsurer's internal IT team size and technical stack? | ❓ Unknown | Small IT team favors managed services and lower operational complexity |
+| 9 | 🟢 | Is there a requirement for counterparties to export their reconciliation records in a specific format? | ❓ Not discussed | Custom export formats add scope to the reporting service |
 
 ---
 

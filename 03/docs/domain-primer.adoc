@@ -1,0 +1,753 @@
+= Reasekuracja od podstaw — Przewodnik po domenie i architekturze platformy
+:author: Solution Architect
+:revdate: 2026-04-14
+:toc: left
+:toclevels: 3
+:numbered:
+:icons: font
+:sectanchors:
+:kroki-server-url: http://localhost:8000
+:kroki-fetch-diagram: true
+:imagesdir: diagrams
+
+// Dokument edukacyjny w języku polskim — wprowadzenie do domeny reasekuracji
+// i omówienie architektury platformy reconciliacji B2B.
+
+== Ubezpieczenie — punkt wyjścia
+
+Zanim zrozumiemy reasekurację, musimy zrozumieć ubezpieczenie.
+
+=== Czym jest ubezpieczenie?
+
+Ubezpieczenie to umowa, w której **ubezpieczyciel** (firma ubezpieczeniowa) zgadza się pokryć określone koszty klienta w zamian za regularne płatności zwane *składką*.
+
+Przykład z życia:
+----
+Płacisz 200 zł miesięcznie za ubezpieczenie samochodu.
+Jeśli masz wypadek → firma płaci naprawę (np. 20 000 zł).
+Jeśli nie masz wypadku → firma zatrzymuje składkę jako zysk.
+----
+
+Firma ubezpieczeniowa zarabia dlatego, że większość klientów *nie* składa roszczeń. Ryzyko jest rozłożone na miliony osób — tylko nieliczni mają wypadki.
+
+=== Ryzyko jako towar
+
+W ubezpieczeniach **ryzyko jest towarem**. Firma kupuje ryzyko od klienta (bierze na siebie potencjalną stratę) w zamian za składkę. To fundamentalna zasada całej branży.
+
+.Przepływ pieniędzy w ubezpieczeniu
+[plantuml,primer-insurance-basic,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam actorBackgroundColor #E3F2FD
+skinparam participantBackgroundColor #E8F5E9
+
+actor "Klient\n(np. właściciel auta)" as Klient
+participant "Firma Ubezpieczeniowa\n(ubezpieczyciel)" as Ubezpieczyciel
+
+Klient -> Ubezpieczyciel: Składka miesięczna\n(np. 200 zł/mies.)
+note right: Klient transferuje ryzyko\nfinansowe na ubezpieczyciela
+
+group Jeśli NIE ma szkody [Większość przypadków]
+  Ubezpieczyciel -> Ubezpieczyciel: Zatrzymuje składkę = zysk
+end
+
+group Jeśli SĄ szkody [Mniejszość przypadków]
+  Ubezpieczyciel -> Klient: Wypłata odszkodowania\n(np. 20 000 zł)
+end
+
+@enduml
+....
+
+=== Rodzaje ryzyk ubezpieczeniowych
+
+[cols="1,2,2"]
+|===
+|Typ ryzyka |Przykład |Kto ubezpiecza
+
+|Majątkowe |Samochód, dom, firma |Allianz, PZU, Warta
+|Zdrowotne |Choroba, wypadek, operacja |Medicover, LUX MED
+|Życiowe |Śmierć ubezpieczonego |Unum, MetLife
+|**Emeryturne / długowieczności** |Osoba żyje *dłużej* niż zakładano |Reasekuratorzy (nasz przypadek!)
+|===
+
+== Reasekuracja — ubezpieczenie ubezpieczycieli
+
+=== Problem ubezpieczyciela
+
+Wyobraź sobie, że jesteś firmą ubezpieczeniową. Ubezpieczasz milion emerytów — płacisz im co miesiąc emeryturę (tzw. rentę dożywotnią).
+
+Problem: **Co jeśli emeryci żyją znacznie dłużej, niż zakładały Twoje aktuarialne modele?**
+
+----
+Założenie: statystyczny emeryt żyje 15 lat po przejściu na emeryturę.
+Rzeczywistość: żyje 25 lat → płacisz 10 lat dłużej.
+Dla miliona emerytów: potencjalna strata MILIARDÓW złotych.
+----
+
+To jest właśnie **ryzyko długowieczności** (_longevity risk_) — ryzyko, że ubezpieczeni żyją dłużej niż przewidywano. Dla firmy ubezpieczeniowej to ryzyko jest ogromne i trudne do dywersyfikacji.
+
+=== Rozwiązanie: reasekuracja
+
+Firma ubezpieczeniowa może *sprzedać* część tego ryzyka reasekuratorowi. Działa to analogicznie do ubezpieczenia — tylko że klientem jest inna firma, nie osoba prywatna.
+
+.Łańcuch transferu ryzyka
+[plantuml,primer-reinsurance-chain,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+
+package "Poziom 1 — Umowy z emerytami" {
+  actor "Jan Kowalski\n(emeryt)" as E1
+  actor "Anna Nowak\n(emerytka)" as E2
+  actor "... (milion osób)" as EN
+}
+
+package "Poziom 2 — Ubezpieczyciel" {
+  component "Firma Ubezpieczeniowa\n(np. Prudential UK)\n\nPłaci emerytury →\nNosi ryzyko długowieczności" as Ubezp
+}
+
+package "Poziom 3 — Reasekurator (nasz klient)" {
+  component "Firma Reasekuracyjna\n(np. Swiss Re, Munich Re)\n\nPrzejmuje ryzyko →\nDostaje premię reasekuracyjną" as Reasek
+}
+
+E1 --> Ubezp : Składka\nemeryturna
+E2 --> Ubezp : Składka\nemeryturna
+EN --> Ubezp : ...
+Ubezp -> E1 : Wypłata emerytury
+Ubezp -> E2 : Wypłata emerytury
+Ubezp -> EN : ...
+
+Ubezp --> Reasek : Premia reasekuracyjna\n(transfer ryzyka)
+Reasek --> Ubezp : Wyrównanie finansowe\ngdy ryzyko się materializuje
+
+note right of Reasek
+  Reasekurator specjalizuje się
+  w modelowaniu ryzyka długowieczności.
+  Akceptuje wiele takich kontraktów
+  i dywersyfikuje ryzyko.
+end note
+
+@enduml
+....
+
+=== Dlaczego ubezpieczyciel oddaje ryzyko?
+
+Bo reasekurator jest *lepszy* w zarządzaniu tym konkretnym ryzykiem:
+
+* Reasekurator ma **portfel wielu ubezpieczycieli** z różnych krajów → ryzyko jest zdywersyfikowane
+* Reasekurator zatrudnia **wyspecjalizowanych aktuariuszy** modelujących długowieczność
+* Ubezpieczyciel może **uwolnić kapitał** regulacyjny (wymogi Solvency II) po transferze ryzyka
+* Ubezpieczyciel ogranicza **katastroficzne straty** przy nieoczekiwanej długowieczności populacji
+
+== Kontrakt reasekuracyjny — jak to działa w praktyce
+
+=== Anatomia kontraktu
+
+Kontrakt reasekuracyjny to formalna umowa między ubezpieczycielem (_cedent_) a reasekuratorem. Zawiera:
+
+[cols="1,3"]
+|===
+|Element kontraktu |Opis
+
+|**Portfolio polis** |Lista konkretnych polis emerytalnych objętych kontraktem (np. 50 000 polis Prudential UK)
+|**Formuły kompensacji** |Algorytm obliczający ile reasekurator płaci za każdą osobę w zależności od jej statusu i wieku
+|**Próg trigger** |Warunki aktywujące wypłatę (np. śmiertelność >X% odchylenia od modelu)
+|**Warunki finansowe** |Premia reasekuracyjna, limity odpowiedzialności, franszyz
+|**Daty rozliczeń** |Zazwyczaj miesięczne; kiedy przesyłane są dane i kiedy następują płatności
+|**Warunki specjalne** |Wyjątki, wyłączenia, klauzule dostosowujące
+|===
+
+=== Miesięczny cykl rozliczeń (reconciliation)
+
+Sercem procesu jest **miesięczny cykl rozliczeń**. To właśnie on jest celem naszej platformy.
+
+.Miesięczny cykl rozliczeń — szczegółowy przepływ
+[plantuml,primer-reconciliation-cycle,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam sequenceArrowType ortho
+
+actor "Ubezpieczyciel\n(Counterparty)" as CP
+participant "Dział\nReconciliacji\nReasekuratora" as Rec
+participant "Arkusze\nExcel" as Excel
+actor "Manager\nReasekuratora" as Manager
+
+== Krok 1: Przesłanie danych (ok. 1-5. dnia miesiąca) ==
+
+CP -> Rec: Plik Excel: lista osób\nna dzień 1. miesiąca\n(kto żyje, kto umarł,\njak zmienił się status)
+note right of CP
+  Plik zawiera:
+  - ID osoby
+  - Status: żyje / umarła
+  - Wiek
+  - Numer polisy
+  (czasem tysiące wierszy)
+end note
+
+== Krok 2: Praca manualna (ok. 3-10 dni) ==
+
+Rec -> Excel: Otwórz plik z danymi\n+ plik z kontraktem
+Rec -> Excel: Ręcznie zastosuj\nformuły kontraktu
+note right of Excel
+  "Excel magic":
+  VLOOKUP, SUMIF, formuły
+  zagnieżdżone, makra VBA...
+  Nikt poza autorem nie rozumie!
+end note
+Excel -> Rec: Obliczony wynik:\nkto jest uprawniony\ndo kompensacji i ile
+
+Rec -> Manager: Propozycja rozliczenia\n(inny plik Excel)
+
+== Krok 3: Weryfikacja i negocjacje (ok. 5-15 dni) ==
+
+Manager -> CP: Email z propozycją:\n"Wg naszych wyliczeń\nnależy Wam się X zł"
+CP -> Manager: Odpowiedź emailem:\n"Nie zgadzamy się z poz. 3,\nosoby 1023 i 4567"
+Manager -> Rec: "Sprawdź jeszcze raz\npozycje 1023 i 4567"
+Rec -> Excel: Ponowne przeliczenie\n(kolejny arkusz)
+Rec -> Manager: Poprawiona wersja
+Manager -> CP: "Poprawiliśmy, \nproszę o potwierdzenie"
+CP -> Manager: "OK, zgadzamy się"
+
+== Krok 4: Podpisanie (ok. 1-3 dni) ==
+
+Manager -> CP: Formalny dokument\ndo podpisania (email + PDF)
+CP -> Manager: Podpisany dokument\n(email z załącznikiem)
+note right: Koniec cyklu!\n✅ Przelew bankowy B2B\nrealizowany osobno
+
+@enduml
+....
+
+=== Dlaczego to jest "armia ludzi"?
+
+Jeden cykl dla jednego ubezpieczyciela to praca kilku osób przez 2–4 tygodnie. Reasekurator ma **wielu ubezpieczycieli jednocześnie** — każdy z innym kontraktem, innym formatem pliku, innym rytmem przesyłania danych.
+
+.Skala problemu
+[plantuml,primer-scale,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+
+rectangle "Reasekurator" {
+  rectangle "Zespół A\n(5 osób)" as ZA
+  rectangle "Zespół B\n(5 osób)" as ZB
+  rectangle "Zespół C\n(5 osób)" as ZC
+  rectangle "Zespół D\n(5 osób)" as ZD
+  rectangle "..." as ZN
+}
+
+rectangle "Ubezpieczyciel 1\n(Wielka Brytania)" as CP1
+rectangle "Ubezpieczyciel 2\n(Niemcy)" as CP2
+rectangle "Ubezpieczyciel 3\n(Francja)" as CP3
+rectangle "Ubezpieczyciel 4\n(Szwajcaria)" as CP4
+rectangle "... (wiele firm)" as CPN
+
+CP1 --> ZA
+CP2 --> ZB
+CP3 --> ZC
+CP4 --> ZD
+CPN --> ZN
+
+note bottom
+  100+ managerów reconciliacji
+  Każdy obsługuje 1-3 ubezpieczycieli
+  Czas cyklu: 2-4 tygodnie
+  Ryzyko błędu: WYSOKIE
+end note
+
+@enduml
+....
+
+== Problem zaufania — serce architektury
+
+=== Dlaczego zaufanie jest problemem?
+
+To nie jest kwestia złej woli. Chodzi o strukturalny konflikt interesów:
+
+----
+Reasekurator → chce płacić mniej (kwestionuje każdą wątpliwą pozycję)
+Ubezpieczyciel → chce dostać więcej (prezentuje dane możliwie korzystnie)
+
+Obaj są NIEZALEŻNYMI podmiotami z różnych krajów.
+Nie mają wspólnego systemu, wspólnej bazy danych, ani wzajemnego zaufania.
+----
+
+Dziś zaufanie jest budowane przez *ludzką weryfikację*:
+
+* Człowiek sprawdza plik człowieka
+* Email potwierdza email
+* Podpis potwierdza podpis
+
+Jeśli pojawi się spór → sąd arbitrażowy, który patrzy na... emaile i Excele.
+
+=== Co musi zapewnić platforma?
+
+Platforma musi *cyfrowo zastąpić* tę ludzką warstwę zaufania. Oznacza to:
+
+[cols="1,2,2"]
+|===
+|Pytanie o zaufanie |Odpowiedź manualna (dziś) |Odpowiedź platformy (cel)
+
+|Czy plik danych nie był modyfikowany po wysłaniu? |Porównanie sumy kontrolnej emaila... albo po prostu wiara |SHA-256 checksum weryfikowany automatycznie przy odbiorze
+|Czy obliczenia są zgodne z kontraktem? |Człowiek sprawdza formuły Excela |Silnik eligibility stosuje zakodowane reguły kontraktu
+|Czy obie strony naprawdę się zgodziły? |Email z "OK" lub podpisany PDF |Cyfrowy podpis obu stron w niemodyfikowalnym rejestrze
+|Czy historia rozliczeń jest niezmieniona? |Folder z mailami (łatwy do modyfikacji) |Łańcuch hashowy (kryptograficznie weryfikowalny)
+|Kto co zrobił i kiedy? |Nagłówki emaili (łatwe do podrobienia) |Niemodyfikowalny dziennik zdarzeń z timestampem
+|===
+
+=== Co to jest łańcuch hashowy?
+
+To kluczowy mechanizm zaufania w architekturze. Wyobraź sobie łańcuch, gdzie każde ogniwo zawiera odcisk palca poprzedniego ogniwa:
+
+.Łańcuch hashowy — jak działa weryfikacja
+[plantuml,primer-hash-chain,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+
+package "Rejestr zdarzeń (append-only)" {
+
+  card "Zdarzenie #1\n──────────────\nTyp: PLIK_WGRANY\nAktor: Jan Kowalski (CP)\nDane: {sha256: abc123...}\nHash poprzedniego: 000000\n──────────────\n**Hash tego wpisu: XYZ789**" as E1 #E8F5E9
+
+  card "Zdarzenie #2\n──────────────\nTyp: OBLICZONO_UPRAWNIENIA\nAktor: System (silnik)\nDane: {kwota: 45 230 GBP}\nHash poprzedniego: XYZ789\n──────────────\n**Hash tego wpisu: QRS456**" as E2 #E8F5E9
+
+  card "Zdarzenie #3\n──────────────\nTyp: ZATWIERDZONE\nAktor: Anna Nowak (Manager)\nDane: {notatka: 'OK'}\nHash poprzedniego: QRS456\n──────────────\n**Hash tego wpisu: MNO123**" as E3 #E8F5E9
+
+  card "Zdarzenie #4\n──────────────\nTyp: PODPISANO\nAktor: CP Administrator\nDane: {podpis: ...}\nHash poprzedniego: MNO123\n──────────────\n**Hash tego wpisu: DEF789**" as E4 #BBDEFB
+
+}
+
+E1 -[#4CAF50]-> E2: poprzedni hash =\nXYZ789 ✅
+E2 -[#4CAF50]-> E3: poprzedni hash =\nQRS456 ✅
+E3 -[#4CAF50]-> E4: poprzedni hash =\nMNO123 ✅
+
+note bottom of E4
+  Jeśli ktoś zmieni Zdarzenie #2:
+  ❌ Hash wpisu #2 się zmieni
+  ❌ Hash poprzedniego w #3 nie będzie pasował
+  ❌ Łańcuch jest ZERWANY → wykryto manipulację!
+end note
+
+@enduml
+....
+
+Jeśli ktokolwiek (nawet administrator bazy danych) zmodyfikuje jakikolwiek historyczny wpis, łańcuch hashowy natychmiast to ujawni. Nie potrzeba blockchaina — wystarczy PostgreSQL z odpowiednimi uprawnieniami.
+
+== Architektura platformy — krok po kroku
+
+Teraz, gdy rozumiemy domenę, przeanalizujmy jak platforma rozwiązuje te problemy.
+
+=== Ogólny widok systemu
+
+.Widok kontekstowy — kto korzysta z platformy i w jakim celu
+[plantuml,primer-context,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam actorBackgroundColor #E3F2FD
+
+left to right direction
+
+actor "Manager Reconciliacji\n(pracownik reasekuratora)" as Manager #E8F5E9
+actor "Administrator CP\n(pracownik ubezpieczyciela)" as CpAdmin #E3F2FD
+actor "Audytor / Compliance\n(wewnętrzny, tylko odczyt)" as Audytor #FFF9C4
+
+rectangle "Platforma Reconciliacji Reasekuracyjnej\n\n[Multi-tenant SaaS na AWS]" as Platform {
+  usecase "Prześlij plik\nz danymi" as UC1
+  usecase "Oblicz uprawnienia\n(eligibility engine)" as UC2
+  usecase "Zatwierdź propozycję\nlub zgłoś korektę" as UC3
+  usecase "Podpisz\nrozliczenie" as UC4
+  usecase "Eksportuj raport\ndla regulatora" as UC5
+}
+
+CpAdmin --> UC1
+Manager --> UC2
+Manager --> UC3
+CpAdmin --> UC3
+Manager --> UC4
+CpAdmin --> UC4
+Audytor --> UC5
+
+note right of Platform
+  Każdy ubezpieczyciel = oddzielny tenant
+  Dane tenantów są izolowane na poziomie bazy danych
+  Dziennik zdarzeń = niemodyfikowalny łańcuch hashowy
+end note
+
+@enduml
+....
+
+=== Kluczowe komponenty
+
+.Architektura komponentów platformy
+[d2,primer-components,format=svg,layout=elk]
+....
+direction: down
+
+users: Użytkownicy {
+  style.fill: "#F5F5F5"
+  manager: Manager Reconciliacji\n(reasekurator) {
+    shape: person
+    style.fill: "#E8F5E9"
+  }
+  cp: Administrator CP\n(ubezpieczyciel) {
+    shape: person
+    style.fill: "#E3F2FD"
+  }
+  auditor: Audytor {
+    shape: person
+    style.fill: "#FFF9C4"
+  }
+}
+
+portal: Portal Webowy\n(React SPA na CloudFront) {
+  style.fill: "#FFF3E0"
+}
+
+api: Serwis API\n(ECS Fargate) {
+  style.fill: "#E8F5E9"
+}
+
+engine: Silnik Eligibility\n(ECS Fargate Task) {
+  style.fill: "#E8F5E9"
+}
+
+workflow: Orkiestrator Workflow\n(AWS Step Functions) {
+  style.fill: "#E3F2FD"
+}
+
+db: Baza Operacyjna\n(PostgreSQL RDS Multi-AZ) {
+  shape: cylinder
+  style.fill: "#F3E5F5"
+}
+
+audit: Rejestr Zdarzeń\n(PostgreSQL — schemat append-only\nłańcuch SHA-256) {
+  shape: cylinder
+  style.fill: "#CE93D8"
+}
+
+files: Magazyn Plików\n(Amazon S3 — szyfrowany) {
+  shape: cylinder
+  style.fill: "#E3F2FD"
+}
+
+auth: Uwierzytelnianie\n(AWS Cognito + MFA) {
+  style.fill: "#FFF9C4"
+}
+
+email: Powiadomienia\n(AWS SES) {
+  style.fill: "#FFF9C4"
+}
+
+users.manager -> portal: HTTPS
+users.cp -> portal: HTTPS
+users.auditor -> portal: HTTPS
+portal -> api: REST API
+api -> auth: Weryfikacja tokenu
+api -> db: Odczyt / Zapis\n(RLS per tenant)
+api -> audit: Tylko INSERT\n(niemodyfikowalny)
+api -> files: Przechowywanie plików
+api -> workflow: Uruchom workflow
+workflow -> engine: Oblicz uprawnienia
+workflow -> email: Wyślij powiadomienie
+workflow -> api: Callback zatwierdzenia
+....
+
+=== Jak działa tenant isolation?
+
+To jeden z najtrudniejszych problemów — musisz upewnić się, że ubezpieczyciel A **nigdy** nie zobaczy danych ubezpieczyciela B, nawet jeśli obaj używają tej samej bazy danych.
+
+.Multi-tenancy — izolacja danych na poziomie bazy
+[plantuml,primer-multitenancy,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+
+database "PostgreSQL RDS" {
+  package "Schemat: public" {
+    package "Tenant A: Prudential UK" #E8F5E9 {
+      rectangle "kontrakty (3 rekordy)"
+      rectangle "cykle (47 rekordów)"
+      rectangle "pliki (94 rekordy)"
+    }
+    package "Tenant B: Allianz DE" #E3F2FD {
+      rectangle "kontrakty (7 rekordów)"
+      rectangle "cykle (112 rekordów)"
+      rectangle "pliki (224 rekordy)"
+    }
+    package "Tenant C: AXA FR" #FFF9C4 {
+      rectangle "kontrakty (2 rekordy)"
+      rectangle "cykle (23 rekordy)"
+      rectangle "pliki (46 rekordów)"
+    }
+  }
+}
+
+note right
+  **Row-Level Security (RLS)**:
+  Polityka PostgreSQL wymusza:
+
+  -- Dostęp tylko do SWOICH danych --
+  CREATE POLICY tenant_isolation
+    ON reconciliation_cycles
+    USING (tenant_id = current_setting(
+      'app.current_tenant_id')::uuid);
+
+  Administrator Prudential UK:
+  ✅ Widzi cykle Prudential UK
+  ❌ Nie widzi cykli Allianz
+  ❌ Nie widzi cykli AXA
+
+  To jest egzekwowane przez BAZĘ DANYCH,
+  nie tylko przez aplikację!
+end note
+
+@enduml
+....
+
+=== Jak wygląda nowy cykl rozliczeń na platformie?
+
+.Nowy cykl rozliczeń — z platformą
+[plantuml,primer-new-cycle,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam sequenceArrowType ortho
+
+actor "Administrator CP\n(Ubezpieczyciel)" as CP
+participant "Portal\nWebowy" as Portal
+participant "Serwis\nAPI" as API
+participant "S3\n(pliki)" as S3
+participant "Rejestr\nZdarzeń" as Audit
+participant "Step\nFunctions" as SF
+participant "Silnik\nEligibility" as Engine
+actor "Manager\nReconciliacji" as Manager
+
+== Krok 1: Wgranie pliku (minuty, nie dni) ==
+
+CP -> Portal: Loguje się przez przeglądarkę\n(MFA wymagane)
+CP -> Portal: Wgrywa plik danych\n(CSV/Excel)
+Portal -> API: POST /cycles/{id}/files
+API -> S3: Zapisz plik\n+ oblicz SHA-256
+API -> Audit: INSERT: PLIK_WGRANY\n{sha256, kto, kiedy, hash_poprzedniego}
+API -> SF: Uruchom workflow
+note right of SF: Step Functions = automatyczny\nazjustowywacz stanów.\nNie gubi się jak email!
+
+== Krok 2: Automatyczne obliczenia (minuty, nie dni) ==
+
+SF -> Engine: Oblicz uprawnienia\n(plik + reguły z kontraktu)
+Engine -> Engine: Stosuje formuły kontraktu\ndo każdego wiersza pliku
+Engine --> SF: Wynik: lista uprawnionych\nkwota: 45 230 GBP
+SF -> API: Zapisz wynik
+API -> Audit: INSERT: UPRAWNIENIA_OBLICZONE\n{kwota, wersja_silnika, hash_poprzedniego}
+
+SF -> CP: Email: "Propozycja rozliczenia gotowa"
+SF -> Manager: Email: "Nowa propozycja do weryfikacji"
+
+== Krok 3: Weryfikacja w portalu (nie przez email!) ==
+
+Manager -> Portal: Przegląda propozycję\n(szczegółowa lista, pozycja po pozycji)
+
+alt Manager zatwierdza
+  Manager -> API: Zatwierdź
+  API -> Audit: INSERT: ZATWIERDZONE_PRZEZ_REASEKURATORA
+  SF -> CP: Email: "Proszę o podpis"
+  CP -> API: Podpisuje elektronicznie
+  API -> Audit: INSERT: PODPISANO ← **FINALNY, NIEMODYFIKOWALNY**
+else Manager żąda korekty
+  Manager -> API: Zgłoś korektę + uzasadnienie
+  API -> Audit: INSERT: KOREKTA_ZAŻĄDANA
+  CP -> API: Przyjmuje lub kwestionuje korektę
+  note right: Iteracja w portalu, nie przez email
+end
+
+@enduml
+....
+
+=== Porównanie: przed i po
+
+[cols="1,2,2"]
+|===
+|Aspekt |Przed (Excel + email) |Po (Platforma)
+
+|**Czas cyklu** |2–4 tygodnie |2–5 dni
+|**Ślad audytowy** |Skrzynka emailowa (łatwa do manipulacji) |Kryptograficzny łańcuch hashowy
+|**Obliczenia** |Ręczne formuły Excel (ryzyko błędu) |Automatyczny silnik eligibility (deterministyczny)
+|**Spory** |Email → kontrnegocjacje → arbitraż |Ustrukturyzowany workflow z historią zmian
+|**Onboarding nowego CP** |Tygodnie konfiguracji ręcznej |Formularz + test cycle + UAT
+|**Compliance (Solvency II)** |Rekonstrukcja z emaili (żmudna) |Automatyczny eksport z rejestru
+|**Skalowalność** |+1 ubezpieczyciel = +5 pracowników |+1 ubezpieczyciel = konfiguracja w portalu
+|===
+
+== Trzy warianty architektoniczne
+
+W solution design zaproponowano trzy opcje. Oto ich istota w prostym języku:
+
+=== Opcja 1: Lekki Portal (~165 000 USD, 3 miesiące)
+
+Prosta aplikacja webowa + PostgreSQL. Zatwierdzenia nadal wymagają emaili. Dziennik zdarzeń oparty na triggerach (może być wyłączony przez administratora bazy).
+
+*Kiedy wybrać:* Tylko jako proof-of-concept dla 1–3 ubezpieczycieli.
+
+=== Opcja 2: Pełna Platforma ✅ (~640 000 USD, 8 miesięcy) — Rekomendowana
+
+Pełny workflow ze Step Functions, kryptograficzny łańcuch hashowy, Row-Level Security, wielodostępny portal. Pokrywa cały obecny portfel ubezpieczycieli (5–50 firm).
+
+*Kiedy wybrać:* To jest właściwe rozwiązanie na teraz i na najbliższe lata.
+
+=== Opcja 3: Event Sourcing (~1 100 000 USD, 13 miesięcy)
+
+Każda zmiana stanu to niemodyfikowalne zdarzenie w sklepie zdarzeń. Maksymalna siła audytowa, możliwość odtworzenia dowolnego historycznego stanu. Znacznie wyższa złożoność implementacji.
+
+*Kiedy wybrać:* Gdy portfel urośnie powyżej 50 firm lub regulator zażąda pełnego odtworzenia historii zdarzeń.
+
+.Porównanie opcji — złożoność vs. siła audytu
+[plantuml,primer-options-tradeoff,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+
+!pragma teoz true
+
+scale 600 width
+
+rectangle "OPCJA 1\nLekki Portal\n\n💰 165K USD\n⏱ 3 miesiące\n🛡 Słaby audyt\n🏢 Do 5 CP" as O1 #FFCDD2
+rectangle "OPCJA 2 ✅\nPełna Platforma\n(REKOMENDOWANA)\n\n💰 640K USD\n⏱ 8 miesięcy\n🛡 Silny audyt\n🏢 Do 50 CP" as O2 #C8E6C9
+rectangle "OPCJA 3\nEvent Sourcing\n\n💰 1.1M USD\n⏱ 13 miesięcy\n🛡 Maksymalny audyt\n🏢 Bez limitu CP" as O3 #BBDEFB
+
+O1 -[hidden]-> O2
+O2 -[hidden]-> O3
+
+note bottom of O1
+  Prosta, ale
+  nie skaluje się
+  poza POC
+end note
+
+note bottom of O2
+  Balans między
+  kosztem, czasem
+  i siłą audytu
+end note
+
+note bottom of O3
+  Maksymalne
+  możliwości, ale
+  duża złożoność
+end note
+
+@enduml
+....
+
+== Kluczowe pojęcia techniczne — słownik
+
+=== SHA-256 (skrót kryptograficzny)
+
+Funkcja matematyczna, która dla dowolnych danych tworzy unikalny "odcisk palca" (64 znaki hex). Zmiana choćby jednego bajtu wejściowego całkowicie zmienia wynik.
+
+----
+SHA-256("Jan Kowalski, status: żyje") = a7f3c9...
+SHA-256("Jan Kowalski, status: umarł")  = b8e2d1...  ← zupełnie inny!
+----
+
+=== Row-Level Security (RLS)
+
+Mechanizm PostgreSQL, który pozwala zapisać *w bazie danych* reguły dostępu:
+"Użytkownik z tenant_id = X widzi tylko wiersze z tenant_id = X". Egzekwowanie następuje na poziomie bazy, nie aplikacji — nawet jeśli aplikacja ma błąd, baza nie wyda danych innego tenanta.
+
+=== AWS Step Functions
+
+Usługa AWS do budowania przepływów pracy. Zamiast polegać na emailach do koordynacji między ludźmi, Step Functions utrzymuje stan maszyny stanów (czeka → zatwierdzone → podpisane). Ma wbudowaną historię każdego wykonania — to dodatkowy dziennik audytowy.
+
+=== Multi-tenancy (wielodostępność)
+
+Architektura, w której wiele niezależnych organizacji (tenantów) dzieli tę samą infrastrukturę platformy, ale ich dane są całkowicie od siebie izolowane. W naszym przypadku: każdy ubezpieczyciel to oddzielny tenant.
+
+=== Eligibility Engine (silnik uprawnień)
+
+Serwis, który odczytuje reguły kontraktu i plik danych, a następnie algorytmicznie oblicza, które osoby są "uprawnione" (eligible) do objęcia kompensacją reasekuracyjną. Zastępuje ręczne formuły Excelowe deterministycznym kodem.
+
+=== Solvency II
+
+Europejska dyrektywa regulacyjna dla firm ubezpieczeniowych i reasekuracyjnych. Wymaga m.in. przechowywania szczegółowych, audytowalnych rejestrów wszystkich transakcji transferu ryzyka przez co najmniej 10 lat. To jeden z głównych powodów, dla których niemodyfikowalny dziennik zdarzeń jest wymaganiem, a nie dodatkiem.
+
+== Podsumowanie — dlaczego ta architektura?
+
+.Mapa decyzji architektonicznych — dlaczego to wybraliśmy
+[plantuml,primer-decisions-map,format=svg]
+....
+@startuml
+skinparam backgroundColor #fafafa
+skinparam defaultFontName Arial
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1565C0
+
+start
+
+:Problem: niezależne firmy muszą\nsobie ufać bez ufania sobie nawzajem;
+
+if (Czy potrzebujemy blockchaina?) then (TAK?)
+  :STOP: Reasekurator jest jedynym\nkustodiuszem danych.\nBlockchain = overhead bez korzyści;
+  note right: Lekcja z projektu mentora:\nblockchain odrzucony na etapie discovery
+  -> NIE;
+else (NIE ✅)
+endif
+
+:Potrzebujemy: niemodyfikowalny\ndziennik z weryfikacją;
+
+if (immuDB lub QLDB?) then (Egzotyczna baza?)
+  :STOP: immuDB — problemy z transakcjami w prod.\nQLDB — AWS wycofał usługę w 2025;
+  note right: Lekcja z projektu mentora:\nimmuDB → migracja do PostgreSQL
+  -> NIE ✅;
+else (NIE ✅)
+endif
+
+:PostgreSQL + append-only\n+ łańcuch SHA-256;
+
+if (Jak izolować tenantów?) then (Osobna baza per tenant?)
+  :Koszt: migracje × N baz,\nzarządzanie połączeniami;
+  -> NIE ✅;
+else (RLS ✅)
+endif
+
+:Row-Level Security\n— izolacja na poziomie DB;
+
+if (Jak zarządzać\nwielokrokowym workflow?) then (Własna maszyna stanów?)
+  :Koszt: budowanie mechanizmu\nretry, historii, timeoutów od zera;
+  -> NIE ✅;
+else (Step Functions ✅)
+endif
+
+:AWS Step Functions\n— wbudowana historia wykonania;
+
+stop
+
+@enduml
+....
+
+Kluczowa filozofia całej architektury pochodzi wprost z mentorskiego projektu:
+
+____
+*"Simpler is often better. Your job as an architect is to prevent over-complication."*
+— Nikita Sosnov, mentor projektu
+
+Blockchain wydawał się oczywisty → okazał się zbędny.
+immuDB wydawał się elegancki → okazał się ryzykowny.
+PostgreSQL z łańcuchem hashowym jest nudny → i dlatego jest właściwy.
+____
+
+---
+
+_Dokument edukacyjny przygotowany na potrzeby projektu mentorskiego — Case Study 03._
+_Autor: Solution Architect | Data: 2026-04-14_

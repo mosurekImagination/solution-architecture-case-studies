@@ -1,8 +1,5 @@
 # Case Study 03 — Key Informations
 
-> Extracted from client meeting transcription. Personal data anonymized.
-> Speakers: **Solution Architect / Mentor** (consulting side) and **Mentee Architect** (learner side).
-
 ---
 
 ## Business Context
