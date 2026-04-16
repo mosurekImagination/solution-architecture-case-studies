@@ -1,15 +1,15 @@
-# Mentorship Exercise 03 — Critical Design Challenge
+# Exercise 03 — Architecture Challenge (AI-Assisted)
 
-**Exercise:** Reinsurance Reconciliation Platform — B2B Trust Infrastructure  
-**Mentee:** Tomasz Mosur  
-**Review type:** Senior adversarial critique — all decisions challenged  
+**Exercise:** Reinsurance Reconciliation Platform — B2B Trust Infrastructure
+**Author:** Tomasz Mosur
 **Date:** 2026-04-16
+**Type:** AI-assisted adversarial architecture review — every major decision challenged on elegance, scalability, and maintainability
 
 ---
 
 ## Framing
 
-The initial analysis (see [mentor-analysis.md](mentor-analysis.md)) confirmed the work is production-grade in framing and coverage. This review goes deeper: every major decision is challenged on elegance, scalability, and maintainability. The goal is not to find fault — it is to surface the second-order thinking that separates a good architect from a great one.
+The initial review (see [architecture-review.md](architecture-review.md)) confirmed the work is production-grade in framing and coverage. This review goes deeper: every major decision is challenged on elegance, scalability, and maintainability. The goal is not to find fault — it is to surface the second-order thinking that separates a good architect from a great one.
 
 ---
 
@@ -235,7 +235,7 @@ That is a 45–115 minute process under favorable conditions. The 1-hour RTO is 
 
 **What the design says:** PostgreSQL chosen over blockchain, QLDB, immuDB — "boring and proven."
 
-**The challenge:** The narrative is correct but relies partly on *authority* (mentor's production experience with immuDB) rather than *first principles*. A regulator or CTO reading ADR-001 might push back: "If immuDB had issues with a .NET client, why not use a Go client?" or "QLDB was discontinued but its cryptographic verification model was sound — why not implement the same model in PostgreSQL yourself?"
+**The challenge:** The narrative is correct but relies partly on *authority* rather than *first principles*. A regulator or CTO reading ADR-001 might push back: "If immuDB had issues with a .NET client, why not use a Go client?" or "QLDB was discontinued but its cryptographic verification model was sound — why not implement the same model in PostgreSQL yourself?"
 
 The design should answer these challenges from first principles:
 
@@ -318,7 +318,7 @@ The design demonstrates strong architectural *breadth* — all the right compone
 
 ---
 
-## Discussion Questions for Next Mentorship Session
+## Discussion Questions for Self-Reflection
 
 1. **Hash chain per-tenant:** Why was a global chain designed instead of a per-tenant chain? What would the migration look like if you wanted to change this after go-live?
 

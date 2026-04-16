@@ -50,3 +50,12 @@ Diagrams must be legible when exported to PDF at standard A4/Letter page width. 
 
 **Structurizr (C4):**
 - The Kroki renderer does not support `configuration { styles { ... } }` — do not add it
+
+## AI-Generated Documents
+
+AI-assisted reviews, challenge documents, and self-assessments are stored in an `ai-documents/` subfolder within each case study (e.g., `03/ai-documents/`). These files are **not** client-facing deliverables.
+
+- Always label them with `**Type:** AI-assisted ...` in the document header.
+- Never place AI-generated content in `docs/` alongside client-facing solution designs.
+- Naming convention: `architecture-review.md`, `architecture-challenge.md`, `self-assessment.md`.
+- The author field should reflect the human author (`**Author:** <name>`), not a fictional reviewer role.

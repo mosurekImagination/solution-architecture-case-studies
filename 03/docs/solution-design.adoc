@@ -1,8 +1,7 @@
 = Reinsurance Reconciliation Platform — Solution Design
 :author: Solution Architect
-:revnumber: 0.1
-:revdate: 2026-04-14
-:status: Draft
+:revnumber: 1.0
+:revdate: 2026-04-16
 :toc: left
 :toclevels: 3
 :numbered:
@@ -67,24 +66,24 @@ This manual process requires a large team of reconciliation managers. Trust betw
 |Option 2 — Full Platform with Workflow Engine and Hash-Chain Audit Ledger
 
 |**Estimated CAPEX**
-|~$640K (8-month delivery; includes 20% contingency)
+|~$700K (9.5-month delivery; includes 20% contingency)
 
 |**Estimated OPEX**
-|~$1,600–$2,500/month (AWS eu-west-2; scales sub-linearly with counterparty growth)
+|~$985–$1,800/month (AWS eu-west-2; scales sub-linearly with counterparty growth)
 
 |**Timeline**
-|8 months (4 phases); first counterparty live at end of Phase 3
+|9.5 months (4 phases); first counterparty live at end of Phase 3
 
 |**Team Size**
-|5 people: 1 Architect + 3 Senior Developers + 1 Security Engineer + 1 QA Engineer
+|5 people: 1 Architect + 3 Senior Developers (Kotlin/Spring Boot) + 1 Security Engineer + 1 QA Engineer
 
 |**Key Differentiator**
-|SHA-256 hash-chain audit ledger provides Solvency II-grade tamper evidence without blockchain overhead; AWS Step Functions turns the approval chain into a queryable execution history
+|SHA-256 hash-chain audit ledger provides Solvency II-grade tamper evidence without blockchain overhead; AWS Step Functions turns the multi-level approval chain into a queryable execution history; serverless infrastructure (Lambda + Aurora Serverless v2) minimises cost between monthly peaks; Kotlin BigDecimal ensures financial precision
 |===
 
 === Scope Boundary
 
-This engagement delivers: contract registry, counterparty file ingestion, eligibility engine, multi-step approval workflow, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, and regulatory export.
+This engagement delivers: contract registry with file type configuration, typed multi-file counterparty ingestion, expression tree-based eligibility engine with BigDecimal arithmetic, multi-level approval workflow with counter-proposal support, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, data residency zone tracking, and regulatory export.
 
 This engagement explicitly *does not* include: payment service provider integration (B2B money settlement is handled outside the platform), blockchain infrastructure, historical Excel record migration (closed cycles remain in existing archives), consumer-facing functionality, or changes to the counterparties' internal systems.
 
@@ -100,8 +99,8 @@ This engagement explicitly *does not* include: payment service provider integrat
 |Hard — changing the audit model requires data migration
 
 |2
-|How to orchestrate the multi-step approval workflow
-|AWS Step Functions Standard Workflows with wait-for-callback
+|How to orchestrate the multi-step, multi-level approval workflow
+|AWS Step Functions Standard Workflows with wait-for-callback; sub-workflows for each approval level
 |Medium — Step Functions execution history is natively queryable
 
 |3
@@ -116,8 +115,23 @@ This engagement explicitly *does not* include: payment service provider integrat
 
 |5
 |How counterparties exchange files with the platform
-|HTTPS web upload via S3 pre-signed URLs; SFTP available as fallback
+|HTTPS web upload via S3 pre-signed URLs; SFTP available as fallback; typed multi-file ingestion per cycle
 |Easy — adding new exchange channels does not change core processing
+
+|6
+|What backend language for API and eligibility engine
+|Kotlin + Spring Boot compiled to GraalVM native image; single language for all backend services
+|Medium — language migration requires rewrite; BigDecimal dependency locks in JVM ecosystem
+
+|7
+|How to handle compute for a monthly-peak workload
+|AWS Lambda (API + eligibility) + Aurora Serverless v2; pay-per-use with automatic scaling
+|Medium — migration to ECS Fargate is straightforward if Lambda limits are exceeded
+
+|8
+|How to express contract rules without per-contract code changes
+|Structured expression tree (AND/OR/range/tiered) evaluated by a generic engine; validated against versioned JSON Schema
+|Medium — rule schema is versioned; adding new node types is additive
 |===
 
 == Problem Statement
@@ -227,7 +241,7 @@ A single cloud-hosted platform where the reinsurer acts as the trusted custodian
 
 |**Approach**
 |Web portal + PostgreSQL audit triggers; manual approval via email prompts
-|Workflow engine + append-only hash-chain ledger + automated approval state machine
+|Workflow engine + append-only hash-chain ledger + multi-level approval state machine; serverless compute (Lambda + Aurora Serverless v2); Kotlin API with BigDecimal for financial precision
 |Full event sourcing; every state transition stored as an immutable event; current state derived by replaying the event log
 
 |**Immutability**
@@ -257,22 +271,22 @@ A single cloud-hosted platform where the reinsurer acts as the trusted custodian
 
 |**CAPEX (incl. contingency)**
 |~$165K
-|~$640K
+|~$700K
 |~$1.1M
 
 |**OPEX / month**
 |~$800
-|~$1,600–$2,500
+|~$985–$1,800
 |~$4,500–$5,500
 
 |**Timeline**
 |3 months
-|8 months
+|9.5 months
 |13 months
 
 |**Team**
 |1 Architect + 2 Developers + 1 QA
-|1 Architect + 3 Developers + 1 Security + 1 QA
+|1 Architect + 3 Developers (Kotlin/Spring Boot) + 1 Security + 1 QA
 |1 Architect + 4 Developers + 1 Security + 1 Data Engineer + 1 QA
 
 |**Risk**
@@ -294,8 +308,8 @@ A single cloud-hosted platform where the reinsurer acts as the trusted custodian
     "values": [
       {"option": "Option 1\nLightweight", "category": "CAPEX", "cost": 165},
       {"option": "Option 1\nLightweight", "category": "Year-1 OPEX", "cost": 10},
-      {"option": "Option 2\nFull Platform ✅", "category": "CAPEX", "cost": 640},
-      {"option": "Option 2\nFull Platform ✅", "category": "Year-1 OPEX", "cost": 30},
+      {"option": "Option 2\nFull Platform ✅", "category": "CAPEX", "cost": 700},
+      {"option": "Option 2\nFull Platform ✅", "category": "Year-1 OPEX", "cost": 12},
       {"option": "Option 3\nEvent-Sourced", "category": "CAPEX", "cost": 1100},
       {"option": "Option 3\nEvent-Sourced", "category": "Year-1 OPEX", "cost": 66}
     ]
@@ -462,10 +476,10 @@ workspace {
 
     platform = softwareSystem "Reinsurance Reconciliation Platform" {
       webApp = container "Web Application" "Browser-based portal for internal and external users; two UX modes based on user role" "React SPA / CloudFront + S3"
-      apiService = container "API Service" "REST API handling auth, business logic, file coordination, and workflow triggers" "Node.js / ECS Fargate"
-      eligibilityEngine = container "Eligibility Engine" "Reads contract rules and data file; computes eligibility result and compensation proposal" "Python / ECS Fargate Task"
+      apiService = container "API Service" "REST API handling auth, business logic, file coordination, and workflow triggers" "Kotlin + Spring Boot / AWS Lambda (GraalVM native)"
+      eligibilityEngine = container "Eligibility Engine" "Reads contract rules and typed data files; evaluates expression tree rules and computes compensation using BigDecimal" "Kotlin + Spring Boot / AWS Lambda (GraalVM native)"
       workflowOrchestrator = container "Workflow Orchestrator" "Approval state machine with human-approval callbacks; execution history is a native audit artifact" "AWS Step Functions (Standard)"
-      operationalDb = container "Operational Database" "Stores tenants, users, contracts, reconciliation cycles, approval steps, and eligibility results; RLS enforced per tenant" "PostgreSQL RDS Multi-AZ" "database"
+      operationalDb = container "Operational Database" "Stores tenants, users, contracts, reconciliation cycles, approval steps, and eligibility results; RLS enforced per tenant" "Aurora Serverless v2 (PostgreSQL-compatible)" "database"
       auditLedger = container "Audit Ledger" "Append-only schema in the same RDS instance; SHA-256 hash chain across all events; INSERT-only DB role" "PostgreSQL — Append-Only Schema" "database"
       fileStore = container "File Store" "Encrypted object storage for counterparty data files and contract documents; organised by tenant prefix; versioning enabled" "Amazon S3 (SSE-S3)" "database"
       cognitoExternal = container "Cognito User Pool" "Authentication for external counterparty users; MFA enforced" "AWS Cognito"
@@ -483,7 +497,7 @@ workspace {
     apiService -> workflowOrchestrator "Start workflow; receive callbacks" "AWS SDK"
     apiService -> cognitoExternal "Validate tokens (external users)" "JWKS"
     apiService -> cognitoInternal "Validate tokens (internal users)" "JWKS"
-    workflowOrchestrator -> eligibilityEngine "Invoke eligibility calculation" "ECS task / Lambda"
+    workflowOrchestrator -> eligibilityEngine "Invoke eligibility calculation" "Lambda"
     workflowOrchestrator -> ses "Send notifications" "API"
     workflowOrchestrator -> apiService "Human approval callback (task token)" "HTTPS"
     cognitoInternal -> identityProvider "Federate identity" "SAML 2.0"
@@ -534,7 +548,7 @@ edge: Edge Layer {
 
 api: API Layer {
   style.fill: "#E8F5E9"
-  apiSvc: API Service\n(ECS Fargate) {
+  apiSvc: API Service\n(Lambda + API Gateway) {
     style.fill: "#C8E6C9"
   }
   cognito: Cognito\n(Auth) {
@@ -547,7 +561,7 @@ workflow: Workflow Layer {
   stepFn: Step Functions\n(Approval State Machine) {
     style.fill: "#BBDEFB"
   }
-  eligibility: Eligibility Engine\n(ECS Fargate Task) {
+  eligibility: Eligibility Engine\n(Lambda) {
     style.fill: "#BBDEFB"
   }
   ses: SES\n(Notifications) {
@@ -557,7 +571,7 @@ workflow: Workflow Layer {
 
 data: Data Layer {
   style.fill: "#F3E5F5"
-  rds: PostgreSQL RDS\nMulti-AZ {
+  rds: Aurora Serverless v2\n(PostgreSQL-compatible) {
     shape: cylinder
     style.fill: "#E1BEE7"
   }
@@ -605,49 +619,72 @@ participant "S3\nFile Store" as S3
 participant "Audit\nLedger" as AUDIT
 participant "Step\nFunctions" as SF
 participant "Eligibility\nEngine" as EE
-participant "Reconciliation\nManager" as RM
+participant "Reconciliation\nManager (L1)" as RM
+participant "Senior\nManager (L2)" as SM
 participant "SES\nEmail" as SES
 
-== Phase 1: File Submission ==
+== Phase 1: Multi-File Submission ==
 
-CP -> WEB: Upload monthly data file
-WEB -> API: POST /cycles/{id}/files\n(multipart upload)
+CP -> WEB: Upload people table file
+WEB -> API: POST /cycles/{id}/files\n(file_type=PEOPLE_TABLE)
 API -> S3: Store file; record SHA-256 checksum
-S3 -->> API: s3_key + ETag confirmed
-API -> AUDIT: INSERT FILE_UPLOADED event\n(sha256, actor, previous_hash, event_hash)
+API -> AUDIT: INSERT FILE_UPLOADED event\n(file_type, sha256, previous_hash, event_hash)
+API -->> WEB: 202 Accepted — file received
+
+CP -> WEB: Upload money movement file
+WEB -> API: POST /cycles/{id}/files\n(file_type=MONEY_MOVEMENT)
+API -> S3: Store file; record SHA-256 checksum
+API -> AUDIT: INSERT FILE_UPLOADED event
+
+note over API: Check cycle_readiness view:\nall required file types received?
+API -> AUDIT: INSERT CYCLE_FILES_COMPLETE event
 API -> SF: StartExecution — reconciliation workflow
-API -->> WEB: 202 Accepted — cycle in progress
+API -->> WEB: All files received — cycle in progress
 
 == Phase 2: Eligibility Calculation ==
 
-SF -> EE: InvokeTask — compute eligibility\n(contract_id, data_file s3_key)
-EE -> S3: Fetch data file
+SF -> EE: InvokeTask — compute eligibility\n(contract_id, cycle_files s3_keys)
+EE -> S3: Fetch all typed data files
 EE -> API: GET /contracts/{id}/rules
-EE -> EE: Apply contract rules\nto each individual record
+EE -> EE: Evaluate expression tree rules\nagainst each individual record
 EE -->> SF: TaskSuccess — eligibility_result_json
 SF -> API: POST /cycles/{id}/eligibility-result
 API -> AUDIT: INSERT ELIGIBILITY_COMPUTED event\n(result_summary, engine_version, previous_hash, event_hash)
 SF -> SES: Send "Proposal ready for review"\nto Reconciliation Manager
 
-== Phase 3: Reinsurer Review ==
+== Phase 3: Multi-Level Reinsurer Review ==
 
 SES -->> RM: Email — "Cycle {id} proposal ready"
 RM -> WEB: Open proposal; review eligibility result
-alt Reinsurer approves
-  RM -> API: POST /cycles/{id}/approve\n(step_token)
-  API -> AUDIT: INSERT REINSURER_APPROVED event
+alt L1 approves (amount ≤ threshold)
+  RM -> API: POST /cycles/{id}/approve\n(step_token, level=L1)
+  API -> AUDIT: INSERT REINSURER_APPROVED_L1 event
+  API -> SF: SendTaskSuccess — step_token
+else L1 approves (amount > threshold — L2 required)
+  RM -> API: POST /cycles/{id}/approve\n(step_token, level=L1)
+  API -> AUDIT: INSERT REINSURER_APPROVED_L1 event
+  API -> SF: SendTaskSuccess — escalate_to_L2
+  SF -> SES: Notify Senior Manager
+  SM -> API: POST /cycles/{id}/approve\n(step_token, level=L2)
+  API -> AUDIT: INSERT REINSURER_APPROVED_L2 event
   API -> SF: SendTaskSuccess — step_token
 else Reinsurer requests adjustment
   RM -> API: POST /cycles/{id}/adjust\n(adjustment_note)
   API -> AUDIT: INSERT ADJUSTMENT_REQUESTED event
   API -> SF: SendTaskSuccess — step_token (adjusted)
   SF -> SES: Notify counterparty of adjustment
-  CP -> API: POST /cycles/{id}/accept-adjustment
-  API -> AUDIT: INSERT ADJUSTMENT_ACCEPTED event
-  SF -> SES: Re-notify Reconciliation Manager
-  RM -> API: POST /cycles/{id}/approve
-  API -> AUDIT: INSERT REINSURER_APPROVED event
-  API -> SF: SendTaskSuccess — step_token
+  alt Counterparty accepts adjustment
+    CP -> API: POST /cycles/{id}/accept-adjustment
+    API -> AUDIT: INSERT ADJUSTMENT_ACCEPTED event
+  else Counterparty submits revised file
+    CP -> API: POST /cycles/{id}/files\n(file_type=PEOPLE_TABLE, revised=true)
+    API -> AUDIT: INSERT FILE_REVISED event
+    note over SF: Re-trigger eligibility calculation\nwith updated file set
+  else Counterparty submits counter-proposal
+    CP -> API: POST /cycles/{id}/counter-proposal
+    API -> AUDIT: INSERT COUNTER_PROPOSAL_SUBMITTED event
+    SF -> SES: Notify Reconciliation Manager\nof counter-proposal
+  end
 end
 
 == Phase 4: Counter-Sign and Seal ==
@@ -666,6 +703,8 @@ API -->> WEB: Cycle status = SIGNED ✅
 
 === Approval Workflow State Machine
 
+The approval model supports multi-round negotiation between the reinsurer and counterparty. Multiple reinsurer approvers can sign off in sequence (L1 reconciliation manager, L2 senior manager for cycles above a configurable threshold amount). The counterparty can submit revised data files at any point before the cycle is sealed — re-triggering a full eligibility recalculation — or issue a formal counter-proposal with their own eligibility calculation.
+
 .Reconciliation Cycle — State Machine
 [plantuml,case03-state-machine,format=svg]
 ....
@@ -680,26 +719,36 @@ skinparam state {
   EndColor #B71C1C
 }
 
-[*] --> FILE_PENDING : Cycle opened
+[*] --> AWAITING_FILES : Cycle opened
 
-FILE_PENDING --> FILE_UPLOADED : Counterparty uploads data file\n[SHA-256 checksum verified]
-FILE_UPLOADED --> ELIGIBILITY_RUNNING : Step Functions invokes\nEligibility Engine
+AWAITING_FILES --> FILES_COMPLETE : All required file types\nreceived for this contract
+FILES_COMPLETE --> ELIGIBILITY_RUNNING : Step Functions invokes\nEligibility Engine
 ELIGIBILITY_RUNNING --> PROPOSAL_READY : Calculation complete
-PROPOSAL_READY --> REINSURER_REVIEW : Notification sent to\nReconciliation Manager
+PROPOSAL_READY --> REINSURER_REVIEW_L1 : Notification sent to\nReconciliation Manager
 
-REINSURER_REVIEW --> REINSURER_APPROVED : Manager approves proposal
-REINSURER_REVIEW --> ADJUSTMENT_REQUESTED : Manager requests adjustment
+state "Multi-Level Reinsurer Sign-Off" as reinsurerBlock {
+  REINSURER_REVIEW_L1 --> REINSURER_REVIEW_L2 : L1 approves\n[amount > threshold]
+  REINSURER_REVIEW_L1 --> COUNTERPARTY_REVIEW : L1 approves\n[amount ≤ threshold]
+  REINSURER_REVIEW_L2 --> COUNTERPARTY_REVIEW : L2 approves
+  REINSURER_REVIEW_L2 --> REINSURER_REVIEW_L1 : L2 requests adjustment\n(loop back)
+}
+
+REINSURER_REVIEW_L1 --> ADJUSTMENT_REQUESTED : Manager requests adjustment
 
 ADJUSTMENT_REQUESTED --> COUNTERPARTY_RESPONDING : Adjustment sent to counterparty
-COUNTERPARTY_RESPONDING --> REINSURER_REVIEW : Counterparty accepts adjustment;\nManager re-reviews
-COUNTERPARTY_RESPONDING --> DISPUTED : Counterparty rejects adjustment
 
-DISPUTED --> ESCALATED : Manual escalation\n(compliance team)
-ESCALATED --> REINSURER_REVIEW : Escalation resolved
+COUNTERPARTY_RESPONDING --> REINSURER_REVIEW_L1 : Counterparty accepts adjustment
+COUNTERPARTY_RESPONDING --> ELIGIBILITY_RUNNING : Counterparty submits\nrevised data file\n(full re-computation)
+COUNTERPARTY_RESPONDING --> REINSURER_COUNTER_REVIEW : Counterparty submits\ncounter-proposal
 
-REINSURER_APPROVED --> COUNTERPARTY_REVIEW : Notification sent to\nCounterparty Administrator
+REINSURER_COUNTER_REVIEW --> REINSURER_REVIEW_L1 : Counter-proposal\naccepted / merged
+REINSURER_COUNTER_REVIEW --> ESCALATED : Cannot resolve
+
 COUNTERPARTY_REVIEW --> CYCLE_SIGNED : Counterparty counter-signs\n[Audit ledger sealed — immutable]
-COUNTERPARTY_REVIEW --> ADJUSTMENT_REQUESTED : Counterparty disputes\nproposal
+COUNTERPARTY_REVIEW --> REINSURER_COUNTER_REVIEW : Counterparty submits\ncounter-proposal
+COUNTERPARTY_REVIEW --> ELIGIBILITY_RUNNING : Counterparty submits\nrevised data file\n(full re-computation)
+
+ESCALATED --> REINSURER_REVIEW_L1 : Escalation resolved
 
 CYCLE_SIGNED --> [*]
 
@@ -709,11 +758,18 @@ note right of CYCLE_SIGNED
   SHA-256 hash chain link —
   record cannot be modified
 end note
+
+note right of REINSURER_REVIEW_L2
+  L2 approval required when
+  cycle compensation amount
+  exceeds contract threshold
+  (configurable per contract)
+end note
 ....
 
 === Audit Ledger Design
 
-The audit ledger is the platform's trust anchor. It is a separate append-only schema (`audit`) within the same PostgreSQL RDS instance, with distinct privileges:
+The audit ledger is the platform's trust anchor. It is a separate append-only schema (`audit`) within the same Aurora Serverless v2 instance, with distinct privileges:
 
 * The application role has `INSERT` only — no `UPDATE`, no `DELETE`
 * A dedicated verification role has `SELECT` only
@@ -730,7 +786,7 @@ CREATE TABLE audit.events (
     actor_id        UUID            NOT NULL,
     actor_type      TEXT            NOT NULL,  -- INTERNAL | COUNTERPARTY | SYSTEM
     payload         JSONB           NOT NULL,  -- event-specific data (file checksum, result summary, approval note, etc.)
-    previous_hash   TEXT            NOT NULL,  -- SHA-256 of the immediately preceding row (empty string for row 1)
+    previous_hash   TEXT            NOT NULL,  -- SHA-256 of the immediately preceding row for this tenant (genesis row stores KMS-signed anchor hash)
     event_hash      TEXT            NOT NULL,  -- SHA-256(previous_hash || event_type || actor_id || payload::text || created_at::text)
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT now()
 );
@@ -744,9 +800,19 @@ GRANT SELECT ON audit.events TO verify_role;
 ALTER TABLE audit.events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON audit.events
     USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- Per-tenant chain: each INSERT resolves previous_hash from the last row
+-- for the same tenant_id — not globally. This eliminates write contention
+-- when multiple tenants submit files simultaneously at month-end.
+-- Example: SELECT event_hash FROM audit.events
+--          WHERE tenant_id = $1 ORDER BY id DESC LIMIT 1
 ----
 
-**Tamper detection:** A weekly Lambda job (`audit-verify`) recomputes every row's `event_hash` and checks that each `previous_hash` matches the preceding row's `event_hash`. Any discrepancy triggers an immediate alert to the compliance team via SNS.
+**Per-tenant hash chain:** Each tenant has an independent chain. Row N's `previous_hash` references the hash of the preceding event for the *same* `tenant_id`, not the globally preceding row. This allows concurrent month-end submissions from all counterparties without serialization contention.
+
+**KMS-signed genesis:** When a tenant is provisioned, a genesis audit event (`TENANT_PROVISIONED`) is written whose `previous_hash` is a signature produced by AWS KMS (using a CMK dedicated to audit integrity). This anchors the chain cryptographically — an attacker who deletes and re-inserts all rows cannot forge the genesis signature without access to the KMS key, which is controlled by IAM policy and logged in CloudTrail.
+
+**Tamper detection:** A Lambda job (`audit-verify`) recomputes each row's `event_hash` and checks that each `previous_hash` matches the preceding row's hash for that tenant. The job runs on every read of a sealed cycle (zero-cost at monthly reconciliation volume) and also on a weekly full-chain sweep. Any discrepancy triggers an immediate alert to the compliance team via SNS.
 
 === Data Model
 
@@ -764,6 +830,7 @@ class tenants {
   --
   name : TEXT
   country_code : TEXT
+  data_residency_zone : TEXT
   status : TEXT
   onboarded_at : TIMESTAMPTZ
   created_at : TIMESTAMPTZ
@@ -804,12 +871,21 @@ class reconciliation_cycles {
   signed_at : TIMESTAMPTZ
 }
 
-class data_files {
+class contract_file_types {
+  + id : UUID <<PK>>
+  --
+  contract_id : UUID <<FK>>
+  file_type : TEXT
+  required : BOOLEAN
+  validation_schema : JSONB
+}
+
+class cycle_files {
   + id : UUID <<PK>>
   --
   cycle_id : UUID <<FK>>
+  file_type : TEXT
   s3_key : TEXT
-  filename : TEXT
   sha256_checksum : TEXT
   uploaded_by : UUID <<FK>>
   uploaded_at : TIMESTAMPTZ
@@ -820,9 +896,10 @@ class eligibility_results {
   --
   cycle_id : UUID <<FK>>
   result_json : JSONB
-  compensation_amount : NUMERIC
+  compensation_amount : NUMERIC <<generated>>
   engine_version : TEXT
   computed_at : TIMESTAMPTZ
+  note: compensation_amount is GENERATED ALWAYS AS\n((result_json->>'compensation_amount')::numeric) STORED
 }
 
 class approval_steps {
@@ -842,6 +919,8 @@ class adjustments {
   --
   cycle_id : UUID <<FK>>
   prior_cycle_id : UUID <<FK>>
+  root_cycle_id : UUID <<FK>>
+  generation : INTEGER
   reason : TEXT
   amount_delta : NUMERIC
   created_by : UUID <<FK>>
@@ -865,7 +944,8 @@ class "audit.events" as audit_events {
 tenants "1" --> "many" contracts
 tenants "1" --> "many" users
 contracts "1" --> "many" reconciliation_cycles
-reconciliation_cycles "1" --> "many" data_files
+contracts "1" --> "many" contract_file_types
+reconciliation_cycles "1" --> "many" cycle_files
 reconciliation_cycles "1" --> "1" eligibility_results
 reconciliation_cycles "1" --> "many" approval_steps
 reconciliation_cycles "1" --> "many" adjustments
@@ -881,28 +961,33 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 
 4+|**Epic 1 — Contract Registry**
 
-|FR-01 |Must |Upload and version contract definitions; store rule metadata as structured JSON |1
-|FR-02 |Must |Parse contract rules to drive eligibility engine input schema per counterparty |1
+|FR-01 |Must |Upload and version contract definitions; store rule metadata as structured expression tree JSON validated against a versioned JSON Schema |1
+|FR-02 |Must |Parse contract rules to drive eligibility engine input schema per counterparty; define required file types per contract |1
 |FR-03 |Should |Support multiple active contract versions per counterparty (effective date ranges) |2
 
 4+|**Epic 2 — File Ingestion**
 
-|FR-04 |Must |Accept counterparty data file upload via HTTPS (S3 pre-signed URL) |1
+|FR-04 |Must |Accept typed counterparty data file uploads via HTTPS (S3 pre-signed URL); each file tagged with its file type (PEOPLE_TABLE, MONEY_MOVEMENT, SPECIAL_CONDITIONS, ADJUSTMENT_RECORDS, CONTRACT_EXCEPTIONS) |1
+|FR-04a |Must |Track per-cycle file readiness: the eligibility engine is triggered only when all required file types for the contract have been submitted |1
 |FR-05 |Must |Verify file integrity via SHA-256 checksum on receipt |1
-|FR-06 |Must |Validate file structure against the contract-defined schema; reject malformed files with clear error |1
-|FR-07 |Should |Accept file submission via SFTP for counterparties requiring it (AWS Transfer Family) |2
+|FR-06 |Must |Validate file structure against the contract-defined schema for its file type; reject malformed files with clear error |1
+|FR-06a |Must |Deduplicate file submissions: reject a file if a submission for the same `(cycle_id, file_type)` already exists in any non-rejected state; return HTTP 409 with a reference to the existing submission |1
+|FR-07 |Should |Accept file submission via SFTP for counterparties requiring it (AWS Transfer Family, provisioned on-demand) |2
 
 4+|**Epic 3 — Eligibility Engine**
 
-|FR-08 |Must |Apply contract rules to ingested data file; produce eligibility result and compensation proposal |2
+|FR-08 |Must |Evaluate contract expression tree rules against all typed data files for a cycle; produce eligibility result and compensation proposal using BigDecimal arithmetic |2
 |FR-09 |Must |Record engine version alongside every result for reproducibility |2
-|FR-10 |Should |Support re-computation if contract rules are corrected (creates a new cycle version, not an overwrite) |3
+|FR-10 |Should |Support re-computation when a counterparty submits a revised file during negotiation (creates a new eligibility result version, preserving the prior result) |2
+|FR-10a |Should |Support re-computation if contract rules are corrected (creates a new cycle version, not an overwrite) |3
 
 4+|**Epic 4 — Approval Workflow**
 
-|FR-11 |Must |Multi-step approval state machine: propose → reinsurer review → counterparty counter-sign → sealed |2
-|FR-12 |Must |Support adjustment rounds within a cycle before final sign-off |2
-|FR-13 |Must |Record every approval and adjustment action as an immutable audit ledger event |2
+|FR-11 |Must |Multi-level approval state machine: propose → L1 reinsurer review → L2 senior review (if amount exceeds threshold) → counterparty counter-sign → sealed |2
+|FR-11a |Must |Support counterparty counter-proposals: counterparty can submit an alternative eligibility calculation for reinsurer review |2
+|FR-11b |Must |Support counterparty file revision: counterparty can submit a revised data file at any point before cycle seal, re-triggering eligibility computation |2
+|FR-12 |Must |Support multiple adjustment rounds within a cycle before final sign-off |2
+|FR-13 |Must |Record every approval, adjustment, counter-proposal, and file revision action as an immutable audit ledger event |2
 |FR-14 |Should |Automated escalation notification if a cycle remains in a single state for >72 hours |3
 
 4+|**Epic 5 — Audit Ledger**
@@ -926,8 +1011,14 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 
 4+|**Epic 8 — Counterparty Onboarding**
 
-|FR-25 |Must |Platform-mediated onboarding: tenant provisioning → contract upload → test cycle → UAT sign-off → live |1
+|FR-25 |Must |Platform-mediated onboarding: tenant provisioning (incl. data residency zone) → contract upload → file type configuration → test cycle → UAT sign-off → live |1
 |FR-26 |Should |Self-service tenant onboarding reducing reinsurer IT involvement |3
+
+4+|**Epic 9 — Data Residency**
+
+|FR-27 |Must |Each tenant record includes a `data_residency_zone` field (`UK`, `EU`, `APAC`, `NA`); all tenant data stored exclusively in the designated zone |1
+|FR-28 |Should |Support deploying additional regional stacks (same Terraform module, different AWS region) when a counterparty requires a non-UK/EU residency zone |3
+|FR-29 |Should |Cross-cycle adjustment reporting: multi-generation adjustment chains are traceable from the current cycle back to the originating cycle via `root_cycle_id` |2
 |===
 
 === Non-Functional Requirements
@@ -942,7 +1033,7 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 
 |**Data Durability**
 |Audit ledger must never lose a committed event
-|RPO = 0 (PostgreSQL Multi-AZ synchronous replication)
+|RPO = 0 (Aurora Serverless v2 Multi-AZ synchronous replication)
 
 |**Recovery Time**
 |Platform recovers from component failure within defined window
@@ -973,12 +1064,66 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 |Minimum 10 years; active records in RDS; records >3 years old migrated to S3 Glacier
 |===
 
+=== Eligibility Engine — Rule Schema
+
+Contract rules are stored as structured expression trees validated against a versioned JSON Schema. The eligibility engine evaluates `eligibility_rule` as a boolean expression tree and `compensation_rule` as a computation tree — both without any contract-specific code. New field types (mortality rate lookup, annuity factor table) are added once to the evaluator, then usable across all contracts without per-contract changes.
+
+Each rule set contains a `schema_version` field so the engine knows which interpreter to use. Unknown node types are rejected at contract upload time. The `schema_version` field ensures older rule sets remain reproducible even as the evaluator gains new capabilities.
+
+.Example contract rule JSON (expression tree structure)
+[source,json]
+----
+{
+  "schema_version": "2.0",
+  "contract_ref": "CP-042-LR",
+  "effective_from": "2026-01-01",
+  "eligibility_rule": {
+    "type": "AND",
+    "conditions": [
+      { "type": "range", "field": "age", "min": 60, "max": 90 },
+      { "type": "in", "field": "policy_type", "values": ["annuity", "pension"] },
+      { "type": "not", "condition": { "type": "in", "field": "policy_type", "values": ["term_life"] } }
+    ]
+  },
+  "compensation_rule": {
+    "type": "tiered",
+    "tiers": [
+      { "age_max": 70, "rate_per_individual": 100.00 },
+      { "age_max": 80, "rate_per_individual": 120.00 },
+      { "age_max": 90, "rate_per_individual": 150.00 }
+    ],
+    "currency": "GBP"
+  }
+}
+----
+
+**Expression tree node types (initial set):**
+
+* `AND` / `OR` — logical combinators; evaluate child conditions
+* `NOT` — logical negation of a single child condition
+* `range` — field value within `[min, max]`; supports open-ended ranges
+* `in` — field value in a set of allowed values
+* `eq` — exact match on a single value
+* `tiered` — stepped rate table; selects rate based on the first matching tier
+* `flat` — fixed rate per individual (simplest case)
+
+New node types (e.g. `lookup` for mortality tables, `formula` for actuarial calculations) are added to the evaluator once and immediately usable in any contract definition without deployment changes.
+
+**Validation:** The eligibility engine validates the rule JSON against a versioned JSON Schema at contract upload time. Unknown node types are rejected immediately with a clear validation error. All compensation amounts are computed using `BigDecimal` (Kotlin/JVM) to ensure exact decimal arithmetic — no IEEE 754 floating-point rounding artefacts.
+
+**Regression validation approach:** During Phase 1, the eligibility engine is run against 12 months of historical Excel output for 2–3 representative counterparty contracts. A pass requires 100% agreement on eligibility flags and compensation amounts for all historical periods before the engine is used in production.
+
 === Testing Approach
 
-* **Eligibility engine unit tests:** Every contract rule has a corresponding test vector (input record → expected eligibility flag); side-by-side validation against existing Excel output used during Phase 1 workshops
+* **Expression tree evaluator unit tests:** Every node type (AND, OR, range, tiered, flat, etc.) has a dedicated test suite; every contract rule has a corresponding test vector (input record → expected eligibility flag); side-by-side validation against existing Excel output used during Phase 1 workshops
+* **BigDecimal precision tests:** Verify compensation calculations produce exact decimal results matching Excel output to the penny; no IEEE 754 rounding artefacts
+* **Eligibility regression tests:** Engine output compared to 12 months of historical Excel results for 2–3 representative counterparties before Phase 2 go-ahead (Phase 1→2 gate)
+* **Multi-file ingestion tests:** Verify cycle readiness logic — eligibility engine only triggers when all required file types are present; partial submissions do not trigger premature calculations
+* **Multi-level approval tests:** Full cycle with L1 and L2 approvers; counter-proposal and revised file submission flows; verify all transitions produce correct audit events
 * **RLS penetration tests:** Automated suite that attempts cross-tenant data access via API and direct DB connection; runs on every deployment
-* **Hash-chain integrity tests:** Test suite that inserts events, tampers with one, and verifies the verification Lambda detects the break
-* **Month-end load test:** Concurrent file submission simulation (20 counterparties) run against staging before each Phase go-live
+* **Hash-chain integrity tests:** Test suite that inserts events, tampers with one, and verifies the verification Lambda detects the break per tenant
+* **GraalVM native image tests:** Verify that all Spring Boot endpoints work correctly after GraalVM AOT compilation; reflection configuration is complete; cold start < 500ms
+* **Month-end load test:** Concurrent file submission simulation (20 counterparties, multiple file types each) run against staging before each Phase go-live
 * **Counterparty UAT:** First counterparty completes a full test cycle with synthetic data before live cycle approval
 
 == Cost Breakdown
@@ -989,13 +1134,13 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 |===
 |Role |Rate / month |Duration |Cost |Deliverables
 
-|Solution Architect |$15,000 |8 months |$120,000 |Architecture, ADRs, oversight
-|Senior Developer (×3) |$12,000 |8 months |$288,000 |API, eligibility engine, portal, audit ledger
-|Security / Compliance Engineer |$13,000 |6 months |$78,000 |RLS, Cognito, WAF, penetration tests
-|QA Engineer |$8,000 |6 months |$48,000 |Test suites, UAT coordination
-|**Subtotal** | | |**$534,000** |
-|Contingency (20%) | | |$106,800 |Risk buffer for integration unknowns
-|**Total CAPEX** | | |**~$640,000** |
+|Solution Architect |$15,000 |9.5 months |$142,500 |Architecture, ADRs, oversight
+|Senior Kotlin Developer (×3) |$13,000 |9.5 months |$370,500 |API, eligibility engine, portal, audit ledger, GraalVM CI
+|Security / Compliance Engineer |$13,000 |7 months |$91,000 |RLS, Cognito, WAF, penetration tests
+|QA Engineer |$8,000 |7 months |$56,000 |Test suites, UAT coordination
+|**Subtotal** | | |**$580,000** |
+|Contingency (20%) | | |$116,000 |Risk buffer for integration unknowns, GraalVM compilation
+|**Total CAPEX** | | |**~$700,000** |
 |===
 
 === Operational Costs (OPEX)
@@ -1004,8 +1149,8 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 |===
 |Service |Purpose |Monthly Cost
 
-|RDS PostgreSQL Multi-AZ (db.r6g.large, eu-west-2) |Operational DB + Audit Ledger schema |~$480
-|ECS Fargate (API Service + Eligibility Engine tasks) |Application compute |~$380
+|Aurora Serverless v2 (PostgreSQL-compatible, eu-west-2, 0.5–8 ACU) |Operational DB + Audit Ledger schema |~$200
+|Lambda + API Gateway (API Service + Eligibility Engine) |Application compute (pay-per-invocation) |~$45
 |S3 (file storage + audit backups, ~500GB) |File store and audit archive |~$80
 |AWS Step Functions (Standard Workflows) |Approval workflow orchestration |~$40
 |Cognito (up to 1,000 MAU external + internal users) |Authentication |~$55
@@ -1014,11 +1159,11 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 |CloudWatch (logs, metrics, alarms, dashboards) |Observability |~$80
 |AWS Backup + S3 Glacier (long-term retention) |Regulatory retention (10+ years) |~$150
 |AWS Transfer Family SFTP (opt-in for legacy counterparties) |Fallback file exchange channel |~$200
-|**Total OPEX (base)** | |**~$1,600/month**
-|**Total OPEX (incl. DR replication to eu-west-1)** | |**~$2,500/month**
+|**Total OPEX (base)** | |**~$985/month**
+|**Total OPEX (incl. DR replication to eu-west-1)** | |**~$1,800/month**
 |===
 
-_Year-1 OPEX estimate: ~$20,000–$30,000. Three-year TCO (CAPEX + OPEX): ~$720,000–$730,000._
+_Year-1 OPEX estimate: ~$12,000–$22,000. Three-year TCO (CAPEX + OPEX): ~$736,000–$765,000._
 
 === Phase Cost Summary
 
@@ -1026,17 +1171,17 @@ _Year-1 OPEX estimate: ~$20,000–$30,000. Three-year TCO (CAPEX + OPEX): ~$720,
 |===
 |Phase |Scope |Duration |Team Active |Cost (est.)
 
-|Phase 1 |Infrastructure, Auth, Contract Registry, File Ingestion |2 months |Architect + 2 Devs + Security |~$100K
-|Phase 2 |Eligibility Engine, Approval Workflow, Audit Ledger |2 months |Full team |~$160K
-|Phase 3 |Multi-Tenant Portal, Notifications, First Counterparty Onboarding |2 months |Full team |~$160K
-|Phase 4 |Regulatory Reporting, Second Counterparty Batch, Performance Testing, Go-Live |2 months |Full team + QA |~$160K
+|Phase 1 |Infrastructure, Auth, Contract Registry, Multi-File Ingestion, GraalVM CI pipeline |2.5 months |Architect + 2 Devs + Security |~$130K
+|Phase 2 |Eligibility Engine (expression tree), Multi-Level Approval Workflow, Audit Ledger |2.5 months |Full team |~$180K
+|Phase 3 |Multi-Tenant Portal, Notifications, First Counterparty Onboarding |2.5 months |Full team |~$170K
+|Phase 4 |Regulatory Reporting, Data Residency, Second Counterparty Batch, Performance Testing, Go-Live |2 months |Full team + QA |~$160K
 |Contingency | | | |~$60K
-|**Total** | |**8 months** | |**~$640K**
+|**Total** | |**~9.5 months** | |**~$700K**
 |===
 
 === Timeline
 
-.Project Timeline — 8-Month Delivery
+.Project Timeline — 9.5-Month Delivery
 [plantuml,case03-gantt,format=svg]
 ....
 @startgantt
@@ -1056,32 +1201,36 @@ skinparam backgroundColor #fafafa
 
 Project starts 2026-05-01
 
-[Phase 1: Infrastructure & Auth] lasts 4 weeks
-[AWS VPC, RDS, ECS, S3 setup] lasts 2 weeks
+[Phase 1: Infrastructure & Auth] lasts 5 weeks
+[AWS VPC, Aurora Serverless v2, Lambda, S3 setup] lasts 2 weeks
+[GraalVM native compilation CI pipeline] lasts 2 weeks
+[GraalVM native compilation CI pipeline] starts at [AWS VPC, Aurora Serverless v2, Lambda, S3 setup]'s end
 [Cognito User Pool + SAML federation] lasts 2 weeks
-[Cognito User Pool + SAML federation] starts at [AWS VPC, RDS, ECS, S3 setup]'s end
-[Contract Registry — API + DB schema] lasts 2 weeks
-[Contract Registry — API + DB schema] starts at [AWS VPC, RDS, ECS, S3 setup]'s end
-[File Ingestion + S3 pre-signed URLs] lasts 2 weeks
-[File Ingestion + S3 pre-signed URLs] starts at [Contract Registry — API + DB schema]'s end
+[Cognito User Pool + SAML federation] starts at [AWS VPC, Aurora Serverless v2, Lambda, S3 setup]'s end
+[Contract Registry + File Type Configuration] lasts 2 weeks
+[Contract Registry + File Type Configuration] starts at [GraalVM native compilation CI pipeline]'s end
+[Multi-File Ingestion + S3 pre-signed URLs] lasts 2 weeks
+[Multi-File Ingestion + S3 pre-signed URLs] starts at [Contract Registry + File Type Configuration]'s end
 
-[Phase 2: Eligibility & Workflow] lasts 4 weeks
+[Phase 2: Eligibility & Workflow] lasts 5 weeks
 [Phase 2: Eligibility & Workflow] starts at [Phase 1: Infrastructure & Auth]'s end
-[Eligibility Engine — rules interpreter] lasts 3 weeks
-[Eligibility Engine — rules interpreter] starts at [Phase 1: Infrastructure & Auth]'s end
-[Step Functions — approval state machine] lasts 3 weeks
-[Step Functions — approval state machine] starts at [Phase 1: Infrastructure & Auth]'s end
+[Eligibility Engine — expression tree evaluator] lasts 4 weeks
+[Eligibility Engine — expression tree evaluator] starts at [Phase 1: Infrastructure & Auth]'s end
+[Step Functions — multi-level approval state machine] lasts 4 weeks
+[Step Functions — multi-level approval state machine] starts at [Phase 1: Infrastructure & Auth]'s end
+[Counter-proposal and file revision flows] lasts 2 weeks
+[Counter-proposal and file revision flows] starts 3 weeks after [Phase 2: Eligibility & Workflow]'s start
 [Audit Ledger — append-only + hash chain] lasts 2 weeks
 [Audit Ledger — append-only + hash chain] starts at [Phase 1: Infrastructure & Auth]'s end
 
-[Phase 3: Portal & Onboarding] lasts 4 weeks
+[Phase 3: Portal & Onboarding] lasts 5 weeks
 [Phase 3: Portal & Onboarding] starts at [Phase 2: Eligibility & Workflow]'s end
-[Multi-tenant Web Portal (React)] lasts 4 weeks
+[Multi-tenant Web Portal (React)] lasts 5 weeks
 [Multi-tenant Web Portal (React)] starts at [Phase 2: Eligibility & Workflow]'s end
 [SES Email Notifications] lasts 1 week
 [SES Email Notifications] starts at [Phase 2: Eligibility & Workflow]'s end
 [First Counterparty UAT] lasts 2 weeks
-[First Counterparty UAT] starts 2 weeks after [Phase 3: Portal & Onboarding]'s start
+[First Counterparty UAT] starts 3 weeks after [Phase 3: Portal & Onboarding]'s start
 
 [Milestone: First Counterparty Live] happens at [Phase 3: Portal & Onboarding]'s end
 
@@ -1089,6 +1238,8 @@ Project starts 2026-05-01
 [Phase 4: Reporting & Go-Live] starts at [Phase 3: Portal & Onboarding]'s end
 [Regulatory Export Service] lasts 2 weeks
 [Regulatory Export Service] starts at [Phase 3: Portal & Onboarding]'s end
+[Data Residency Zone Support] lasts 2 weeks
+[Data Residency Zone Support] starts at [Phase 3: Portal & Onboarding]'s end
 [Second Counterparty Batch Onboarding] lasts 3 weeks
 [Second Counterparty Batch Onboarding] starts at [Phase 3: Portal & Onboarding]'s end
 [Month-End Load Testing] lasts 1 week
@@ -1100,6 +1251,36 @@ Project starts 2026-05-01
 
 @endgantt
 ....
+
+=== Phase Gates
+
+A phase does not begin until its entry criteria are met. Unresolved gate items are tracked as blockers, not carried forward as open risks.
+
+[cols="2,4", options="header"]
+|===
+|Gate |Pass criteria (all must be met)
+
+|**Phase 1 → Phase 2**
+a|
+* Eligibility engine reproduces 100% of historical Excel output for at least 3 representative contract types (validated side-by-side with reconciliation managers)
+* GraalVM native compilation pipeline produces working Lambda deployment artefacts; cold start < 500ms verified in staging
+* Multi-file ingestion model tested: typed file uploads trigger cycle readiness check; eligibility engine only starts when all required file types are present
+* Compliance workshop complete; Solvency II Pillar III and GDPR handling confirmed in writing by compliance lead
+* RLS policy deployed and automated isolation test suite passing in staging
+
+|**Phase 2 → Phase 3**
+a|
+* Multi-level approval state machine completes a full cycle end-to-end in staging (file upload → eligibility → L1 approval → L2 approval → counter-sign)
+* Counter-proposal and revised file flows tested: counterparty file revision re-triggers eligibility computation
+* Hash-chain tamper detection verified: verification Lambda detects a deliberately corrupted row in a synthetic 6-month dataset
+* RLS penetration test passed: no cross-tenant data visible via API or direct DB query
+
+|**Phase 3 → Phase 4**
+a|
+* First counterparty UAT signed off by both the counterparty and reinsurer compliance lead
+* Month-end cycle completed end-to-end in staging with synthetic month-end file volume (20 concurrent uploads)
+* Audit ledger regulatory export tested and output reviewed by compliance team
+|===
 
 == Option 3: Event-Sourced Architecture
 
@@ -1161,6 +1342,40 @@ The recommended migration path from Option 2 to Option 3 is to introduce an even
 
 |**Key-person risk** — reconciliation managers hold undocumented contract formula knowledge
 |High |Medium |Domain knowledge extraction sprint in Phase 1 produces documented, version-controlled rule sets; the platform itself removes the dependency on individuals holding formula knowledge in private Excel files
+
+|**Duplicate file submission** — a counterparty re-uploads a file for a period already in progress (network retry, human error)
+|Medium |High |FR-06a enforces a unique constraint on `(cycle_id, file_type)` before any S3 write or workflow start; the API returns HTTP 409 with a reference to the existing submission; prevents duplicate audit events for the same cycle
+
+|**GraalVM native compilation complexity** — GraalVM native image builds may require reflection configuration and fail on Spring Boot libraries not tested with AOT
+|Medium |Medium |Run GraalVM compilation in CI from Phase 1 Week 1; maintain a reflection-config.json for all Spring Boot dependencies; fallback: deploy as standard JVM Lambda with SnapStart (2–3s cold start instead of ~150ms, acceptable for background processing)
+
+|**Lambda 15-minute execution limit** — eligibility computation for very large counterparty files (>500K individuals) could exceed Lambda timeout
+|Low |Medium |Implement chunked processing: the eligibility engine splits input into batches, Step Functions fans out Lambda invocations and joins results; at initial scale (10–30 counterparties) a single invocation suffices
+
+|**Aurora Serverless v2 cold start** — database may take several seconds to scale up from minimum ACU after idle period
+|Low |Low |Minimum ACU set to 0.5 (database is never fully cold); Lambda provisioned concurrency on the API function keeps a warm connection pool; month-end peak is predictable — schedule a pre-warming Lambda 1 hour before expected submission window
+
+|**Data residency enforcement** — international counterparties may require data localisation in jurisdictions not covered by eu-west-2
+|Low |Medium |`data_residency_zone` field on tenants table; Phase 1 all tenants use UK zone; when a non-UK/EU zone is needed, deploy an additional regional stack using the same Terraform module; contract and audit data stored exclusively in the tenant's zone
+|===
+
+=== Regulatory Compliance Gap Analysis
+
+[cols="2,3,3", options="header"]
+|===
+|Regulation |Gap in current design |Proposed handling
+
+|**Solvency II Pillar III — Article 259**
+|Article 259 requires a documented audit trail of actuarial computations, including calculation inputs and outputs. The hash-chain ledger provides tamper evidence but does not explicitly define the granularity of `ELIGIBILITY_COMPUTED` payload content.
+|The `ELIGIBILITY_COMPUTED` audit event payload must include: input file SHA-256, contract rule version, per-individual eligibility flags, and the total compensation amount. The exact schema is to be confirmed with the compliance team in the Phase 1 compliance workshop.
+
+|**FCA SYSC 9.1**
+|SYSC 9.1 requires records of all client-facing communications. The current design logs file submissions and approval actions but does not explicitly capture negotiation messages (adjustment requests and free-text responses) in the audit ledger.
+|`ADJUSTMENT_REQUESTED` and `ADJUSTMENT_ACCEPTED` events must include the full adjustment note text in their `payload`. Free-text negotiation messages entered via the portal are appended to the audit ledger as `COMMUNICATION_RECORDED` events at send time.
+
+|**GDPR Article 17 — Right to Erasure**
+|The append-only audit ledger cannot delete records. If counterparty employees' personal data (names, email addresses) are stored inline in audit event payloads, a Right to Erasure request cannot be fulfilled without breaking the hash chain.
+|Personal identifiers (user name, email) are stored only in the mutable `users` table with a reference `actor_id` UUID. Audit event payloads contain only the UUID, never the raw personal data. On a Right to Erasure request, the user record is anonymised in the `users` table; the UUID reference in audit events remains intact and the chain is unaffected.
 |===
 
 === Key Assumptions
@@ -1168,8 +1383,10 @@ The recommended migration path from Option 2 to Option 3 is to introduce an even
 * Counterparty count at launch is in the range of 10–30; RLS-based multi-tenancy is sufficient without schema-per-tenant
 * Monthly cycle is the primary cadence; quarterly and annual cycles use the same workflow with a different `period` field — no separate code path required
 * The reinsurer has an existing SAML 2.0-capable identity provider (Azure AD or equivalent) for internal user federation
-* Budget is sufficient for Option 2 (~$640K CAPEX); client has confirmed budget is not the primary constraint for this innovation initiative
-* Regulatory retention of 10 years satisfies the Solvency II run-off period for the contracts in scope — to be confirmed with the compliance team in Phase 1
+* Budget is sufficient for Option 2 (~$700K CAPEX); client has confirmed budget is not the primary constraint for this innovation initiative
+* Regulatory retention of 10 years satisfies the Solvency II run-off period for the contracts in scope — to be validated with the compliance team during the Phase 1 compliance workshop
+* The development team has Kotlin/Spring Boot experience; GraalVM native compilation is within their operational capability
+* All Phase 1 tenants are UK/EU-based; data residency zones beyond `UK` and `EU` are not needed until counterparty expansion to APAC or Americas
 
 == Architecture Decisions
 
@@ -1180,43 +1397,88 @@ The recommended migration path from Option 2 to Option 3 is to introduce an even
 *Decision:* PostgreSQL append-only audit schema with SHA-256 hash chain.
 
 *Rationale:*
-* **Blockchain** rejected — the reinsurer is a single custodian; blockchain's distributed consensus overhead solves a problem that does not exist here
-* **AWS QLDB** rejected — discontinued by AWS in 2025; long-term viability cannot be assured
-* **immuDB** rejected — consistency and transaction management issues emerged in production on a prior reinsurance-adjacent project when integrated from a non-Go application layer (mentor's first-hand experience); migrating away required significant rework
-* **Full event sourcing** deferred — architecturally superior but adds significant complexity not justified by the initial counterparty volume
-* **PostgreSQL hash chain** chosen — battle-tested operationally; regulators can query it with standard SQL; SHA-256 verification is transparent; PostgreSQL extension ecosystem (pgaudit, temporal tables) adds defence-in-depth without operational risk
+* **Blockchain** rejected — the reinsurer is the sole custodian of this platform; blockchain's value is distributed consensus between mutually distrusting parties. A single custodian gains nothing from consensus overhead and inherits all of the governance and key-management complexity.
+* **AWS QLDB** rejected — discontinued by AWS in 2025; long-term viability cannot be assured. The underlying cryptographic model (hash chain over a Merkle tree) is sound, but the same model can be implemented directly in PostgreSQL without vendor lock-in.
+* **immuDB** rejected — despite sound architecture, consistency and transaction management issues emerged in a prior production project integrating from a non-Go application layer; migrating away required significant rework. The risk of opaque internals in a trust-critical system is not acceptable.
+* **Full event sourcing** deferred — architecturally superior for auditability but adds projection rebuild complexity and requires specialist knowledge the initial team does not have. Deferred to Option 3 migration when counterparty volume justifies it.
+* **PostgreSQL hash chain** chosen — regulators can query it with standard SQL; SHA-256 verification is transparent and reproducible by any auditor; the team already operates PostgreSQL; `pgaudit` adds DB-level statement logging as defence-in-depth. The chain is partitioned per tenant to eliminate write serialization at month-end; a KMS-signed genesis anchor prevents undetected chain reconstruction.
 
 === ADR-002: Multi-Tenancy — Row-Level Security
 
 *Context:* The platform serves multiple independent counterparty insurers who must be strictly isolated from each other. Options: schema-per-tenant, row-level security (RLS), separate databases per tenant.
 
-*Decision:* PostgreSQL Row-Level Security enforced at the database layer; all tenants share a single schema; `app.current_tenant_id` session variable set by the API service on every connection.
+*Decision:* PostgreSQL Row-Level Security enforced at the database layer; all tenants share a single schema; `app.current_tenant_id` set via `SET LOCAL` (transaction-scoped) by the API service at the start of every database transaction.
 
 *Rationale:* Schema-per-tenant provides the strongest isolation but adds significant migration complexity as counterparty count grows (running schema migrations across 30 schemas is operationally painful). Separate databases per tenant would make cross-tenant admin queries (for the platform operator) impractical. RLS is the pragmatic middle ground — proven in multi-tenant SaaS at this scale, with the additional safety net of WAF rules and API-layer tenant checks.
 
+`SET LOCAL` is used instead of `SET` so that the tenant context is transaction-scoped and automatically cleared when the transaction ends. This prevents the known production failure mode where a connection pool reuses a session before the session variable is cleared — which would silently expose the prior tenant's data to the next request on that connection.
+
 === ADR-003: Approval Workflow — AWS Step Functions Standard Workflows
 
-*Context:* The multi-step approval chain (propose → reinsurer review → adjustment rounds → counterparty counter-sign) needs durable state management with human-approval steps that can pause for hours or days.
+*Context:* The multi-level approval chain (propose → L1 reinsurer review → L2 senior review → adjustment rounds → counterparty counter-proposal or revised file → counter-sign) needs durable state management with human-approval steps that can pause for hours or days. The workflow must support a chain of 2–4+ approvers per cycle and allow the counterparty to re-submit revised data files at any point before seal.
 
-*Decision:* AWS Step Functions Standard Workflows with wait-for-callback task tokens.
+*Decision:* AWS Step Functions Standard Workflows with wait-for-callback task tokens. Each approval level (L1, L2) is implemented as a sub-workflow so the number of levels is configurable per contract tier without changing the Step Functions definition.
 
-*Rationale:* Step Functions Standard Workflows provide built-in execution history (up to 90 days, queryable via API) — this history is a natural secondary audit artifact alongside the hash-chain ledger. The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Step Functions' visual execution graph also simplifies debugging stalled approvals.
+*Rationale:* The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Step Functions' visual execution graph simplifies debugging stalled approvals. Sub-workflows for approval levels allow a new tier to be added per contract without modifying the parent workflow.
 
-=== ADR-004: File Exchange — S3 Pre-Signed URLs with SFTP Fallback
+Step Functions is the *workflow engine*; the hash-chain audit ledger is the *sole compliance archive*. Step Functions execution history (retained for up to 90 days by default) is an operational debugging aid only — it is not a regulatory record and must not be treated as one. All compliance-relevant state transitions are written to the audit ledger by the API service, not derived from Step Functions history.
 
-*Context:* Counterparties need to submit monthly data files securely. Options: SFTP-only, web upload via S3 pre-signed URLs, API-based upload, email attachment (current state).
+Each workflow execution must be guarded by an idempotency key (`tenant_id + contract_id + period`) to prevent duplicate executions from generating conflicting audit events for the same reconciliation cycle.
 
-*Decision:* Web portal upload via S3 pre-signed URLs as the primary channel; AWS Transfer Family SFTP as an opt-in secondary channel for counterparties with existing SFTP tooling.
+=== ADR-004: File Exchange — S3 Pre-Signed URLs with Typed Multi-File Ingestion
 
-*Rationale:* Most counterparty contacts are non-technical users who interact with a web portal; SFTP-only would require client software and firewall coordination. Pre-signed URLs allow the browser to upload directly to S3 without proxying through the API service (better performance, lower cost, no file size limits from API gateway). SFTP is retained as a fallback to avoid blocking counterparties with legacy automation.
+*Context:* Counterparties need to submit monthly data files securely. The requirements describe five distinct file types per reconciliation cycle (people tables, money movement tables, special condition tables, adjustment records, contract exceptions). Options: SFTP-only, web upload via S3 pre-signed URLs, API-based upload, email attachment (current state).
+
+*Decision:* Web portal upload via S3 pre-signed URLs as the primary channel; AWS Transfer Family SFTP as an opt-in secondary channel. Each upload is tagged with a file type; the eligibility engine is triggered only when all required file types for a contract have been submitted (tracked via `cycle_readiness` view).
+
+*Rationale:* Most counterparty contacts are non-technical users who interact with a web portal; SFTP-only would require client software and firewall coordination. Pre-signed URLs allow the browser to upload directly to S3 without proxying through the API service (better performance, lower cost, no file size limits from API gateway). SFTP is retained as a fallback to avoid blocking counterparties with legacy automation. The typed ingestion model matches real-world practice where counterparties submit different file types at different times during the month — a generic single-file upload would either trigger incomplete calculations or force counterparties to bundle all file types into one upload.
 
 === ADR-005: Authentication — Cognito with SAML Federation
 
 *Context:* The platform serves two user populations: internal reinsurer staff (who have a corporate identity provider) and external counterparty administrators (who do not have a shared IdP).
 
-*Decision:* AWS Cognito User Pool for external counterparty users (MFA enforced, email-based registration); Cognito + SAML 2.0 identity federation for internal reinsurer users (federated from the corporate IdP).
+*Decision:* A single AWS Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users, and SAML 2.0 federation from the corporate IdP for internal reinsurer users. Both paths issue JWTs from one issuer; a `custom:user_type` claim (`INTERNAL` or `COUNTERPARTY`) drives RBAC in the API service.
 
-*Rationale:* A single Cognito deployment covers both populations with different authentication paths. Cognito MFA is mandatory for all users out of the box. SAML federation removes the need to manage internal user credentials separately from the corporate directory. Building a custom auth layer would require significant security investment with no advantage over a managed service.
+*Rationale:* Two separate User Pools would mean two JWT issuers, two sets of token validation logic, two audit surfaces, and double the Cognito configuration to maintain — with no architectural benefit. A single pool with two identity providers achieves the same authentication model at half the operational complexity. Cognito MFA is enforced for all users. SAML federation removes the need to manage internal user credentials separately from the corporate directory.
+
+=== ADR-006: Backend Language — Kotlin + Spring Boot (GraalVM Native)
+
+*Context:* The platform computes financial compensation amounts that are regulatory records. The eligibility engine and API service must handle decimal arithmetic precisely. Options: Node.js, Python, Kotlin/Spring Boot, Java/Spring Boot.
+
+*Decision:* Kotlin + Spring Boot for all backend services (API service and eligibility engine), compiled to GraalVM native images for Lambda deployment.
+
+*Rationale:*
+
+* **Node.js** rejected — JavaScript's `Number` type uses IEEE 754 double precision, which cannot represent all decimal fractions exactly. A calculation of `120.00 × 1,234 = 148,080.0000000001` is a compliance risk. Workarounds exist (`decimal.js`) but require discipline and code review for every calculation.
+* **Python** rejected — while Python has `Decimal` support, the mature financial compliance library ecosystem (SWIFT formatting, actuarial calculations, Solvency II reporting) is predominantly on the JVM. Using Python would narrow future library choices for regulatory output formats.
+* **Java** considered but Kotlin preferred — Kotlin provides the same JVM BigDecimal and Spring Boot ecosystem with more concise syntax, null safety, and coroutine support for concurrent file processing. The team has Kotlin experience.
+* **GraalVM native** chosen for Lambda — cold starts of ~150ms match Node.js performance. Without GraalVM, JVM Lambda cold starts are 2–5 seconds (acceptable for background processing but noticeable for the portal API). Fallback: Lambda SnapStart provides ~1s cold starts without GraalVM compilation complexity.
+
+=== ADR-007: Compute — AWS Lambda + Aurora Serverless v2
+
+*Context:* The workload is monthly peaks with near-zero baseline between reconciliation cycles (a few portal logins per week). Options: ECS Fargate (always-running containers), Lambda + API Gateway (pay-per-invocation), EKS (Kubernetes).
+
+*Decision:* AWS Lambda + API Gateway for all compute; Aurora Serverless v2 for the database.
+
+*Rationale:*
+
+* **ECS Fargate** rejected — cost is dominated by idle time between month-end peaks. Always-running containers (2+ tasks) cost ~$380/month even when serving near-zero traffic. Lambda charges only for invocations, reducing API compute to ~$40/month at this request volume.
+* **Aurora Serverless v2** chosen over RDS fixed-instance — scales to near-zero ACUs (0.5 ACU minimum ≈ 1 GB RAM) between peaks. At month-end, it scales automatically to handle concurrent eligibility computations without any capacity planning. RLS, pgaudit, and the hash-chain audit ledger work identically on Aurora PostgreSQL-compatible. Monthly cost: ~$200 vs ~$480 for RDS db.r6g.large.
+* **Lambda 15-minute limit** mitigated — eligibility computation for typical counterparty files (10K–100K individuals) completes within minutes. For very large files (>500K), the engine splits input into batches and Step Functions fans out parallel Lambda invocations. At initial scale, a single invocation suffices.
+* **EKS** rejected — operational overhead of managing a Kubernetes cluster is not justified for a 5-person team with a monthly-peak workload.
+
+=== ADR-008: Contract Rules — Structured Expression Tree
+
+*Context:* The platform must accept contract definitions as structured metadata without constraining contract authors to a rigid schema that breaks when a new contract type is introduced. Options: flat JSON with code-per-contract, expression tree with generic evaluator, embedded DSL (e.g. SpEL/MVEL), Rete-based rule engine.
+
+*Decision:* Contract rules stored as a structured expression tree (AND/OR/range/tiered/flat node types) evaluated by a generic engine. Validated against a versioned JSON Schema at upload time.
+
+*Rationale:*
+
+* **Flat JSON** rejected — the initial `min_age`, `base_rate_per_individual` schema works for simple contracts but breaks the moment a contract has stepped rates by age band, multi-condition eligibility, or annuity factor tables. Every new contract type would require a code change and deployment.
+* **Expression tree** chosen — the engine evaluates `eligibility_rule` as a boolean tree and `compensation_rule` as a computation tree without any contract-specific code. New node types (e.g. `lookup` for mortality tables) are added once to the evaluator, then usable across all contracts. The `schema_version` field ensures older rule sets remain reproducible.
+* **Embedded DSL (SpEL/MVEL)** rejected — powerful but creates a security risk (arbitrary code execution in rule definitions) and makes audit reproducibility harder (DSL version changes could alter evaluation semantics). The expression tree is a constrained subset that is fully auditable.
+* **Rete-based rule engine (Drools)** rejected — operational overhead for this scale; the expression tree provides sufficient flexibility for the known contract types while remaining transparent and debuggable.
 
 == Deployment & Infrastructure
 
@@ -1254,7 +1516,7 @@ aws: AWS eu-west-2 (London) {
 
     pubSubnet: Public Subnets\n(AZ-a, AZ-b) {
       style.fill: "#C8E6C9"
-      alb: Application\nLoad Balancer {
+      apigw: API Gateway {
         style.fill: "#A5D6A7"
       }
     }
@@ -1262,17 +1524,17 @@ aws: AWS eu-west-2 (London) {
     privSubnet: Private Subnets\n(AZ-a, AZ-b) {
       style.fill: "#DCEDC8"
 
-      ecs: ECS Fargate Cluster {
+      lambda: Lambda Functions {
         style.fill: "#F1F8E9"
-        apiTask: API Service\n(tasks: 2+) {
+        apiLambda: API Service\n(Kotlin / GraalVM native) {
           style.fill: "#CCFF90"
         }
-        eligTask: Eligibility Engine\n(on-demand tasks) {
+        eligLambda: Eligibility Engine\n(Kotlin / GraalVM native) {
           style.fill: "#CCFF90"
         }
       }
 
-      rds: RDS PostgreSQL\nMulti-AZ (db.r6g.large) {
+      aurora: Aurora Serverless v2\n(PostgreSQL-compatible) {
         shape: cylinder
         style.fill: "#DCEDC8"
       }
@@ -1306,7 +1568,7 @@ aws: AWS eu-west-2 (London) {
 drRegion: AWS eu-west-1 (Ireland) — DR {
   style.fill: "#FAFAFA"
   style.stroke-dash: 4
-  rdsSnapshot: RDS Snapshot\nReplica {
+  rdsSnapshot: Aurora Snapshot\nReplica {
     shape: cylinder
     style.fill: "#F5F5F5"
   }
@@ -1318,17 +1580,17 @@ drRegion: AWS eu-west-1 (Ireland) — DR {
 
 internet.users -> aws.edge.cf: HTTPS
 aws.edge.cf -> aws.edge.s3web: Static assets
-aws.edge.cf -> aws.vpc.pubSubnet.alb: API requests
-aws.vpc.pubSubnet.alb -> aws.vpc.privSubnet.ecs.apiTask
-aws.vpc.privSubnet.ecs.apiTask -> aws.vpc.privSubnet.rds
-aws.vpc.privSubnet.ecs.apiTask -> aws.managed.s3data
-aws.vpc.privSubnet.ecs.apiTask -> aws.managed.stepFn
-aws.managed.stepFn -> aws.vpc.privSubnet.ecs.eligTask
+aws.edge.cf -> aws.vpc.pubSubnet.apigw: API requests
+aws.vpc.pubSubnet.apigw -> aws.vpc.privSubnet.lambda.apiLambda
+aws.vpc.privSubnet.lambda.apiLambda -> aws.vpc.privSubnet.aurora
+aws.vpc.privSubnet.lambda.apiLambda -> aws.managed.s3data
+aws.vpc.privSubnet.lambda.apiLambda -> aws.managed.stepFn
+aws.managed.stepFn -> aws.vpc.privSubnet.lambda.eligLambda
 aws.managed.stepFn -> aws.managed.ses
-aws.managed.cognito -> aws.vpc.privSubnet.ecs.apiTask: Token validation
-aws.managed.cw -> aws.vpc.privSubnet.ecs.apiTask: Logs & metrics
-aws.managed.backup -> aws.vpc.privSubnet.rds: Automated snapshots
-aws.vpc.privSubnet.rds -> drRegion.rdsSnapshot: AWS Backup\ncross-region
+aws.managed.cognito -> aws.vpc.privSubnet.lambda.apiLambda: Token validation
+aws.managed.cw -> aws.vpc.privSubnet.lambda.apiLambda: Logs & metrics
+aws.managed.backup -> aws.vpc.privSubnet.aurora: Automated snapshots
+aws.vpc.privSubnet.aurora -> drRegion.rdsSnapshot: AWS Backup\ncross-region
 aws.managed.s3data -> drRegion.s3dr: S3 CRR
 ....
 
@@ -1338,9 +1600,9 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 |===
 |Environment |Purpose |Infrastructure |Data Strategy
 
-|Development |Feature development and unit testing |Single-AZ RDS; Fargate min 1 task |Synthetic contract and file data; no PII
-|Staging |Pre-production validation; counterparty UAT |Production-like; Multi-AZ RDS |Anonymised sample data per contract; counterparty UAT with synthetic data
-|Production |Live reconciliation platform |Full Multi-AZ; Fargate auto-scaling |Real contract and counterparty data; encrypted at rest; RLS enforced
+|Development |Feature development and unit testing |Aurora Serverless v2 (min ACU); Lambda functions |Synthetic contract and file data; no PII
+|Staging |Pre-production validation; counterparty UAT |Production-like; Aurora Serverless v2 Multi-AZ |Anonymised sample data per contract; counterparty UAT with synthetic data
+|Production |Live reconciliation platform |Full Multi-AZ Aurora Serverless v2; Lambda with provisioned concurrency for API |Real contract and counterparty data; encrypted at rest; RLS enforced
 |===
 
 === Security Controls
@@ -1349,23 +1611,23 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 |===
 |Control |Implementation
 
-|Authentication (external users) |Cognito User Pool; MFA enforced (TOTP or SMS); Cognito Hosted UI or custom UI backed by Cognito
-|Authentication (internal users) |Cognito + SAML 2.0 federation from corporate IdP; MFA enforced at IdP level
+|Authentication (all users) |Single Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users; SAML 2.0 federation from corporate IdP for internal users. `custom:user_type` claim drives RBAC. MFA enforced for all users.
 |Authorisation |RBAC implemented in API service; roles: REINSURER_ADMIN, RECONCILIATION_MANAGER, COMPLIANCE_VIEWER, COUNTERPARTY_ADMIN, PLATFORM_ADMIN
-|Data isolation |PostgreSQL RLS enforces tenant isolation at DB layer; API layer sets session variable; WAF rate limiting on API
-|Encryption at rest |RDS: AES-256 (AWS KMS); S3: SSE-S3 (AES-256); KMS CMK for audit-critical data
-|Encryption in transit |TLS 1.2+ enforced at CloudFront and ALB; internal ECS-to-RDS and ECS-to-S3 communication within VPC
-|Network security |ECS tasks in private subnets; RDS not publicly accessible; Security Groups restrict inter-service traffic; WAF OWASP managed rule group on CloudFront
-|Audit logging |CloudTrail for all AWS API calls; RDS pgaudit for all DB statements; application audit ledger for all business events
-|Break-glass access |RDS superuser access requires IAM role assumption logged in CloudTrail; documented procedure; alerts on assumption
+|Data isolation |PostgreSQL RLS enforces tenant isolation at DB layer; API service sets `app.current_tenant_id` via `SET LOCAL` (transaction-scoped) to prevent connection-pool session bleed; WAF rate limiting on API
+|Encryption at rest |Aurora Serverless v2: AES-256 (AWS KMS); S3: SSE-S3 (AES-256); KMS CMK for audit-critical data
+|Encryption in transit |TLS 1.2+ enforced at CloudFront and API Gateway; Lambda-to-Aurora and Lambda-to-S3 communication within VPC
+|Network security |Lambda functions in private subnets; Aurora not publicly accessible; Security Groups restrict inter-service traffic; WAF OWASP managed rule group on CloudFront
+|Audit logging |CloudTrail for all AWS API calls; Aurora pgaudit for all DB statements; application audit ledger for all business events
+|Break-glass access |Aurora superuser access requires IAM role assumption logged in CloudTrail; documented procedure; alerts on assumption
 |===
 
 === Disaster Recovery
 
 * **Strategy:** Active-passive; primary in eu-west-2 (London); DR in eu-west-1 (Ireland)
-* **RDS:** Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)
+* **Aurora Serverless v2:** Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)
 * **S3:** Cross-Region Replication to eu-west-1 with 15-minute SLA; versioning enabled in both regions
-* **Audit Ledger:** PostgreSQL Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure)
+* **Audit Ledger:** Aurora Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure)
+* **Lambda:** Stateless — no DR concern for compute; function deployment is region-scoped; DR region can be provisioned from the same CI/CD pipeline
 * **RTO target:** < 1 hour for full region failover; documented DR runbook tested quarterly
 
 == Post-Launch Plan
@@ -1377,21 +1639,48 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 * Dedicated Slack/Teams channel with first counterparty technical contact
 * Eligibility result validation: side-by-side comparison with parallel Excel run for first 2 cycles
 
+=== Counterparty Integration Tiers
+
+Counterparties vary in technical capability. The platform supports three integration tiers; the tier is agreed during onboarding and can be upgraded at any time.
+
+[cols="1,2,2,2", options="header"]
+|===
+|Tier |Profile |Authentication |File Exchange
+
+|**Tier 1 — Federated**
+|Large insurer with corporate SSO
+|SAML 2.0 federation from counterparty IdP into the platform Cognito User Pool
+|Web portal upload via S3 pre-signed URLs
+
+|**Tier 2 — Portal**
+|Smaller insurer; no corporate IdP
+|Cognito-native email/password with mandatory MFA (TOTP or SMS)
+|Web portal upload via S3 pre-signed URLs
+
+|**Tier 3 — File-based**
+|Legacy counterparty with existing SFTP automation; no portal adoption
+|Service account credentials for SFTP; no portal login required
+|AWS Transfer Family SFTP (provisioned on-demand for this counterparty only)
+|===
+
 === Counterparty Onboarding Runbook
 
-1. Provision tenant (ID, name, country code) in platform admin portal
-2. Upload contract definition (rules JSON) and verify parsing
-3. Provision counterparty administrator user (Cognito invite email + MFA setup)
-4. Run synthetic test cycle: counterparty uploads sample file → validate eligibility output against contract rules
-5. UAT sign-off (counterparty + reinsurer compliance lead)
-6. First live cycle: run in parallel with Excel for one month
-7. Decommission Excel process for this counterparty
+1. Agree integration tier with counterparty technical contact; provision any required IdP federation or SFTP endpoint
+2. Provision tenant (ID, name, country code, data residency zone) in platform admin portal
+3. Upload contract definition (expression tree rules JSON) and configure required file types per contract
+4. Verify rule parsing and file type configuration; validate expression tree against JSON Schema
+5. Provision counterparty administrator user (Cognito invite email + MFA setup, or SFTP service account)
+6. Run synthetic test cycle: counterparty uploads all required file types → verify cycle readiness trigger → validate eligibility output against contract rules
+7. UAT sign-off (counterparty + reinsurer compliance lead)
+8. First live cycle: run in parallel with Excel for one month
+9. Decommission Excel process for this counterparty
 
 === Audit Ledger Health
 
-* Weekly Lambda job (`audit-verify`) recomputes hash chain for all events in the last 7 days; alerts compliance team on any discrepancy via SNS → email
-* Monthly full-chain verification for regulatory assurance
-* Quarterly compliance report: cycle count, event count, verification pass rate, any anomalies
+* **On every sealed-cycle read:** hash chain recomputed for that tenant's cycle events at query time; any discrepancy returns an error before the data is returned
+* **Weekly full-chain sweep:** Lambda job (`audit-verify`) recomputes all events per tenant for the rolling 7-day window; alerts compliance team via SNS on any discrepancy
+* **Monthly full-chain verification** for regulatory assurance; output archived as compliance evidence
+* **Quarterly compliance report:** cycle count, event count, verification pass rate, any anomalies
 
 === Knowledge Transfer
 
@@ -1401,6 +1690,8 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 |Platform overview and reconciliation workflow |Workshop (2 hours) |All reinsurer staff + first counterparty |Phase 3 go-live
 |Reconciliation Manager portal walkthrough |Guided demo + recorded video |Reconciliation Managers |Phase 3, week before go-live
+|Multi-file upload and cycle readiness |Guided demo + recorded video |Counterparty Administrators |Phase 3, week before go-live
+|Expression tree contract rule authoring |Workshop (half day) |Reconciliation Managers + Platform Admins |Phase 2
 |Compliance audit log queries |Workshop (half day) |Compliance / Audit team |Phase 4 go-live
 |Platform administration and monitoring |Documentation + workshop |Reinsurer IT team |Phase 4
 |Counterparty onboarding guide |Written runbook + video |Platform Admins |Phase 3
@@ -1410,11 +1701,13 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 1. Share this design with reinsurer leadership and compliance lead for review; obtain sign-off before Phase 1 procurement
 2. Validate audit ledger design against Solvency II Article 259 record-keeping requirements with the compliance team — confirm 10-year retention period and acceptable format for regulatory submissions
-3. Schedule domain knowledge extraction workshops with reconciliation managers in Phase 1, Week 1 — identify the 3 most common contract types and build rule sets with side-by-side Excel validation
-4. Confirm first counterparty for onboarding pilot and identify their technical contact
+3. Schedule domain knowledge extraction workshops with reconciliation managers in Phase 1, Week 1 — identify the 3 most common contract types and build expression tree rule sets with side-by-side Excel validation
+4. Confirm first counterparty for onboarding pilot and identify their technical contact; document which of the five file types (people tables, money movement, special conditions, adjustment records, contract exceptions) they submit and in what sequence
 5. Procure AWS accounts (separate accounts for dev/staging/production recommended); set up AWS Organizations and Control Tower baseline
-6. Obtain SAML metadata from the reinsurer's identity provider (Azure AD or equivalent) for Cognito federation setup
-7. Review and sign Data Processing Agreements (DPAs) with each counterparty before their data is processed on the platform (GDPR requirement for EU-based counterparties)
+6. Set up GraalVM native compilation CI pipeline early in Phase 1 to de-risk the Kotlin/Lambda deployment model; validate cold start targets (<500ms) in staging
+7. Obtain SAML metadata from the reinsurer's identity provider (Azure AD or equivalent) for Cognito federation setup
+8. Review and sign Data Processing Agreements (DPAs) with each counterparty before their data is processed on the platform (GDPR requirement for EU-based counterparties)
+9. Confirm data residency requirements for all launch counterparties; assign residency zones (`UK` or `EU` for Phase 1)
 
 ---
 
