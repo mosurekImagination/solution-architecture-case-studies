@@ -86,7 +86,7 @@ This manual process requires a large team of reconciliation managers. Trust betw
 
 === Scope Boundary
 
-This engagement delivers: contract registry with file type configuration, typed multi-file counterparty ingestion, expression tree-based eligibility engine with exact decimal arithmetic, multi-level approval workflow with counter-proposal support, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, data residency zone tracking, and regulatory export.
+This engagement delivers: contract registry with file type configuration, typed multi-file counterparty ingestion with per-counterparty file normalisation, expression tree-based eligibility engine with exact decimal arithmetic, multi-level approval workflow with counter-proposal support, immutable audit ledger, multi-tenant web portal, counterparty onboarding, email notifications, data residency zone tracking, and regulatory export.
 
 This engagement explicitly *does not* include: payment service provider integration (B2B money settlement is handled outside the platform), blockchain infrastructure, historical Excel record migration (closed cycles remain in existing archives), consumer-facing functionality, or changes to the counterparties' internal systems.
 
@@ -130,6 +130,21 @@ This engagement explicitly *does not* include: payment service provider integrat
 |How to express contract rules without per-contract code changes
 |Structured expression tree (AND/OR/range/tiered) evaluated by a generic engine; validated against versioned JSON Schema
 |Medium — rule schema is versioned; adding new node types is additive
+
+|8
+|How to handle diverse counterparty file formats
+|Per-counterparty file normalisation mappings applied between raw upload and eligibility engine input; mappings stored as tenant configuration
+|Easy — adding a new mapping does not change the engine or core schema
+
+|9
+|How to handle cross-cycle adjustments
+|Snapshot-based: each adjustment triggers a full eligibility recalculation; results are self-contained, not deltas
+|Medium — switching to delta-based requires engine changes and audit payload redesign
+
+|10
+|Which contract rule version applies when rules change mid-cycle
+|Contract version locked at cycle opening; mid-cycle changes apply to the next cycle only
+|Easy — policy decision, not a structural constraint
 |===
 
 == Problem Statement
@@ -601,114 +616,75 @@ workflow.eligibility -> api.apiSvc: Return result
 
 === Reconciliation Cycle Flow
 
-.Happy Path — Monthly Reconciliation Cycle
+Each monthly reconciliation cycle follows four phases. The workflow is orchestrated by Step Functions; every state transition is recorded as an immutable audit ledger event.
+
+.Monthly Reconciliation Cycle — Four-Phase Flow
 [plantuml,case03-cycle-flow,format=svg]
 ....
 @startuml
-skinparam sequenceArrowType ortho
 skinparam backgroundColor #fafafa
 skinparam defaultFontName Arial
-skinparam sequenceGroupBorderColor #90A4AE
+skinparam defaultFontSize 14
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1565C0
+skinparam arrowColor #1565C0
 
-participant "Counterparty\nAdministrator" as CP
-participant "Web App" as WEB
-participant "API Service" as API
-participant "S3\nFile Store" as S3
-participant "Audit\nLedger" as AUDIT
-participant "Step\nFunctions" as SF
-participant "Eligibility\nEngine" as EE
-participant "Reconciliation\nManager (L1)" as RM
-participant "Senior\nManager (L2)" as SM
-participant "SES\nEmail" as SES
+|Counterparty|
+start
+:Upload typed data files\n(people table, money movement,\nspecial conditions, etc.);
 
-== Phase 1: Multi-File Submission ==
+|Platform|
+:Normalise files to\ncanonical schema;
+:Check cycle readiness:\nall required file types received?;
 
-CP -> WEB: Upload people table file
-WEB -> API: POST /cycles/{id}/files\n(file_type=PEOPLE_TABLE)
-API -> S3: Store file; record SHA-256 checksum
-API -> AUDIT: INSERT FILE_UPLOADED event\n(file_type, sha256, previous_hash, event_hash)
-API -->> WEB: 202 Accepted — file received
+if (All files present?) then (yes)
+  :Trigger eligibility\ncalculation;
+else (no)
+  :Wait for remaining files;
+  stop
+endif
 
-CP -> WEB: Upload money movement file
-WEB -> API: POST /cycles/{id}/files\n(file_type=MONEY_MOVEMENT)
-API -> S3: Store file; record SHA-256 checksum
-API -> AUDIT: INSERT FILE_UPLOADED event
+:Evaluate expression tree rules\nagainst all data files;
+:Produce eligibility result\nand compensation proposal;
 
-note over API: Check cycle_readiness view:\nall required file types received?
-API -> AUDIT: INSERT CYCLE_FILES_COMPLETE event
-API -> SF: StartExecution — reconciliation workflow
-API -->> WEB: All files received — cycle in progress
+|Reinsurer|
+:L1 Reconciliation Manager\nreviews proposal;
 
-== Phase 2: Eligibility Calculation ==
+if (Approved?) then (yes)
+  if (Amount > threshold?) then (yes)
+    :L2 Senior Manager review;
+  else (no)
+  endif
+else (request adjustment)
+  |Counterparty|
+  :Accept adjustment /\nsubmit revised file /\nsubmit counter-proposal;
+  |Platform|
+  :Re-trigger eligibility\nif data revised;
+  |Reinsurer|
+  :Review updated proposal;
+endif
 
-SF -> EE: InvokeTask — compute eligibility\n(contract_id, cycle_files s3_keys)
-EE -> S3: Fetch all typed data files
-EE -> API: GET /contracts/{id}/rules
-EE -> EE: Evaluate expression tree rules\nagainst each individual record
-EE -->> SF: TaskSuccess — eligibility_result_json
-SF -> API: POST /cycles/{id}/eligibility-result
-API -> AUDIT: INSERT ELIGIBILITY_COMPUTED event\n(result_summary, engine_version, previous_hash, event_hash)
-SF -> SES: Send "Proposal ready for review"\nto Reconciliation Manager
+|Counterparty|
+:Counter-sign cycle;
 
-== Phase 3: Multi-Level Reinsurer Review ==
-
-SES -->> RM: Email — "Cycle {id} proposal ready"
-RM -> WEB: Open proposal; review eligibility result
-alt L1 approves (amount ≤ threshold)
-  RM -> API: POST /cycles/{id}/approve\n(step_token, level=L1)
-  API -> AUDIT: INSERT REINSURER_APPROVED_L1 event
-  API -> SF: SendTaskSuccess — step_token
-else L1 approves (amount > threshold — L2 required)
-  RM -> API: POST /cycles/{id}/approve\n(step_token, level=L1)
-  API -> AUDIT: INSERT REINSURER_APPROVED_L1 event
-  API -> SF: SendTaskSuccess — escalate_to_L2
-  SF -> SES: Notify Senior Manager
-  SM -> API: POST /cycles/{id}/approve\n(step_token, level=L2)
-  API -> AUDIT: INSERT REINSURER_APPROVED_L2 event
-  API -> SF: SendTaskSuccess — step_token
-else Reinsurer requests adjustment
-  RM -> API: POST /cycles/{id}/adjust\n(adjustment_note)
-  API -> AUDIT: INSERT ADJUSTMENT_REQUESTED event
-  API -> SF: SendTaskSuccess — step_token (adjusted)
-  SF -> SES: Notify counterparty of adjustment
-  alt Counterparty accepts adjustment
-    CP -> API: POST /cycles/{id}/accept-adjustment
-    API -> AUDIT: INSERT ADJUSTMENT_ACCEPTED event
-  else Counterparty submits revised file
-    CP -> API: POST /cycles/{id}/files\n(file_type=PEOPLE_TABLE, revised=true)
-    API -> AUDIT: INSERT FILE_REVISED event
-    note over SF: Re-trigger eligibility calculation\nwith updated file set
-  else Counterparty submits counter-proposal
-    CP -> API: POST /cycles/{id}/counter-proposal
-    API -> AUDIT: INSERT COUNTER_PROPOSAL_SUBMITTED event
-    SF -> SES: Notify Reconciliation Manager\nof counter-proposal
-  end
-end
-
-== Phase 4: Counter-Sign and Seal ==
-
-SF -> SES: Send "Please counter-sign cycle {id}"\nto Counterparty Administrator
-SES -->> CP: Email — counter-sign request
-CP -> WEB: Open portal; review and sign
-CP -> API: POST /cycles/{id}/counter-sign
-API -> AUDIT: INSERT CYCLE_SIGNED event\n(is_final=true, previous_hash, event_hash)
-note over SF: Workflow complete — execution status = SUCCEEDED
-API -> AUDIT: INSERT WORKFLOW_COMPLETED event
-API -->> WEB: Cycle status = SIGNED ✅
+|Platform|
+:Seal cycle in audit ledger\n(SHA-256 hash chain — immutable);
+stop
 
 @enduml
 ....
 
 === Approval Workflow State Machine
 
-The approval model supports multi-round negotiation between the reinsurer and counterparty. Multiple reinsurer approvers can sign off in sequence (L1 reconciliation manager, L2 senior manager for cycles above a configurable threshold amount). The counterparty can submit revised data files at any point before the cycle is sealed — re-triggering a full eligibility recalculation — or issue a formal counter-proposal with their own eligibility calculation.
+The approval model supports multi-round negotiation between the reinsurer and counterparty. The L1 reconciliation manager reviews each proposal; cycles above a configurable compensation threshold require L2 senior manager sign-off. Counterparties can submit revised data files at any point before the cycle is sealed — re-triggering a full eligibility recalculation — or issue a formal counter-proposal.
 
-.Reconciliation Cycle — State Machine
+.Reconciliation Cycle — State Machine (Key States)
 [plantuml,case03-state-machine,format=svg]
 ....
 @startuml
 skinparam backgroundColor #fafafa
 skinparam defaultFontName Arial
+skinparam defaultFontSize 14
 skinparam state {
   BackgroundColor #E3F2FD
   BorderColor #1565C0
@@ -717,52 +693,22 @@ skinparam state {
   EndColor #B71C1C
 }
 
-[*] --> AWAITING_FILES : Cycle opened
+[*] --> Awaiting_Files : Cycle opened
 
-AWAITING_FILES --> FILES_COMPLETE : All required file types\nreceived for this contract
-FILES_COMPLETE --> ELIGIBILITY_RUNNING : Step Functions invokes\nEligibility Engine
-ELIGIBILITY_RUNNING --> PROPOSAL_READY : Calculation complete
-PROPOSAL_READY --> REINSURER_REVIEW_L1 : Notification sent to\nReconciliation Manager
+Awaiting_Files --> Eligibility_Running : All required file\ntypes received
 
-state "Multi-Level Reinsurer Sign-Off" as reinsurerBlock {
-  REINSURER_REVIEW_L1 --> REINSURER_REVIEW_L2 : L1 approves\n[amount > threshold]
-  REINSURER_REVIEW_L1 --> COUNTERPARTY_REVIEW : L1 approves\n[amount ≤ threshold]
-  REINSURER_REVIEW_L2 --> COUNTERPARTY_REVIEW : L2 approves
-  REINSURER_REVIEW_L2 --> REINSURER_REVIEW_L1 : L2 requests adjustment\n(loop back)
-}
+Eligibility_Running --> Reinsurer_Review : Calculation complete\n(L1, then L2 if threshold exceeded)
 
-REINSURER_REVIEW_L1 --> ADJUSTMENT_REQUESTED : Manager requests adjustment
+Reinsurer_Review --> Adjustment_Loop : Reinsurer requests adjustment
+Adjustment_Loop --> Eligibility_Running : Counterparty submits\nrevised data file
+Adjustment_Loop --> Reinsurer_Review : Counterparty accepts\nor submits counter-proposal
 
-ADJUSTMENT_REQUESTED --> COUNTERPARTY_RESPONDING : Adjustment sent to counterparty
+Reinsurer_Review --> Counterparty_Sign : Approved (all levels)
 
-COUNTERPARTY_RESPONDING --> REINSURER_REVIEW_L1 : Counterparty accepts adjustment
-COUNTERPARTY_RESPONDING --> ELIGIBILITY_RUNNING : Counterparty submits\nrevised data file\n(full re-computation)
-COUNTERPARTY_RESPONDING --> REINSURER_COUNTER_REVIEW : Counterparty submits\ncounter-proposal
+Counterparty_Sign --> Cycle_Sealed : Counter-signed\n[Audit ledger sealed — immutable]
 
-REINSURER_COUNTER_REVIEW --> REINSURER_REVIEW_L1 : Counter-proposal\naccepted / merged
-REINSURER_COUNTER_REVIEW --> ESCALATED : Cannot resolve
-
-COUNTERPARTY_REVIEW --> CYCLE_SIGNED : Counterparty counter-signs\n[Audit ledger sealed — immutable]
-COUNTERPARTY_REVIEW --> REINSURER_COUNTER_REVIEW : Counterparty submits\ncounter-proposal
-COUNTERPARTY_REVIEW --> ELIGIBILITY_RUNNING : Counterparty submits\nrevised data file\n(full re-computation)
-
-ESCALATED --> REINSURER_REVIEW_L1 : Escalation resolved
-
-CYCLE_SIGNED --> [*]
-
-note right of CYCLE_SIGNED
-  Audit ledger entry:
-  CYCLE_SIGNED event with
-  SHA-256 hash chain link —
-  record cannot be modified
-end note
-
-note right of REINSURER_REVIEW_L2
-  L2 approval required when
-  cycle compensation amount
-  exceeds contract threshold
-  (configurable per contract)
-end note
+Cycle_Sealed --> [*]
+@enduml
 ....
 
 === Audit Ledger Design
@@ -773,38 +719,7 @@ The audit ledger is the platform's trust anchor. It is a separate append-only sc
 * A dedicated verification role has `SELECT` only
 * Database superusers are restricted by IAM policy; access requires a break-glass procedure logged in CloudTrail
 
-[source,sql]
-----
--- Audit events table (append-only; no updates or deletes permitted)
-CREATE TABLE audit.events (
-    id              BIGSERIAL       PRIMARY KEY,
-    tenant_id       UUID            NOT NULL,
-    cycle_id        UUID,
-    event_type      TEXT            NOT NULL,  -- FILE_UPLOADED | ELIGIBILITY_COMPUTED | REINSURER_APPROVED | ADJUSTMENT_REQUESTED | CYCLE_SIGNED | ...
-    actor_id        UUID            NOT NULL,
-    actor_type      TEXT            NOT NULL,  -- INTERNAL | COUNTERPARTY | SYSTEM
-    payload         JSONB           NOT NULL,  -- event-specific data (file checksum, result summary, approval note, etc.)
-    previous_hash   TEXT            NOT NULL,  -- SHA-256 of the immediately preceding row for this tenant (genesis row stores KMS-signed anchor hash)
-    event_hash      TEXT            NOT NULL,  -- SHA-256(previous_hash || event_type || actor_id || payload::text || created_at::text)
-    created_at      TIMESTAMPTZ     NOT NULL DEFAULT now()
-);
-
--- Restrict to INSERT only for the application role
-REVOKE ALL ON audit.events FROM app_role;
-GRANT INSERT ON audit.events TO app_role;
-GRANT SELECT ON audit.events TO verify_role;
-
--- Row-Level Security ensures tenants cannot read each other's audit records
-ALTER TABLE audit.events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation ON audit.events
-    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
-
--- Per-tenant chain: each INSERT resolves previous_hash from the last row
--- for the same tenant_id — not globally. This eliminates write contention
--- when multiple tenants submit files simultaneously at month-end.
--- Example: SELECT event_hash FROM audit.events
---          WHERE tenant_id = $1 ORDER BY id DESC LIMIT 1
-----
+Each event row stores the event type, acting user, a JSONB payload with event-specific data, and two hash fields (`previous_hash`, `event_hash`) that form the per-tenant chain. Row-Level Security isolates tenants at the database layer. The full schema definition — including privilege grants, RLS policies, and hash-chain linking logic — is delivered as part of the Phase 1 database migration scripts.
 
 **Per-tenant hash chain:** Each tenant has an independent chain. Row N's `previous_hash` references the hash of the preceding event for the *same* `tenant_id`, not the globally preceding row. This allows concurrent month-end submissions from all counterparties without serialization contention.
 
@@ -814,130 +729,29 @@ CREATE POLICY tenant_isolation ON audit.events
 
 === Data Model
 
-.Data Model — Core Entities
+The platform's core data model comprises ten entities spanning tenant management, contract configuration, reconciliation lifecycle, and audit. Column-level schema definitions are delivered as Phase 1 migration scripts.
+
+.Data Model — Core Entities and Relationships
 [plantuml,case03-data-model,format=svg]
 ....
 @startuml
 skinparam backgroundColor #fafafa
 skinparam defaultFontName Arial
+skinparam defaultFontSize 14
 skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1565C0
+hide members
 
-class tenants {
-  + id : UUID <<PK>>
-  --
-  name : TEXT
-  country_code : TEXT
-  data_residency_zone : TEXT
-  status : TEXT
-  onboarded_at : TIMESTAMPTZ
-  created_at : TIMESTAMPTZ
-}
-
-class users {
-  + id : UUID <<PK>>
-  --
-  tenant_id : UUID <<FK>>
-  email : TEXT
-  role : TEXT
-  user_type : TEXT
-  cognito_sub : TEXT
-  created_at : TIMESTAMPTZ
-}
-
-class contracts {
-  + id : UUID <<PK>>
-  --
-  tenant_id : UUID <<FK>>
-  reference : TEXT
-  rules_json : JSONB
-  effective_from : DATE
-  effective_to : DATE
-  version : INTEGER
-  status : TEXT
-  created_at : TIMESTAMPTZ
-}
-
-class reconciliation_cycles {
-  + id : UUID <<PK>>
-  --
-  contract_id : UUID <<FK>>
-  period : TEXT
-  status : TEXT
-  sf_execution_arn : TEXT
-  opened_at : TIMESTAMPTZ
-  signed_at : TIMESTAMPTZ
-}
-
-class contract_file_types {
-  + id : UUID <<PK>>
-  --
-  contract_id : UUID <<FK>>
-  file_type : TEXT
-  required : BOOLEAN
-  validation_schema : JSONB
-}
-
-class cycle_files {
-  + id : UUID <<PK>>
-  --
-  cycle_id : UUID <<FK>>
-  file_type : TEXT
-  s3_key : TEXT
-  sha256_checksum : TEXT
-  uploaded_by : UUID <<FK>>
-  uploaded_at : TIMESTAMPTZ
-}
-
-class eligibility_results {
-  + id : UUID <<PK>>
-  --
-  cycle_id : UUID <<FK>>
-  result_json : JSONB
-  compensation_amount : NUMERIC <<generated>>
-  engine_version : TEXT
-  computed_at : TIMESTAMPTZ
-  note: compensation_amount is GENERATED ALWAYS AS\n((result_json->>'compensation_amount')::numeric) STORED
-}
-
-class approval_steps {
-  + id : UUID <<PK>>
-  --
-  cycle_id : UUID <<FK>>
-  step_order : INTEGER
-  approver_id : UUID <<FK>>
-  approver_type : TEXT
-  action : TEXT
-  notes : TEXT
-  signed_at : TIMESTAMPTZ
-}
-
-class adjustments {
-  + id : UUID <<PK>>
-  --
-  cycle_id : UUID <<FK>>
-  prior_cycle_id : UUID <<FK>>
-  root_cycle_id : UUID <<FK>>
-  generation : INTEGER
-  reason : TEXT
-  amount_delta : NUMERIC
-  created_by : UUID <<FK>>
-  created_at : TIMESTAMPTZ
-}
-
-class "audit.events" as audit_events {
-  + id : BIGSERIAL <<PK>>
-  --
-  tenant_id : UUID
-  cycle_id : UUID
-  event_type : TEXT
-  actor_id : UUID
-  actor_type : TEXT
-  payload : JSONB
-  previous_hash : TEXT
-  event_hash : TEXT
-  created_at : TIMESTAMPTZ
-}
+class tenants
+class users
+class contracts
+class reconciliation_cycles
+class contract_file_types
+class cycle_files
+class eligibility_results
+class approval_steps
+class adjustments
+class "audit.events" as audit_events
 
 tenants "1" --> "many" contracts
 tenants "1" --> "many" users
@@ -951,72 +765,35 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 @enduml
 ....
 
+**Key design points:**
+
+* **tenants** — each counterparty is a tenant with a designated data residency zone; Row-Level Security isolates all downstream data
+* **contracts** — versioned contract definitions with expression tree rules stored as JSONB; `contract_file_types` defines which file types each contract requires
+* **reconciliation_cycles** — one cycle per contract per period; locks a `contract_version` at opening time (ADR-009); tracks workflow status
+* **cycle_files** — typed file uploads (people table, money movement, etc.) with SHA-256 checksums; drives the cycle readiness check
+* **eligibility_results** — engine output with a generated `compensation_amount` column derived from the result JSONB; records engine version for reproducibility
+* **approval_steps** — ordered sequence of L1/L2 approvals, adjustments, and counter-proposals within a cycle
+* **adjustments** — cross-cycle correction chain tracked via `prior_cycle_id`, `root_cycle_id`, and `generation` (ADR-008)
+* **audit.events** — append-only ledger with per-tenant SHA-256 hash chain; KMS-signed genesis anchor; no UPDATE or DELETE permitted
+
 === Functional Requirements
 
-[cols="1,1,3,1"]
+The platform's functional scope is organised into nine epics. Detailed requirements per epic are elaborated during the Investigation Period and documented in the Functional Requirements Document (FRD).
+
+[cols="1,2,4,1,1", options="header"]
 |===
-|# |MoSCoW |Requirement |Phase
+|Epic |Name |Scope Summary |Phase |Priority
 
-4+|**Epic 1 — Contract Registry**
-
-|FR-01 |Must |Upload and version contract definitions; store rule metadata as structured expression tree JSON validated against a versioned JSON Schema |1
-|FR-02 |Must |Parse contract rules to drive eligibility engine input schema per counterparty; define required file types per contract |1
-|FR-03 |Should |Support multiple active contract versions per counterparty (effective date ranges) |2
-
-4+|**Epic 2 — File Ingestion**
-
-|FR-04 |Must |Accept typed counterparty data file uploads via HTTPS (S3 pre-signed URL); each file tagged with its file type (PEOPLE_TABLE, MONEY_MOVEMENT, SPECIAL_CONDITIONS, ADJUSTMENT_RECORDS, CONTRACT_EXCEPTIONS) |1
-|FR-04a |Must |Track per-cycle file readiness: the eligibility engine is triggered only when all required file types for the contract have been submitted |1
-|FR-05 |Must |Verify file integrity via SHA-256 checksum on receipt |1
-|FR-06 |Must |Validate file structure against the contract-defined schema for its file type; reject malformed files with clear error |1
-|FR-06a |Must |Deduplicate file submissions: reject a file if a submission for the same `(cycle_id, file_type)` already exists in any non-rejected state; return HTTP 409 with a reference to the existing submission |1
-|FR-07 |Should |Accept file submission via SFTP for counterparties requiring it (AWS Transfer Family, provisioned on-demand) |2
-
-4+|**Epic 3 — Eligibility Engine**
-
-|FR-08 |Must |Evaluate contract expression tree rules against all typed data files for a cycle; produce eligibility result and compensation proposal using exact decimal arithmetic |2
-|FR-09 |Must |Record engine version alongside every result for reproducibility |2
-|FR-10 |Should |Support re-computation when a counterparty submits a revised file during negotiation (creates a new eligibility result version, preserving the prior result) |2
-|FR-10a |Should |Support re-computation if contract rules are corrected (creates a new cycle version, not an overwrite) |3
-
-4+|**Epic 4 — Approval Workflow**
-
-|FR-11 |Must |Multi-level approval state machine: propose → L1 reinsurer review → L2 senior review (if amount exceeds threshold) → counterparty counter-sign → sealed |2
-|FR-11a |Must |Support counterparty counter-proposals: counterparty can submit an alternative eligibility calculation for reinsurer review |2
-|FR-11b |Must |Support counterparty file revision: counterparty can submit a revised data file at any point before cycle seal, re-triggering eligibility computation |2
-|FR-12 |Must |Support multiple adjustment rounds within a cycle before final sign-off |2
-|FR-13 |Must |Record every approval, adjustment, counter-proposal, and file revision action as an immutable audit ledger event |2
-|FR-14 |Should |Automated escalation notification if a cycle remains in a single state for >72 hours |3
-
-4+|**Epic 5 — Audit Ledger**
-
-|FR-15 |Must |Append-only audit log with SHA-256 hash chain across all state transitions |2
-|FR-16 |Must |Weekly automated hash-chain verification job; alert on any discrepancy |2
-|FR-17 |Must |Sealed cycle records can never be modified or deleted |2
-|FR-18 |Should |On-demand regulatory export: all events for a tenant, a contract, or a date range |3
-
-4+|**Epic 6 — Multi-Tenant Portal**
-
-|FR-19 |Must |Separate UX modes for internal (reinsurer) and external (counterparty) users |1
-|FR-20 |Must |PostgreSQL RLS enforced at DB layer; counterparties can never access each other's data |1
-|FR-21 |Must |Cognito MFA required for all users |1
-|FR-22 |Should |Read-only portal access for compliance / audit users |2
-
-4+|**Epic 7 — Notifications**
-
-|FR-23 |Should |Email notifications via SES for all workflow events (file received, proposal ready, approval requested, signed) |2
-|FR-24 |Could |In-app notification feed (non-blocking enhancement) |4
-
-4+|**Epic 8 — Counterparty Onboarding**
-
-|FR-25 |Must |Platform-mediated onboarding: tenant provisioning (incl. data residency zone) → contract upload → file type configuration → test cycle → UAT sign-off → live |1
-|FR-26 |Should |Self-service tenant onboarding reducing reinsurer IT involvement |3
-
-4+|**Epic 9 — Data Residency**
-
-|FR-27 |Must |Each tenant record includes a `data_residency_zone` field (`UK`, `EU`, `APAC`, `NA`); all tenant data stored exclusively in the designated zone |1
-|FR-28 |Should |Support deploying additional regional stacks (same Terraform module, different AWS region) when a counterparty requires a non-UK/EU residency zone |3
-|FR-29 |Should |Cross-cycle adjustment reporting: multi-generation adjustment chains are traceable from the current cycle back to the originating cycle via `root_cycle_id` |2
+|1 |Contract Registry |Upload, version, and validate contract definitions as expression tree JSON; define required file types per contract |1 |Must
+|2 |File Ingestion |Typed file upload via S3 pre-signed URLs with SHA-256 integrity check; cycle readiness tracking; SFTP fallback for legacy counterparties; duplicate submission prevention |1–2 |Must
+|2a |File Normalisation |Per-counterparty column/format mappings from native file format to platform canonical schema; mapping validation tool |1 |Must
+|3 |Eligibility Engine |Expression tree evaluation against all cycle files; exact decimal arithmetic; engine version recorded for reproducibility; re-computation on file revision |2 |Must
+|4 |Approval Workflow |Multi-level state machine (L1 → L2 → counterparty); adjustment rounds; counter-proposals; revised file re-trigger; 72-hour escalation |2–3 |Must
+|5 |Audit Ledger |Append-only SHA-256 hash-chain log; weekly automated verification; sealed-cycle immutability; on-demand regulatory export |2–3 |Must
+|6 |Multi-Tenant Portal |Separate UX for internal and external users; RLS-enforced data isolation; Cognito MFA; read-only compliance view |1–2 |Must
+|7 |Notifications |Email notifications via SES for workflow events; in-app notification feed (Phase 4 enhancement) |2–4 |Should
+|8 |Counterparty Onboarding |Platform-mediated tenant provisioning → contract upload → file config → normalisation mapping → test cycle → UAT → live; self-service onboarding in Phase 3 |1–3 |Must
+|9 |Data Residency |Per-tenant residency zone; regional stack deployment via same Terraform module; cross-cycle adjustment traceability |1–3 |Must
 |===
 
 === Non-Functional Requirements
@@ -1064,36 +841,7 @@ reconciliation_cycles "1" --> "many" audit_events : append-only
 
 === Eligibility Engine — Rule Schema
 
-Contract rules are stored as structured expression trees validated against a versioned JSON Schema. The eligibility engine evaluates `eligibility_rule` as a boolean expression tree and `compensation_rule` as a computation tree — both without any contract-specific code. New field types (mortality rate lookup, annuity factor table) are added once to the evaluator, then usable across all contracts without per-contract changes.
-
-Each rule set contains a `schema_version` field so the engine knows which interpreter to use. Unknown node types are rejected at contract upload time. The `schema_version` field ensures older rule sets remain reproducible even as the evaluator gains new capabilities.
-
-.Example contract rule JSON (expression tree structure)
-[source,json]
-----
-{
-  "schema_version": "2.0",
-  "contract_ref": "CP-042-LR",
-  "effective_from": "2026-01-01",
-  "eligibility_rule": {
-    "type": "AND",
-    "conditions": [
-      { "type": "range", "field": "age", "min": 60, "max": 90 },
-      { "type": "in", "field": "policy_type", "values": ["annuity", "pension"] },
-      { "type": "not", "condition": { "type": "in", "field": "policy_type", "values": ["term_life"] } }
-    ]
-  },
-  "compensation_rule": {
-    "type": "tiered",
-    "tiers": [
-      { "age_max": 70, "rate_per_individual": 100.00 },
-      { "age_max": 80, "rate_per_individual": 120.00 },
-      { "age_max": 90, "rate_per_individual": 150.00 }
-    ],
-    "currency": "GBP"
-  }
-}
-----
+Contract rules are stored as structured expression trees validated against a versioned JSON Schema. The eligibility engine evaluates `eligibility_rule` as a boolean expression tree and `compensation_rule` as a computation tree — both without any contract-specific code. New field types (mortality rate lookup, annuity factor table) are added once to the evaluator, then usable across all contracts without per-contract changes. Each rule set contains a `schema_version` field so the engine knows which interpreter to use; unknown node types are rejected at contract upload time.
 
 **Expression tree node types (initial set):**
 
@@ -1107,9 +855,11 @@ Each rule set contains a `schema_version` field so the engine knows which interp
 
 New node types (e.g. `lookup` for mortality tables, `formula` for actuarial calculations) are added to the evaluator once and immediately usable in any contract definition without deployment changes.
 
-**Validation:** The eligibility engine validates the rule JSON against a versioned JSON Schema at contract upload time. Unknown node types are rejected immediately with a clear validation error. All compensation amounts are computed using exact decimal arithmetic (no IEEE 754 floating-point) to prevent rounding artefacts.
+**Complexity ceiling gate:** If the Investigation Period finds that more than 20% of contract types require node types not in the initial set (e.g. mortality table lookups, actuarial factor calculations, multi-dimensional tiered rates), the expression tree approach is escalated to a constrained formula DSL before Phase 2 begins. The escalation decision is a Phase 1→2 gate item — it is not deferred.
 
-**Regression validation approach:** During Phase 1, the eligibility engine is run against 12 months of historical Excel output for 2–3 representative counterparty contracts. A pass requires 100% agreement on eligibility flags and compensation amounts for all historical periods before the engine is used in production.
+**Decimal precision:** All monetary values, rates, and factors in contract rule JSON are represented as strings, not JSON numbers, to prevent IEEE 754 rounding artefacts. The JSON Schema enforces a decimal string pattern; the eligibility engine parses strings into language-native exact decimal types at evaluation time.
+
+**Validation and regression:** The engine validates rule JSON against a versioned JSON Schema at upload time. During Phase 1, the engine is run against 12 months of historical Excel output for 2–3 representative contracts. A pass requires 100% agreement on eligibility flags and compensation amounts before production use.
 
 === Testing Approach
 
@@ -1259,6 +1009,8 @@ A phase does not begin until its entry criteria are met. Unresolved gate items a
 |**Phase 1 → Phase 2**
 a|
 * Eligibility engine reproduces 100% of historical Excel output for at least 3 representative contract types (validated side-by-side with reconciliation managers)
+* Expression tree complexity ceiling assessed: if >20% of extracted contract types require node types beyond the initial set (AND/OR/range/tiered/flat), escalation to constrained formula DSL is triggered before Phase 2 scope is finalised
+* File normalisation mappings validated for at least 3 counterparty file formats; mapping configuration tested end-to-end
 * Lambda deployment artefacts validated in staging; cold start latency acceptable for portal API interactions
 * Multi-file ingestion model tested: typed file uploads trigger cycle readiness check; eligibility engine only starts when all required file types are present
 * Compliance workshop complete; Solvency II Pillar III and GDPR handling confirmed in writing by compliance lead
@@ -1412,11 +1164,9 @@ The recommended migration path from Option 2 to Option 3 is to introduce an even
 
 *Decision:* AWS Step Functions Standard Workflows with wait-for-callback task tokens. Each approval level (L1, L2) is implemented as a sub-workflow so the number of levels is configurable per contract tier without changing the Step Functions definition.
 
-*Rationale:* The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Step Functions' visual execution graph simplifies debugging stalled approvals. Sub-workflows for approval levels allow a new tier to be added per contract without modifying the parent workflow.
+*Rationale:* The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Sub-workflows for approval levels allow a new tier to be added per contract without modifying the parent workflow.
 
-Step Functions is the *workflow engine*; the hash-chain audit ledger is the *sole compliance archive*. Step Functions execution history (retained for up to 90 days by default) is an operational debugging aid only — it is not a regulatory record and must not be treated as one. All compliance-relevant state transitions are written to the audit ledger by the API service, not derived from Step Functions history.
-
-Each workflow execution must be guarded by an idempotency key (`tenant_id + contract_id + period`) to prevent duplicate executions from generating conflicting audit events for the same reconciliation cycle.
+Step Functions is the *workflow engine*; the hash-chain audit ledger is the *sole compliance archive*. Step Functions execution history is an operational debugging aid only — it is not a regulatory record. Workflow executions are guarded by an idempotency key to prevent duplicate audit events for the same reconciliation cycle.
 
 === ADR-004: File Exchange — S3 Pre-Signed URLs with Typed Multi-File Ingestion
 
@@ -1451,14 +1201,35 @@ Each workflow execution must be guarded by an idempotency key (`tenant_id + cont
 
 *Context:* The platform must accept contract definitions as structured metadata without constraining contract authors to a rigid schema that breaks when a new contract type is introduced. Options: flat JSON with code-per-contract, expression tree with generic evaluator, embedded DSL (e.g. SpEL/MVEL), Rete-based rule engine.
 
-*Decision:* Contract rules stored as a structured expression tree (AND/OR/range/tiered/flat node types) evaluated by a generic engine. Validated against a versioned JSON Schema at upload time.
+*Decision:* Contract rules stored as a structured expression tree evaluated by a generic engine. Validated against a versioned JSON Schema at upload time. See the _Eligibility Engine — Rule Schema_ section for the node type taxonomy and decimal precision approach.
 
 *Rationale:*
 
-* **Flat JSON** rejected — the initial `min_age`, `base_rate_per_individual` schema works for simple contracts but breaks the moment a contract has stepped rates by age band, multi-condition eligibility, or annuity factor tables. Every new contract type would require a code change and deployment.
-* **Expression tree** chosen — the engine evaluates `eligibility_rule` as a boolean tree and `compensation_rule` as a computation tree without any contract-specific code. New node types (e.g. `lookup` for mortality tables) are added once to the evaluator, then usable across all contracts. The `schema_version` field ensures older rule sets remain reproducible.
-* **Embedded DSL (SpEL/MVEL)** rejected — powerful but creates a security risk (arbitrary code execution in rule definitions) and makes audit reproducibility harder (DSL version changes could alter evaluation semantics). The expression tree is a constrained subset that is fully auditable.
-* **Rete-based rule engine (Drools)** rejected — operational overhead for this scale; the expression tree provides sufficient flexibility for the known contract types while remaining transparent and debuggable.
+* **Flat JSON** rejected — breaks when a contract has stepped rates by age band, multi-condition eligibility, or annuity factor tables. Every new contract type would require a code change.
+* **Expression tree** chosen — the engine evaluates eligibility and compensation rules as tree structures without contract-specific code. New node types are added once to the evaluator, then usable across all contracts. A `schema_version` field ensures reproducibility.
+* **Embedded DSL (SpEL/MVEL)** rejected — creates a security risk (arbitrary code execution) and makes audit reproducibility harder.
+* **Rete-based rule engine (Drools)** rejected — operational overhead not justified at this scale.
+
+=== ADR-008: Adjustment Reconciliation — Snapshot-Based Model
+
+*Context:* Corrections from prior months are folded into subsequent cycles as explicit adjustment records. When month 3 adjusts month 1, and month 5 adjusts month 3's adjustment of month 1, the platform must define how multi-generation adjustment chains affect eligibility calculations and audit reproducibility. Options: delta-based (each adjustment is a differential applied to the prior result) or snapshot-based (each adjustment is a self-contained recalculation from the original data).
+
+*Decision:* Snapshot-based adjustment model. Each adjustment record triggers a full eligibility recalculation using the original cycle's data files plus the adjustment parameters. The result is a complete, self-contained eligibility snapshot — not a delta applied to the prior result.
+
+*Rationale:*
+
+* **Delta-based** rejected — applying sequential deltas requires replaying the full adjustment chain to reconstruct the current state. If any intermediate delta is incorrect, all downstream deltas propagate the error. Debugging requires understanding every delta in the chain, which reintroduces the same person-dependent knowledge problem the platform is designed to eliminate.
+* **Snapshot-based** chosen — each adjustment produces a complete result that can be verified independently. An auditor reconstructing the state of a contract at month 3 reads a single `ELIGIBILITY_COMPUTED` event with full inputs and outputs — no chain replay required. The `adjustments` table's `prior_cycle_id` and `root_cycle_id` fields provide traceability back to the originating cycle, but the eligibility result at each generation is self-contained.
+* The `generation` field on the `adjustments` table tracks the depth of the chain (generation 0 = original, generation 1 = first correction, etc.). The `ELIGIBILITY_COMPUTED` audit event payload includes the `root_cycle_id` and `generation` so the full correction history is traceable from any point in the chain.
+* Trade-off: snapshot recalculations are more compute-expensive than deltas, but at monthly cadence with Lambda's pay-per-invocation model, the cost is negligible.
+
+=== ADR-009: Contract Version Locking at Cycle Opening
+
+*Context:* Contract rules can be updated between reconciliation cycles (e.g. renegotiated terms, corrected parameters). If a contract version changes after a counterparty has uploaded files but before the cycle is signed off, the platform must determine which rule version applies.
+
+*Decision:* Eligibility computation is locked to the contract version that was active at cycle opening time. The `reconciliation_cycles` table records a `contract_version_id` at cycle creation. Mid-cycle contract changes apply to the next cycle only.
+
+*Rationale:* Both parties' expectations for a cycle are set when the cycle opens. Applying a mid-cycle rule change would invalidate work already reviewed by the counterparty and create a dispute trigger. The locked version is recorded in the audit ledger alongside every `ELIGIBILITY_COMPUTED` event, ensuring reproducibility. If a rule correction is genuinely needed for the current cycle, the existing flow supports it: close the current cycle as voided, open a new cycle with the corrected contract version, and re-upload files — all captured in the audit trail.
 
 == Deployment & Infrastructure
 
@@ -1589,16 +1360,15 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 [cols="2,3"]
 |===
-|Control |Implementation
+|Control |Approach
 
-|Authentication (all users) |Single Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users; SAML 2.0 federation from corporate IdP for internal users. `custom:user_type` claim drives RBAC. MFA enforced for all users.
-|Authorisation |RBAC implemented in API service; roles: REINSURER_ADMIN, RECONCILIATION_MANAGER, COMPLIANCE_VIEWER, COUNTERPARTY_ADMIN, PLATFORM_ADMIN
-|Data isolation |PostgreSQL RLS enforces tenant isolation at DB layer; API service sets `app.current_tenant_id` via `SET LOCAL` (transaction-scoped) to prevent connection-pool session bleed; WAF rate limiting on API
-|Encryption at rest |Aurora Serverless v2: AES-256 (AWS KMS); S3: SSE-S3 (AES-256); KMS CMK for audit-critical data
-|Encryption in transit |TLS 1.2+ enforced at CloudFront and API Gateway; Lambda-to-Aurora and Lambda-to-S3 communication within VPC
-|Network security |Lambda functions in private subnets; Aurora not publicly accessible; Security Groups restrict inter-service traffic; WAF OWASP managed rule group on CloudFront
-|Audit logging |CloudTrail for all AWS API calls; Aurora pgaudit for all DB statements; application audit ledger for all business events
-|Break-glass access |Aurora superuser access requires IAM role assumption logged in CloudTrail; documented procedure; alerts on assumption
+|Authentication |Single Cognito User Pool; SAML 2.0 federation for internal users, Cognito-native (email/password) for external; MFA enforced for all users
+|Authorisation |Role-based access control (RBAC) with five roles spanning reinsurer, counterparty, compliance, and platform administration
+|Data isolation |PostgreSQL RLS at DB layer; transaction-scoped tenant context to prevent connection-pool bleed; WAF rate limiting
+|Encryption |AES-256 at rest (KMS-managed); TLS 1.2+ in transit; dedicated KMS CMK for audit-critical data
+|Network security |Lambda in private subnets; Aurora not publicly accessible; WAF with OWASP managed rule group
+|Audit logging |Three layers: AWS CloudTrail (API calls), database statement logging, application-level audit ledger (business events)
+|Break-glass access |Superuser access requires documented procedure with alerting; all access logged
 |===
 
 === Disaster Recovery
@@ -1614,10 +1384,7 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 === Hypercare (Weeks 1–4 after First Counterparty Go-Live)
 
-* Daily stand-up with reinsurer IT and reconciliation ops team
-* On-call rota covering month-end submission window (24/7 for first month-end)
-* Dedicated Slack/Teams channel with first counterparty technical contact
-* Eligibility result validation: side-by-side comparison with parallel Excel run for first 2 cycles
+The first four weeks after go-live include daily stand-ups with the reinsurer IT and reconciliation ops team, a 24/7 on-call rota for the first month-end submission window, a dedicated channel with the first counterparty’s technical contact, and side-by-side eligibility result validation against a parallel Excel run for the first two cycles.
 
 === Counterparty Integration Tiers
 
@@ -1645,15 +1412,13 @@ Counterparties vary in technical capability. The platform supports three integra
 
 === Counterparty Onboarding Runbook
 
-1. Agree integration tier with counterparty technical contact; provision any required IdP federation or SFTP endpoint
-2. Provision tenant (ID, name, country code, data residency zone) in platform admin portal
-3. Upload contract definition (expression tree rules JSON) and configure required file types per contract
-4. Verify rule parsing and file type configuration; validate expression tree against JSON Schema
-5. Provision counterparty administrator user (Cognito invite email + MFA setup, or SFTP service account)
-6. Run synthetic test cycle: counterparty uploads all required file types → verify cycle readiness trigger → validate eligibility output against contract rules
-7. UAT sign-off (counterparty + reinsurer compliance lead)
-8. First live cycle: run in parallel with Excel for one month
-9. Decommission Excel process for this counterparty
+1. Agree integration tier and provision IdP federation or SFTP endpoint as needed
+2. Provision tenant (ID, name, country code, data residency zone) and upload contract definition with file type configuration
+3. Configure file normalisation mapping: obtain a sample file, define column/format mappings, validate against canonical schema using the mapping validation tool
+4. Verify rule parsing, file type configuration, and expression tree validation against JSON Schema
+5. Provision counterparty user (Cognito invite + MFA setup, or SFTP service account)
+6. Run synthetic test cycle end-to-end: file upload → normalisation → cycle readiness → eligibility → approval → counter-sign; UAT sign-off by counterparty and compliance lead
+7. First live cycle in parallel with Excel for one month; decommission Excel on successful validation
 
 === Audit Ledger Health
 
@@ -1664,17 +1429,14 @@ Counterparties vary in technical capability. The platform supports three integra
 
 === Knowledge Transfer
 
-[cols="2,2,1,1"]
+[cols="2,1,1", options="header"]
 |===
-|Topic |Format |Audience |Timing
+|Topic |Audience |Timing
 
-|Platform overview and reconciliation workflow |Workshop (2 hours) |All reinsurer staff + first counterparty |Phase 3 go-live
-|Reconciliation Manager portal walkthrough |Guided demo + recorded video |Reconciliation Managers |Phase 3, week before go-live
-|Multi-file upload and cycle readiness |Guided demo + recorded video |Counterparty Administrators |Phase 3, week before go-live
-|Expression tree contract rule authoring |Workshop (half day) |Reconciliation Managers + Platform Admins |Phase 2
-|Compliance audit log queries |Workshop (half day) |Compliance / Audit team |Phase 4 go-live
-|Platform administration and monitoring |Documentation + workshop |Reinsurer IT team |Phase 4
-|Counterparty onboarding guide |Written runbook + video |Platform Admins |Phase 3
+|Platform overview and reconciliation workflow (workshop) |All reinsurer staff + first counterparty |Phase 3 go-live
+|Portal walkthrough and multi-file upload (guided demo + video) |Reconciliation Managers, Counterparty Admins |Phase 3
+|Expression tree contract rule authoring (half-day workshop) |Reconciliation Managers, Platform Admins |Phase 2
+|Compliance audit log queries and platform administration |Compliance / Audit team, Reinsurer IT |Phase 4
 |===
 
 == Next Steps

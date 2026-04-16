@@ -321,6 +321,45 @@ exists.
 |Phase 2–3
 |===
 
+=== Post-Platform Staffing Model
+
+The table below illustrates how the remaining reconciliation team operates once the
+platform is fully adopted. This is not a restructuring plan — it is a model for
+understanding what roles remain essential and how the team's focus shifts from
+manual processing to exception management and relationship oversight.
+
+[cols="2,1,1,3", options="header"]
+|===
+|Role |Conservative ({reduction-factor-conservative}×) |Optimistic ({reduction-factor-optimistic}×) |Primary Responsibilities
+
+|**Exception & Complex Contract Managers**
+|15–20
+|8–10
+|Handle contracts too complex for the expression tree engine; manage non-standard counterparty arrangements; resolve disputes escalated from the approval workflow
+
+|**Counterparty Relationship Managers**
+|10–15
+|5–8
+|Serve as named contacts for each counterparty; coordinate onboarding, manage quarterly reviews, handle ad-hoc queries outside the monthly cycle
+
+|**Platform Operations & Onboarding**
+|5–8
+|3–5
+|Configure new counterparty tenants and file normalisation mappings; maintain contract rule metadata; manage the onboarding pipeline (1–2 new counterparties per month)
+
+|**Compliance & Audit**
+|3–5
+|2–3
+|Monitor audit ledger health; prepare quarterly compliance reports; coordinate with PRA/FCA audit requests; manage regulatory export and retention
+
+|**Team Leads & Process Owners**
+|3–5
+|2–3
+|Oversee cycle deadlines; manage escalation from the automated workflow; own the reconciliation process and its continuous improvement
+
+4+|_The shift is structural: today's team spends the majority of its time on routine calculation, file exchange, and manual verification. The platform automates these activities. The remaining team focuses on judgement-intensive work — exceptions, relationships, compliance, and continuous improvement — where human expertise adds value that automation cannot replace._
+|===
+
 === Cost Savings Scenarios
 
 The projections below focus on headcount reduction — the most direct and measurable
