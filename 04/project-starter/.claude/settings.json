@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(gradle *)",
+      "Bash(docker compose *)",
+      "Bash(docker ps*)",
+      "Bash(docker logs *)",
+      "Bash(npm install*)",
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git status*)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git checkout *)",
+      "Bash(curl *)",
+      "Bash(nc *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Bash(mkdir -p *)",
+      "Bash(cat *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(rm *)",
+      "Bash(chmod *)",
+      "Bash(python3 *)",
+      "Bash(java *)",
+      "Bash(which *)",
+      "Bash(echo *)",
+      "Bash(sleep *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json, subprocess\ntry:\n    d = json.load(sys.stdin)\n    f = d.get('file_path', '')\n    if f.endswith(('.ts', '.tsx')):\n        subprocess.run(['npx', 'prettier', '--write', f], capture_output=True)\nexcept:\n    pass\n\""
+          }
+        ]
+      }
+    ]
+  }
+}
