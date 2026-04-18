@@ -2,6 +2,7 @@ package com.example.chat
 
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.http.ResponseEntity
 import org.springframework.messaging.converter.MappingJackson2MessageConverter
 import org.springframework.messaging.simp.stomp.StompHeaders
 import org.springframework.messaging.simp.stomp.StompSession
@@ -50,6 +51,7 @@ abstract class AbstractIntegrationTest {
 
     // Connect to the running STOMP broker with an authenticated cookie.
     // Use this in Slice 3+ tests instead of reimplementing the setup.
+    // Throws immediately on ERROR frame or transport failure — no silent 10s hang.
     fun connectStomp(authCookie: String): StompSession {
         val transports = listOf(WebSocketTransport(StandardWebSocketClient()))
         val client = WebSocketStompClient(SockJsClient(transports)).apply {
@@ -58,15 +60,40 @@ abstract class AbstractIntegrationTest {
         val headers = StompHeaders().apply { add("Cookie", "access_token=$authCookie") }
         val latch = CountDownLatch(1)
         val sessionRef = AtomicReference<StompSession>()
+        val errorRef = AtomicReference<String>()
         client.connectAsync("ws://localhost:$port/ws", object : StompSessionHandlerAdapter() {
             override fun afterConnected(session: StompSession, connectedHeaders: StompHeaders) {
                 sessionRef.set(session)
                 latch.countDown()
             }
+            override fun handleTransportError(session: StompSession, exception: Throwable) {
+                errorRef.set(exception.message ?: "transport error")
+                latch.countDown()
+            }
+            override fun handleException(
+                session: StompSession,
+                command: org.springframework.messaging.simp.stomp.StompCommand?,
+                headers: StompHeaders,
+                payload: ByteArray,
+                exception: Throwable,
+            ) {
+                errorRef.set(exception.message ?: "stomp exception")
+                latch.countDown()
+            }
         }, headers)
         check(latch.await(10, TimeUnit.SECONDS)) { "STOMP connect timeout after 10s" }
+        errorRef.get()?.let { error("STOMP connect failed: $it") }
         return sessionRef.get()!!
     }
+
+    // Extract a named cookie value from a response — avoids duplicating substringAfter/Before parsing in every test.
+    // Subclasses inject @Autowired lateinit var restTemplate: TestRestTemplate in their own class definition.
+    fun extractAuthCookie(response: ResponseEntity<*>, name: String = "access_token"): String =
+        response.headers["Set-Cookie"]
+            ?.firstOrNull { it.startsWith("$name=") }
+            ?.substringAfter("$name=")
+            ?.substringBefore(";")
+            ?: error("$name cookie not found in response")
 
     // Subclasses must clean up their own data in @AfterEach.
     // Do NOT use @Transactional rollback — it does not work in RANDOM_PORT tests:

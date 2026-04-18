@@ -6,7 +6,9 @@ allowed_tools: ["Bash"]
 Run integration tests for all slices from 1 through $ARGUMENTS to confirm no regressions.
 
 ```bash
-cd backend && TESTS="" && for i in $(seq 1 $ARGUMENTS); do TESTS="$TESTS --tests \"*Slice${i}*\""; done && eval "./gradlew test $TESTS --continue 2>&1"
+N=$ARGUMENTS
+[[ ! "$N" =~ ^[0-9]+$ ]] && { echo "error: slice number must be numeric (e.g. /regression-check 3)"; exit 1; }
+cd backend && TESTS="" && for i in $(seq 1 $N); do TESTS="$TESTS --tests \"*Slice${i}*\""; done && eval "./gradlew test $TESTS --continue 2>&1"
 ```
 
 After running:

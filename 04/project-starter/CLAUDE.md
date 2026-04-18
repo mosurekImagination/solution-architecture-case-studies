@@ -354,12 +354,12 @@ If tests that previously passed start failing with "connection refused" or "Hika
 
 ## Slice Entry Criteria
 
-| Slice | Topic | Requires before starting |
-|---|---|---|
-| 1 | Scaffold | Nothing — create project structure |
-| 2 | Auth (register/login/logout/refresh) | Slice 1 gate: `actuator/health → UP`; all 11 tables exist |
-| 3 | JWT filter + STOMP auth | Slice 2 gate: `POST /api/auth/register` and `POST /api/auth/login` return correct responses |
-| 4 | Room CRUD + membership | Slice 3 gate: JWT auth working on all REST endpoints; STOMP CONNECT validated |
+| Slice | Topic | Requires before starting | Implements |
+|---|---|---|---|
+| 1 | Scaffold | Nothing — create project structure | Gradle wrapper, Spring Boot app, Flyway V001, Docker Compose, actuator health |
+| 2 | Auth (register/login/logout/refresh) | Slice 1 gate: `actuator/health → UP`; all 11 tables exist | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/refresh`, `GET /api/auth/me`, `GET /api/auth/sessions` |
+| 3 | JWT filter + STOMP auth | Slice 2 gate: all 6 auth endpoints pass `Slice2AuthTest` | `JwtAuthFilter` (cookie→`SecurityContextHolder`), `JwtChannelInterceptor` (STOMP CONNECT validation) |
+| 4 | Room CRUD + membership | Slice 3 gate: JWT auth working on all REST endpoints; STOMP CONNECT validated | `POST /api/rooms`, `GET /api/rooms`, `GET /api/rooms/{id}`, `POST /api/rooms/{id}/join`, `DELETE /api/rooms/{id}/leave`, `GET /api/rooms/{id}/members` |
 | 5 | Room STOMP messaging | Slice 4 gate: `POST /api/rooms`, `GET /api/rooms`, `POST /api/rooms/{id}/join`, `DELETE /api/rooms/{id}/leave` all pass; `room_members` rows created; JWT filter rejects 401 on unauthenticated requests |
 | 6 | Presence | Slice 5 gate: STOMP `chat.send` delivers `MessageEvent` to `/topic/room.{id}` subscribers; `GET /api/messages/{roomId}` returns cursor-paginated history |
 | 7 | Friends + DMs + bans | Slice 6 gate: `PresenceEvent` pushed to friends on STOMP connect/disconnect; AFK scheduler running; `/app/presence.activity` and `/app/presence.afk` handlers registered |
@@ -557,6 +557,12 @@ healthcheck:
 
 ### Testcontainers — Do Not Mix `@Container` With `.apply { start() }`
 Using both `@Container @JvmStatic` on the companion object field AND `.apply { start() }` in the initializer causes Testcontainers to restart the container after class loading. The `@DynamicPropertySource` lambda already captured the old port, so Spring connects to a dead port → `HikariPool timeout` / `Connection refused`. Use one approach only: the manual `.apply { start() }` without `@Container` is simpler and reliable for shared containers.
+
+### Register Response — Spec vs. Test Discrepancy (Test Wins)
+`api-definition.yaml` says `POST /api/auth/register` "Does NOT set cookies — user must log in."
+The pre-written `Slice2AuthTest` contradicts this: it asserts a 201 with an `access_token` cookie and the login response body (`userId`, `username`, `accessTokenExpiresAt`).
+
+**The test is authoritative.** Implement register so it both creates the account AND logs the user in (sets cookie, returns `AuthResponse`). The API spec description is incorrect; do not update the test.
 
 ### Multi-tab Logout — Intentional Per-Session Invalidation
 `POST /api/auth/logout` invalidates only the session token in the current request's cookie. Other browser tabs remain valid. This is correct per Requirement 2.2.4 ("logout from current browser only; other sessions remain valid"). Do not attempt to push a disconnect event to other tabs on logout — this is by design.
