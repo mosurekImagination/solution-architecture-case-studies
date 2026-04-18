@@ -53,7 +53,7 @@ CREATE TABLE user_bans (
 
 CREATE TABLE rooms (
     id          BIGSERIAL PRIMARY KEY,
-    name        TEXT NOT NULL UNIQUE,
+    name        TEXT NOT NULL,
     description TEXT,
     visibility  TEXT NOT NULL CHECK (visibility IN ('PUBLIC', 'PRIVATE', 'DM')),
     owner_id    BIGINT REFERENCES users(id) ON DELETE SET NULL,
@@ -127,6 +127,8 @@ CREATE INDEX idx_friendships_addressee ON friendships(addressee_id, status);
 CREATE INDEX idx_friendships_requester ON friendships(requester_id, status);
 
 -- Session token validation (hot path on every authenticated request)
-CREATE INDEX idx_sessions_token_hash
-    ON sessions(token_hash)
-    WHERE expires_at > NOW();
+-- Note: partial index WHERE expires_at > NOW() is invalid in PostgreSQL (NOW() is STABLE not IMMUTABLE)
+CREATE INDEX idx_sessions_token_hash ON sessions(token_hash);
+
+-- Room name uniqueness: case-insensitive (so "Chat" and "chat" are the same room)
+CREATE UNIQUE INDEX idx_rooms_name_lower ON rooms (LOWER(name));

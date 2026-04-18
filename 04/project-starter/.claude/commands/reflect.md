@@ -1,13 +1,13 @@
 ---
 description: Post-slice self-improvement loop. Run after /test-slice gate clears to capture new gotchas in CLAUDE.md.
-allowed_tools: ["Read", "Edit"]
+allowed_tools: ["Read", "Edit", "Bash"]
 ---
 
 After the slice gate has cleared, review what was just built and improve CLAUDE.md so future slices benefit.
 
 ## Step 1 — Review the slice
 
-Read the test file for the slice just completed and compare it against the architecture proposal in `04/ai-documents/architecture-proposal.md`. Note:
+Read the test file for the slice just completed and compare it against the architecture proposal in `ai-documents/architecture-proposal.md`. Note:
 - Any test case that had to be changed or skipped vs. the proposal
 - Any bug that appeared and wasn't anticipated (Spring behavior, DB constraint, React state issue)
 - Any gotcha that would have been faster to implement if known upfront

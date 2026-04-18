@@ -1,0 +1,7 @@
+spring:
+  mail:
+    host: localhost
+    port: 1025
+
+app:
+  uploads-dir: /tmp/chat-test-uploads

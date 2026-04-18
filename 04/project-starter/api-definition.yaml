@@ -461,6 +461,15 @@ components:
         createdAt:
           type: string
           format: date-time
+        dmRoomId:
+          type: integer
+          format: int64
+          nullable: true
+          description: >
+            Populated only when status transitions to ACCEPTED.
+            The ID of the DM room created server-side on acceptance.
+            Null for PENDING or REJECTED states.
+          example: 42
 
     SendFriendRequestRequest:
       type: object
@@ -686,6 +695,24 @@ components:
         messageId:
           type: integer
           format: int64
+
+    StompPresenceActivityFrame:
+      type: object
+      description: >
+        Sent to `/app/presence.activity` by the React client every 30 seconds
+        while a browser tab is active. Updates the server-side presence map for
+        the sender's STOMP session. No response sent back.
+        Kotlin handler: `@MessageMapping("presence.activity")` in PresenceHandler.
+        No body required — the sender's principal is extracted from the STOMP session.
+
+    StompPresenceAfkFrame:
+      type: object
+      description: >
+        Sent to `/app/presence.afk` when all browser tabs are idle (user stopped
+        interacting). The server immediately sets the user's status to AFK and
+        pushes PresenceEvent to the user's friends.
+        Kotlin handler: `@MessageMapping("presence.afk")` in PresenceHandler.
+        No body required.
 
 # ---------------------------------------------------------------------------
 # Global security — applied to all paths; overridden where not required

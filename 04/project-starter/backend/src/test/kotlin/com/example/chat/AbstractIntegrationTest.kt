@@ -1,18 +1,38 @@
 package com.example.chat
 
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.messaging.converter.MappingJackson2MessageConverter
+import org.springframework.messaging.simp.stomp.StompHeaders
+import org.springframework.messaging.simp.stomp.StompSession
+import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.web.socket.client.standard.StandardWebSocketClient
+import org.springframework.web.socket.messaging.WebSocketStompClient
+import org.springframework.web.socket.sockjs.client.SockJsClient
+import org.springframework.web.socket.sockjs.client.WebSocketTransport
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 @Testcontainers
 abstract class AbstractIntegrationTest {
 
+    @LocalServerPort
+    protected var port: Int = 0
+
     companion object {
-        // Single shared container for the entire test suite — started once, reused across all test classes.
-        // Flyway migrations run automatically on first connection.
+        // Manual start — do NOT add @Container here.
+        // @Container + .apply { start() } causes a double-start: the companion object
+        // initializer starts the container on port X, then TestcontainersExtension restarts
+        // it on port Y, but @DynamicPropertySource already captured port X → connection refused.
+        // The manual approach starts the container once per JVM and never stops it mid-suite.
         val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
             .withDatabaseName("chat_test")
             .withUsername("chat")
@@ -26,6 +46,26 @@ abstract class AbstractIntegrationTest {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
         }
+    }
+
+    // Connect to the running STOMP broker with an authenticated cookie.
+    // Use this in Slice 3+ tests instead of reimplementing the setup.
+    fun connectStomp(authCookie: String): StompSession {
+        val transports = listOf(WebSocketTransport(StandardWebSocketClient()))
+        val client = WebSocketStompClient(SockJsClient(transports)).apply {
+            messageConverter = MappingJackson2MessageConverter()
+        }
+        val headers = StompHeaders().apply { add("Cookie", "access_token=$authCookie") }
+        val latch = CountDownLatch(1)
+        val sessionRef = AtomicReference<StompSession>()
+        client.connectAsync("ws://localhost:$port/ws", object : StompSessionHandlerAdapter() {
+            override fun afterConnected(session: StompSession, connectedHeaders: StompHeaders) {
+                sessionRef.set(session)
+                latch.countDown()
+            }
+        }, headers)
+        check(latch.await(10, TimeUnit.SECONDS)) { "STOMP connect timeout after 10s" }
+        return sessionRef.get()!!
     }
 
     // Subclasses must clean up their own data in @AfterEach.

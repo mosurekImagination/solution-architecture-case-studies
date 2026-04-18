@@ -27,6 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -43,6 +44,9 @@ dependencies {
     // Database
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.postgresql:postgresql")
+
+    // Dev tools — hot reload for local development (excluded from production jar)
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")

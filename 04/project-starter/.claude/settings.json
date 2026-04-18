@@ -14,7 +14,6 @@
       "Bash(git status*)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git checkout *)",
       "Bash(curl *)",
       "Bash(nc *)",
       "Bash(grep *)",
@@ -24,13 +23,15 @@
       "Bash(cat *)",
       "Bash(cp *)",
       "Bash(mv *)",
-      "Bash(rm *)",
+      "Bash(rm -f *.bak)",
+      "Bash(rm -rf /tmp/chat-*)",
       "Bash(chmod *)",
       "Bash(python3 *)",
       "Bash(java *)",
       "Bash(which *)",
       "Bash(echo *)",
-      "Bash(sleep *)"
+      "Bash(sleep *)",
+      "Bash(pkill -f *)"
     ]
   },
   "hooks": {
@@ -40,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json, subprocess\ntry:\n    d = json.load(sys.stdin)\n    f = d.get('file_path', '')\n    if f.endswith(('.ts', '.tsx')):\n        subprocess.run(['npx', 'prettier', '--write', f], capture_output=True)\nexcept:\n    pass\n\""
+            "command": "python3 -c \"\nimport sys, json, subprocess\ntry:\n    d = json.load(sys.stdin)\n    f = d.get('file_path', '')\n    if f.endswith('.kt') and 'src/main' in f:\n        r = subprocess.run(['./gradlew', 'compileKotlin', '--quiet'], cwd='backend', capture_output=True, text=True, timeout=120)\n        if r.returncode != 0:\n            print('COMPILE ERROR (fix before continuing):')\n            print(r.stdout or r.stderr)\n            sys.exit(1)\n    elif f.endswith(('.ts', '.tsx')):\n        subprocess.run(['npx', 'prettier', '--write', f], capture_output=True)\nexcept Exception as e:\n    pass\n\""
           }
         ]
       }

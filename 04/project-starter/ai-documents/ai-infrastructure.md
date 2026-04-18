@@ -9,9 +9,9 @@
 
 ## Overview
 
-This document describes the Claude Code setup prepared for the 2-day vibe-coding sprint implementing the chat server. All files live in `ai-tools/` and should be copied to the project root before starting implementation.
+This document describes the Claude Code setup built into `04/project-starter/`. The AI infrastructure files (`.claude/`, `CLAUDE.md`, `api-definition.yaml`) are already in place — no copy step needed. Open the project, run `docker compose up -d`, and start coding from Slice 1.
 
-**Total setup time: ~5 minutes** (copy files, verify commands work).
+**Total setup time: ~2 minutes** (start Docker, verify `/docker-health` passes).
 
 ---
 
