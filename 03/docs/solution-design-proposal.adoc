@@ -387,6 +387,14 @@ calibrated against internal HR data during the Investigation Period.
 4+|_Break-even timelines include the full delivery period ({timeline-months} months), counterparty onboarding ramp (~{adoption-ramp-months} months at 1–2 per month), and the gradual savings curve as counterparties adopt the platform. Once all counterparties are live, the {saving-conservative-per-year} conservative saving recovers the {capex-gbp-approx} development cost (at £1 = ${gbp-usd}) in ~{breakeven-conservative-mo} months. The {reconciliation-salary} average salary is calibrated against actual compensation data during the Investigation Period._
 |===
 
+=== Strategic Platform Value
+
+The headcount reduction case is the primary and measurable return. The platform architecture creates two further avenues of value that emerge over a longer horizon.
+
+**Commercialisation optionality.** The multi-tenant design — per-tenant data isolation, configurable contract rules, counterparty-specific file normalisation — is the same architecture that underpins a SaaS product. No other UK reinsurer currently operates a digital reconciliation platform of this kind. Once the internal deployment is stable, the platform could be white-labelled and offered to other longevity reinsurers, converting a cost centre into a revenue stream. No additional investment is required at build time; the design discipline is to avoid client-specific hardcoding and to log usage metrics from day one.
+
+**Reconciliation data as a strategic asset.** The platform's immutable audit ledger accumulates structured, timestamped mortality and compensation data across all counterparty portfolios. Once 12–18 months of history exists, this dataset enables capabilities that are not currently possible: statistical anomaly detection (flagging counterparty submissions that deviate from historical mortality baselines before they enter the cycle), predictive scoring of dispute probability, and ultimately an anonymised actuarial analytics layer that aggregates trends across the full portfolio. These capabilities are deferred to a later phase and subject to GDPR data aggregation review; the point here is that the platform architecture is already the right foundation to build on.
+
 == Our Approach
 
 Five principles guide how this engagement is structured:

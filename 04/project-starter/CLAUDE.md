@@ -150,6 +150,71 @@ spring.mail.host: mailhog
 spring.mail.port: 1025
 ```
 
+## Package Structure
+
+```
+com.example.chat
+  config/          SecurityConfig, WebSocketConfig, JwtProperties, JwtAuthFilter
+  domain/
+    user/          User, UserRepository, UserService
+    room/          Room, RoomMember, RoomBan, RoomRepository, RoomService
+    message/       Message, Attachment, MessageRepository
+    friend/        Friendship, UserBan, FriendshipRepository
+    file/          FileStorageService
+    presence/      PresenceService
+    notification/  NotificationService
+  api/             REST @RestController classes — one per domain (UserController, RoomController, …)
+  ws/              @MessageMapping handlers, JwtChannelInterceptor
+  dto/             Request / Response data classes (field names must match api-definition.yaml exactly)
+```
+
+## Testcontainers Base Class
+
+All integration tests extend `AbstractIntegrationTest`. The container is static — started once per JVM, shared across all test classes:
+
+```kotlin
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+abstract class AbstractIntegrationTest {
+
+    companion object {
+        @Container
+        @JvmStatic
+        val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
+            .withDatabaseName("chat_test")
+            .withUsername("chat")
+            .withPassword("chat")
+            .apply { start() }
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.datasource.url", postgres::getJdbcUrl)
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
+        }
+    }
+}
+```
+
+Clean up in `@AfterEach` — **never** `@Transactional` rollback (see Testing Conventions above).
+
+## Slice Entry Criteria
+
+| Slice | Topic | Requires before starting |
+|---|---|---|
+| 1 | Scaffold | Nothing — create project structure |
+| 2 | Auth (register/login/logout/refresh) | Slice 1 gate: `actuator/health → UP`; all 11 tables exist |
+| 3 | JWT filter + STOMP auth | Slice 2 gate: `POST /api/auth/register` and `POST /api/auth/login` return correct responses |
+| 4 | Room CRUD + membership | Slice 3 gate: JWT auth working on all REST endpoints; STOMP CONNECT validated |
+| 5 | Room STOMP messaging | Slice 4 gate: `rooms` + `room_members` tables; room create/list/join/leave working |
+| 6 | Presence | Slice 5 gate: STOMP send/receive working; message history endpoint working |
+| 7 | Friends + DMs + bans | Slice 6 gate: presence map initialised; `PresenceEvent` pushed on join/leave |
+| 8 | File upload / download | Slice 7 gate: `friendships` + `user_bans` tables; DM room creation working |
+| 9 | Password reset | Slice 8 gate: file upload working; Tika MIME validation passing |
+| 10 | Unread counts + notifications | Slice 9 gate: `password_reset_tokens` table; email sending via MailHog confirmed |
+| 11 | React UI (all screens) | Slice 10 gate: `room_read_cursors` upsert working; notification push working |
+
 ## Troubleshooting
 
 **Backend fails to start with Flyway checksum mismatch:**
