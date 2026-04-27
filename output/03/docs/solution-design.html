@@ -518,15 +518,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_architecture_decisions">10. Architecture Decisions</a>
 <ul class="sectlevel2">
-<li><a href="#_adr_001_immutability_postgresql_hash_chain_audit_table">10.1. ADR-001: Immutability — PostgreSQL Hash-Chain Audit Table</a></li>
+<li><a href="#_adr_001_immutability_dual_layer_audit_s3_object_lock_postgresql_hash_chain">10.1. ADR-001: Immutability — Dual-Layer Audit (S3 Object Lock + PostgreSQL Hash Chain)</a></li>
 <li><a href="#_adr_002_multi_tenancy_row_level_security">10.2. ADR-002: Multi-Tenancy — Row-Level Security</a></li>
-<li><a href="#_adr_003_approval_workflow_aws_step_functions_standard_workflows">10.3. ADR-003: Approval Workflow — AWS Step Functions Standard Workflows</a></li>
+<li><a href="#_adr_003_approval_workflow_application_layer_state_machine">10.3. ADR-003: Approval Workflow — Application-Layer State Machine</a></li>
 <li><a href="#_adr_004_file_exchange_s3_pre_signed_urls_with_typed_multi_file_ingestion">10.4. ADR-004: File Exchange — S3 Pre-Signed URLs with Typed Multi-File Ingestion</a></li>
-<li><a href="#_adr_005_authentication_cognito_with_saml_federation">10.5. ADR-005: Authentication — Cognito with SAML Federation</a></li>
-<li><a href="#_adr_006_compute_aws_lambda_aurora_serverless_v2">10.6. ADR-006: Compute — AWS Lambda + Aurora Serverless v2</a></li>
+<li><a href="#_adr_005_authentication_cognito_user_pools_with_mfa_saml_deferred">10.5. ADR-005: Authentication — Cognito User Pools with MFA; SAML Deferred</a></li>
+<li><a href="#_adr_006_compute_ecs_fargate_modular_monolith_aurora_serverless_v2">10.6. ADR-006: Compute — ECS Fargate Modular Monolith + Aurora Serverless v2</a></li>
 <li><a href="#_adr_007_contract_rules_structured_expression_tree">10.7. ADR-007: Contract Rules — Structured Expression Tree</a></li>
 <li><a href="#_adr_008_adjustment_reconciliation_snapshot_based_model">10.8. ADR-008: Adjustment Reconciliation — Snapshot-Based Model</a></li>
 <li><a href="#_adr_009_contract_version_locking_at_cycle_opening">10.9. ADR-009: Contract Version Locking at Cycle Opening</a></li>
+<li><a href="#_adr_010_rds_proxy_deferred">10.10. ADR-010: RDS Proxy — Deferred</a></li>
 </ul>
 </li>
 <li><a href="#_deployment_infrastructure">11. Deployment &amp; Infrastructure</a>
@@ -632,8 +633,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">EU/UK regulatory framework governing insurance and reinsurance capital adequacy; requires auditable, long-term records of all risk transfer transactions</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Step Functions</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions — a managed workflow orchestration service; used here to implement the approval state machine with built-in execution history and human-approval callbacks</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application State Machine</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A workflow state machine implemented within the Approval Workflow module; the <code>workflow_state</code> column on <code>reconciliation_cycles</code> tracks each cycle through defined states; no external orchestration service required at current scale</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">TCO</p></td>
@@ -683,7 +684,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estimated OPEX</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$985–$1,800/month (AWS eu-west-2; scales sub-linearly with counterparty growth)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$867–$987/month (AWS eu-west-2; scales sub-linearly with counterparty growth)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Timeline</strong></p></td>
@@ -695,7 +696,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key Differentiator</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SHA-256 hash-chain audit ledger provides Solvency II-grade tamper evidence without blockchain overhead; AWS Step Functions turns the multi-level approval chain into a queryable execution history; serverless infrastructure (Lambda + Aurora Serverless v2) minimises cost between monthly peaks; exact decimal arithmetic enforced as a language selection constraint</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dual-layer audit (S3 Object Lock Compliance Mode = tamper-impossible; PostgreSQL hash-chain = queryable index) satisfies Solvency II Art. 259 with a materially stronger answer than detect-only; ECS Fargate modular monolith eliminates Lambda cold-start and connection exhaustion concerns; application-layer state machine keeps approval workflow inside the service boundary; exact decimal arithmetic enforced as a language selection constraint</p></td>
 </tr>
 </tbody>
 </table>
@@ -736,8 +737,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">How to orchestrate the multi-step, multi-level approval workflow</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions Standard Workflows with wait-for-callback; sub-workflows for each approval level</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — Step Functions execution history is natively queryable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application-layer state machine with <code>workflow_state</code> column; background job handles escalation timers; extractable to Step Functions if workflow count grows</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — state machine interface is a clean module boundary; extraction is additive</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
@@ -760,8 +761,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">How to handle compute for a monthly-peak workload</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Lambda (API + eligibility) + Aurora Serverless v2; pay-per-use with automatic scaling</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — migration to ECS Fargate is straightforward if Lambda limits are exceeded</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Single ECS Fargate service (modular monolith) fronted by an Application Load Balancer + Aurora Serverless v2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — modular monolith boundaries allow extraction to separate services if warranted</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
@@ -885,7 +886,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Approach</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Web portal + PostgreSQL audit triggers; manual approval via email prompts</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Workflow engine + append-only hash-chain ledger + multi-level approval state machine; serverless compute (Lambda + Aurora Serverless v2); exact decimal arithmetic required for financial precision</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application-layer state machine + dual-layer audit (S3 Object Lock + hash-chain) + multi-level approval workflow; ECS Fargate modular monolith + Aurora Serverless v2; exact decimal arithmetic required for financial precision</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full event sourcing; every state transition stored as an immutable event; current state derived by replaying the event log</p></td>
 </tr>
 <tr>
@@ -897,8 +898,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Approval Workflow</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Manual (notification email → user acts → repeat)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions with wait-for-callback (automated state machine with built-in execution history)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Event-driven Step Functions (same as Option 2, with event bus backbone)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application-layer state machine with <code>workflow_state</code> column; background job for escalation timers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Event-driven state machine on event bus backbone</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Multi-Tenancy</strong></p></td>
@@ -927,7 +928,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>OPEX / month</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$800</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$985–$1,800/month</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$867–$987/month</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$4,500–$5,500</p></td>
 </tr>
 <tr>
@@ -945,7 +946,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low — but will not scale beyond proof of concept</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — well-understood patterns; Step Functions and RLS are mature AWS/PostgreSQL features</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium — well-understood patterns; application state machine, ECS Fargate, and RLS are battle-tested approaches</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">High — event sourcing requires specialist knowledge; projection rebuilds add operational complexity</p></td>
 </tr>
 </tbody>
@@ -1045,7 +1046,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_architecture"><a class="anchor" href="#_architecture"></a>5.4. Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-option1-arch-cb1317e2e320a32b47c412beb44eaa3313dc2ba6.svg" alt="Option 1 — Lightweight Portal Architecture">
+<img src="diagrams/case03-option1-arch-09f60e78dbb782caf9e1a1b06045cde23d4a2f19.svg" alt="Option 1 — Lightweight Portal Architecture">
 </div>
 <div class="title">Figure 3. Option 1 — Lightweight Portal Architecture</div>
 </div>
@@ -1059,7 +1060,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_system_context"><a class="anchor" href="#_system_context"></a>6.1. System Context</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-c4-context-c04dda166bdf2ada263e553a4798f7afbd3a2186.svg" alt="System Context — Reinsurance Reconciliation Platform">
+<img src="diagrams/case03-c4-context-f56bfaf2bea4f0d19095dd41800d1dc44437922f.svg" alt="System Context — Reinsurance Reconciliation Platform">
 </div>
 <div class="title">Figure 4. System Context — Reinsurance Reconciliation Platform</div>
 </div>
@@ -1068,7 +1069,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_container_diagram"><a class="anchor" href="#_container_diagram"></a>6.2. Container Diagram</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-c4-containers-ba5a61dbf4a60cc7701b20cc7cabbedefe03f563.svg" alt="Container Diagram — Reinsurance Reconciliation Platform">
+<img src="diagrams/case03-c4-containers-98adb403d1c7f75ed11ee27e968a6d116c8da88e.svg" alt="Container Diagram — Reinsurance Reconciliation Platform">
 </div>
 <div class="title">Figure 5. Container Diagram — Reinsurance Reconciliation Platform</div>
 </div>
@@ -1077,7 +1078,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_high_level_architecture"><a class="anchor" href="#_high_level_architecture"></a>6.3. High-Level Architecture</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-option2-arch-90476e113e7215d7d5cb1674d86a780f300e4750.svg" alt="Architecture — Option 2: Full Platform">
+<img src="diagrams/case03-option2-arch-421f666ebeea6c89a782b5614a1b6f3959c9f037.svg" alt="Architecture — Option 2: Full Platform">
 </div>
 <div class="title">Figure 6. Architecture — Option 2: Full Platform</div>
 </div>
@@ -1085,7 +1086,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_reconciliation_cycle_flow"><a class="anchor" href="#_reconciliation_cycle_flow"></a>6.4. Reconciliation Cycle Flow</h3>
 <div class="paragraph">
-<p>Each monthly reconciliation cycle follows four phases. The workflow is orchestrated by Step Functions; every state transition is recorded as an immutable audit ledger event.</p>
+<p>Each monthly reconciliation cycle follows four phases. The workflow is managed by the application-layer state machine; every state transition is recorded as an immutable audit ledger event.</p>
 </div>
 <div class="imageblock kroki">
 <div class="content">
@@ -1109,7 +1110,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_audit_ledger_design"><a class="anchor" href="#_audit_ledger_design"></a>6.6. Audit Ledger Design</h3>
 <div class="paragraph">
-<p>The audit ledger is the platform&#8217;s trust anchor. It is a separate append-only schema (<code>audit</code>) within the same Aurora Serverless v2 instance, with distinct privileges:</p>
+<p>The audit ledger is the platform&#8217;s trust anchor. It uses a dual-layer design: S3 Object Lock as the immutability guarantee and PostgreSQL as the queryable index.</p>
+</div>
+<div class="paragraph">
+<p><strong>Dual-write semantics:</strong> For every audit event, the application writes first to S3 (Object Lock Compliance Mode), then commits the PostgreSQL audit row. The S3 object key and ETag are stored on the PostgreSQL row. The S3 write must succeed before the enclosing database transaction is committed — an S3 failure causes the transaction to roll back. A PostgreSQL write failure is non-fatal: a background reconciliation job rebuilds missing rows from S3. S3 is the system of record; PostgreSQL is the query layer.</p>
+</div>
+<div class="paragraph">
+<p><strong>Why S3 Object Lock in addition to the hash-chain:</strong> The hash-chain detects tampering within 7 days. S3 Object Lock in Compliance Mode makes tampering physically impossible — no IAM principal including account root can delete or overwrite a locked object within the retention period. For Solvency II Art. 259, "tamper-impossible" is a materially stronger answer than "tamper-detectable."</p>
+</div>
+<div class="paragraph">
+<p>The PostgreSQL audit schema is a separate append-only schema (<code>audit</code>) within the same Aurora Serverless v2 instance, with distinct privileges:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1125,16 +1135,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </div>
 <div class="paragraph">
-<p>Each event row stores the event type, acting user, a JSONB payload with event-specific data, and two hash fields (<code>previous_hash</code>, <code>event_hash</code>) that form the per-tenant chain. Row-Level Security isolates tenants at the database layer. The full schema definition — including privilege grants, RLS policies, and hash-chain linking logic — is delivered as part of the Phase 1 database migration scripts.</p>
+<p>Each event row stores the event type, acting user, a JSONB payload with event-specific data, two hash fields (<code>previous_hash</code>, <code>event_hash</code>) that form the per-tenant chain, and the S3 object key and ETag for the corresponding immutable S3 object. Row-Level Security isolates tenants at the database layer. The full schema definition — including privilege grants, RLS policies, and hash-chain linking logic — is delivered as part of the Phase 1 database migration scripts.</p>
 </div>
 <div class="paragraph">
 <p><strong>Per-tenant hash chain:</strong> Each tenant has an independent chain. Row N&#8217;s <code>previous_hash</code> references the hash of the preceding event for the <strong>same</strong> <code>tenant_id</code>, not the globally preceding row. This allows concurrent month-end submissions from all counterparties without serialization contention.</p>
 </div>
 <div class="paragraph">
-<p><strong>KMS-signed genesis:</strong> When a tenant is provisioned, a genesis audit event (<code>TENANT_PROVISIONED</code>) is written whose <code>previous_hash</code> is a signature produced by AWS KMS (using a CMK dedicated to audit integrity). This anchors the chain cryptographically — an attacker who deletes and re-inserts all rows cannot forge the genesis signature without access to the KMS key, which is controlled by IAM policy and logged in CloudTrail.</p>
+<p><strong>KMS-signed genesis:</strong> When a tenant is provisioned, a genesis audit event (<code>TENANT_PROVISIONED</code>) is written whose <code>previous_hash</code> is a signature produced by AWS KMS (using a CMK dedicated to audit integrity). The full KMS key version ARN (not just the key ID) is stored on the genesis event row. This anchors the chain cryptographically — an attacker who deletes and re-inserts all rows cannot forge the genesis signature without access to the KMS key, which is controlled by IAM policy and logged in CloudTrail.</p>
 </div>
 <div class="paragraph">
-<p><strong>Tamper detection:</strong> A Lambda job (<code>audit-verify</code>) recomputes each row&#8217;s <code>event_hash</code> and checks that each <code>previous_hash</code> matches the preceding row&#8217;s hash for that tenant. The job runs on every read of a sealed cycle (zero-cost at monthly reconciliation volume) and also on a weekly full-chain sweep. Any discrepancy triggers an immediate alert to the compliance team via SNS.</p>
+<p><strong>Tamper detection:</strong> A scheduled verification job running inside the application service recomputes each row&#8217;s <code>event_hash</code> and checks that each <code>previous_hash</code> matches the preceding row&#8217;s hash for that tenant. The job runs on every read of a sealed cycle (zero-cost at monthly reconciliation volume) and also on a weekly full-chain sweep. Any discrepancy triggers an immediate alert to the compliance team via SNS. The verification job uses the stored KMS key version ARN (from the genesis row) when calling <code>kms:Verify</code> — not the current default key version. Without this, the first CMK rotation after go-live causes false-positive <code>CHAIN_VIOLATION_DETECTED</code> alerts for all tenants provisioned before the rotation.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1157,13 +1167,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>tenants</strong> — each counterparty is a tenant with a designated data residency zone; Row-Level Security isolates all downstream data</p>
 </li>
 <li>
-<p><strong>contracts</strong> — versioned contract definitions with expression tree rules stored as JSONB; <code>contract_file_types</code> defines which file types each contract requires</p>
+<p><strong>contracts</strong> — versioned contract definitions with expression tree rules stored as JSONB; <code>contract_file_types</code> defines which file types each contract requires; a trigger-based history table (via the <code>temporal_tables</code> PostgreSQL extension) with <code>valid_from</code>/<code>valid_to</code> columns enables "what were the contract terms on date X?" as a single query</p>
 </li>
 <li>
-<p><strong>reconciliation_cycles</strong> — one cycle per contract per period; locks a <code>contract_version</code> at opening time (ADR-009); tracks workflow status</p>
+<p><strong>reconciliation_cycles</strong> — one cycle per contract per period; locks a <code>contract_version</code> at opening time (ADR-009); tracks workflow status via the <code>workflow_state</code> column (<code>AWAITING_FILES → AWAITING_ELIGIBILITY → AWAITING_L1 → AWAITING_L2 → AWAITING_COUNTERPARTY → COMPLETED / DISPUTED / ELIGIBILITY_FAILED</code>); a trigger-based history table (via the <code>temporal_tables</code> extension) preserves the full mutation history of each cycle record</p>
 </li>
 <li>
-<p><strong>cycle_files</strong> — typed file uploads (people table, money movement, etc.) with SHA-256 checksums; drives the cycle readiness check</p>
+<p><strong>cycle_files</strong> — typed file uploads (people table, money movement, etc.) with SHA-256 checksums; includes <code>normalisation_mapping_version</code> (text, not null) recording which parser/mapping version normalised the counterparty file into the canonical format — required for Solvency II Art. 259 reproducibility: without this field, a parser update makes historical eligibility calculations unreproducible; drives the cycle readiness check</p>
 </li>
 <li>
 <p><strong>eligibility_results</strong> — engine output with a generated <code>compensation_amount</code> column derived from the result JSONB; records engine version for reproducibility</p>
@@ -1213,7 +1223,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">File Ingestion</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Typed file upload via S3 pre-signed URLs with SHA-256 integrity check; cycle readiness tracking; SFTP fallback for legacy counterparties; duplicate submission prevention</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Typed file upload via S3 pre-signed URLs with SHA-256 integrity check; cycle readiness tracking; SFTP fallback for legacy counterparties; duplicate submission prevention; record count validation: after parsing, compare record count against the previous month&#8217;s accepted file for the same counterparty + contract type — if the count differs by more than a configurable tolerance (default ±20%), flag the cycle for manual review before eligibility is computed (SHA-256 checksum matches a truncated file; record count comparison catches partial uploads that pass checksum validation)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1–2</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Must</p></td>
 </tr>
@@ -1295,17 +1305,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Availability</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Platform must be accessible during month-end submission windows; downtime during this window breaches counterparty obligations</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">99.9% monthly uptime; maintenance windows scheduled outside month-end</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Target 99.9% monthly uptime. Expected availability based on component SLA product (Aurora Multi-AZ × ECS Fargate × ALB) is ~99.85%. The gap is addressed by scheduling maintenance windows outside month-end submission periods.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data Durability</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Audit ledger must never lose a committed event</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RPO = 0 (Aurora Serverless v2 Multi-AZ synchronous replication)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RPO = 0 (Aurora Serverless v2 Multi-AZ synchronous replication); S3 Object Lock audit store provides additional tamper-impossible durability guarantee</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Recovery Time</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Platform recovers from component failure within defined window</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RTO &lt; 1 hour (Multi-AZ automatic failover + runbook for full DR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RTO &lt; 4 hours (snapshot restore) for full region failure; Multi-AZ automatic failover for AZ failure (~1 min)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Security</strong></p></td>
@@ -1331,6 +1341,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>File Processing Throughput</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Platform handles concurrent month-end file submissions from all counterparties</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Up to 20 concurrent file uploads; eligibility results within 15 minutes of submission</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Eligibility Reliability</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Eligibility computation failures must not leave cycles silently stuck</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3 retries with exponential backoff inside the application; after exhaustion, cycle transitions to <code>ELIGIBILITY_FAILED</code> state (never left in <code>AWAITING_ELIGIBILITY</code>); a P2 CloudWatch alarm fires on any cycle remaining in <code>AWAITING_ELIGIBILITY</code> for more than 2 hours</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Compliance Retention</strong></p></td>
@@ -1409,10 +1424,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>RLS penetration tests:</strong> Automated suite that attempts cross-tenant data access via API and direct DB connection; runs on every deployment</p>
 </li>
 <li>
-<p><strong>Hash-chain integrity tests:</strong> Test suite that inserts events, tampers with one, and verifies the verification Lambda detects the break per tenant</p>
+<p><strong>Hash-chain integrity tests:</strong> Test suite that inserts events, tampers with one, and verifies the verification job detects the break per tenant; also validates dual-write (S3 Object Lock + PostgreSQL row) and the background rebuild path when a PostgreSQL row is missing</p>
 </li>
 <li>
-<p><strong>Lambda deployment tests:</strong> Verify all API endpoints respond correctly when deployed to Lambda; cold start latency within acceptable limits for portal interactions</p>
+<p><strong>ECS deployment tests:</strong> Verify all API endpoints respond correctly when deployed to ECS Fargate; verify ALB health checks and task startup time within acceptable limits for portal interactions</p>
 </li>
 <li>
 <p><strong>Month-end load test:</strong> Concurrent file submission simulation (20 counterparties, multiple file types each) run against staging before each Phase go-live</p>
@@ -1522,9 +1537,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$200</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda + API Gateway (API Service + Eligibility Engine)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Application compute (pay-per-invocation)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$45</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ECS Fargate (modular monolith, Application Load Balancer, eu-west-2)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application compute: ~$35 (base, 2 tasks); ~$52 at month-end peak (4 tasks)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$35 (base, 2 tasks); ~$52 at month-end peak (4 tasks)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">S3 (file storage + audit backups, ~500GB)</p></td>
@@ -1532,9 +1547,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$80</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Step Functions (Standard Workflows)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Approval workflow orchestration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$40</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 Object Lock (audit immutability store)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tamper-impossible audit record storage (Compliance Mode)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$2</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cognito (up to 1,000 MAU external + internal users)</p></td>
@@ -1547,9 +1562,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">~$15</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CloudFront + WAF (OWASP managed rule group)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CDN + web application firewall</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$120</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WAF (ALB-attached, OWASP managed rule group)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Web application firewall</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$50</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CloudWatch (logs, metrics, alarms, dashboards)</p></td>
@@ -1569,17 +1584,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX (base)</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$985/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$867/month</strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX (incl. DR replication to eu-west-1)</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Total OPEX (incl. DR snapshot replication to eu-west-1)</strong></p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$1,800/month</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>~$987/month</strong></p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p><em>Year-1 OPEX estimate: ~$11K–$21K. Three-year TCO (CAPEX + OPEX): ~$793K–$823K.</em></p>
+<p><em>Year-1 OPEX estimate: ~$10K–$11K. Three-year TCO (CAPEX + OPEX): ~$789K–$793K.</em></p>
 </div>
 </div>
 <div class="sect2">
@@ -1651,7 +1666,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_timeline"><a class="anchor" href="#_timeline"></a>7.4. Timeline</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-gantt-2f3bbdb93b37473435343430aea8723d4bf3e6c8.svg" alt="Project Timeline — 9.5-Month Delivery">
+<img src="diagrams/case03-gantt-33687ec4e6fed8e637fee68a58d255a95405149e.svg" alt="Project Timeline — 9.5-Month Delivery">
 </div>
 <div class="title">Figure 10. Project Timeline — 9.5-Month Delivery</div>
 </div>
@@ -1687,7 +1702,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>File normalisation mappings validated for at least 3 counterparty file formats; mapping configuration tested end-to-end</p>
 </li>
 <li>
-<p>Lambda deployment artefacts validated in staging; cold start latency acceptable for portal API interactions</p>
+<p>ECS Fargate deployment validated in staging; ALB health checks passing; container startup time within acceptable limits for portal API interactions</p>
 </li>
 <li>
 <p>Multi-file ingestion model tested: typed file uploads trigger cycle readiness check; eligibility engine only starts when all required file types are present</p>
@@ -1706,13 +1721,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
 <ul>
 <li>
-<p>Multi-level approval state machine completes a full cycle end-to-end in staging (file upload → eligibility → L1 approval → L2 approval → counter-sign)</p>
+<p>Application-layer approval state machine completes a full cycle end-to-end in staging (file upload → eligibility → L1 approval → L2 approval → counter-sign)</p>
 </li>
 <li>
 <p>Counter-proposal and revised file flows tested: counterparty file revision re-triggers eligibility computation</p>
 </li>
 <li>
-<p>Hash-chain tamper detection verified: verification Lambda detects a deliberately corrupted row in a synthetic 6-month dataset</p>
+<p>Hash-chain tamper detection verified: scheduled verification job detects a deliberately corrupted row in a synthetic 6-month dataset; dual-write integrity confirmed (S3 Object Lock write + PostgreSQL row)</p>
 </li>
 <li>
 <p>RLS penetration test passed: no cross-tenant data visible via API or direct DB query</p>
@@ -1812,7 +1827,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>The counterparty portfolio grows beyond 50 and concurrent cycle volume exceeds the Step Functions Standard Workflow throughput limits</p>
+<p>The counterparty portfolio grows beyond 50 and the application state machine&#8217;s cycle volume or branching complexity justifies extraction to a managed workflow engine</p>
 </li>
 <li>
 <p>Regulators require full event-log replay capability (not just hash-chain verification)</p>
@@ -1823,7 +1838,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </div>
 <div class="paragraph">
-<p>The recommended migration path from Option 2 to Option 3 is to introduce an event bus (Amazon EventBridge) alongside the existing hash-chain ledger, publishing events for new cycles while keeping existing cycles on the hash-chain model — a gradual, non-disruptive evolution.</p>
+<p>The recommended migration path from Option 2 to Option 3 is to introduce an event bus (Amazon EventBridge) alongside the existing hash-chain ledger, publishing events for new cycles while keeping existing cycles on the existing model — a gradual, non-disruptive evolution.</p>
 </div>
 </div>
 </div>
@@ -1874,12 +1889,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">Engage compliance lead in Phase 1; validate audit ledger design against Solvency II Article 259 record-keeping requirements before Phase 2 build begins</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Step Functions wait-for-callback timeout</strong> — approval chains that stall for months may exceed Standard Workflow heartbeat limits</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Configure Standard Workflow with a 1-year execution timeout (maximum supported); add escalation notifications if a cycle remains in one state for &gt;72 hours</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Key-person risk</strong> — reconciliation managers hold undocumented contract formula knowledge</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">High</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
@@ -1892,16 +1901,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">FR-06a enforces a unique constraint on <code>(cycle_id, file_type)</code> before any S3 write or workflow start; the API returns HTTP 409 with a reference to the existing submission; prevents duplicate audit events for the same cycle</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Lambda 15-minute execution limit</strong> — eligibility computation for very large counterparty files (&gt;500K individuals) could exceed Lambda timeout</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Eligibility computation for very large counterparty files</strong> — files with &gt;500K individuals could cause long-running computation within the ECS task</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Medium</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Implement chunked processing: the eligibility engine splits input into batches, Step Functions fans out Lambda invocations and joins results; at initial scale (10–30 counterparties) a single invocation suffices</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Implement chunked processing inside the eligibility engine module: split input into batches and process sequentially or in parallel within the task; at initial scale (10–30 counterparties) a single pass suffices; ECS tasks have no 15-minute limit</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Aurora Serverless v2 cold start</strong> — database may take several seconds to scale up from minimum ACU after idle period</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Low</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Minimum ACU set to 0.5 (database is never fully cold); Lambda provisioned concurrency on the API function keeps a warm connection pool; month-end peak is predictable — schedule a pre-warming Lambda 1 hour before expected submission window</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Minimum ACU set to 0.5 (database is never fully cold); ECS Fargate tasks maintain persistent connections with bounded pool size; month-end peak is predictable — schedule a keep-warm DB query 1 hour before expected submission window</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data residency enforcement</strong> — international counterparties may require data localisation in jurisdictions not covered by eu-west-2</p></td>
@@ -1931,7 +1940,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Solvency II Pillar III — Article 259</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Article 259 requires a documented audit trail of actuarial computations, including calculation inputs and outputs. The hash-chain ledger provides tamper evidence but does not explicitly define the granularity of <code>ELIGIBILITY_COMPUTED</code> payload content.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The <code>ELIGIBILITY_COMPUTED</code> audit event payload must include: input file SHA-256, contract rule version, per-individual eligibility flags, and the total compensation amount. The exact schema is to be confirmed with the compliance team in the Phase 1 compliance workshop.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The <code>ELIGIBILITY_COMPUTED</code> audit event payload must include: input file SHA-256, contract rule version, <code>normalisation_mapping_version</code>, per-individual eligibility flags, and the total compensation amount. The exact schema is to be confirmed with the compliance team in the Phase 1 compliance workshop.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>FCA SYSC 9.1</strong></p></td>
@@ -1957,16 +1966,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Monthly cycle is the primary cadence; quarterly and annual cycles use the same workflow with a different <code>period</code> field — no separate code path required</p>
 </li>
 <li>
-<p>The reinsurer has an existing SAML 2.0-capable identity provider (Azure AD or equivalent) for internal user federation</p>
+<p>SAML 2.0 federation with a corporate IdP is not required for Phase 1; Cognito User Pools with MFA is sufficient; SAML federation is a Phase 2 option when a specific counterparty IT team requires enterprise IdP integration</p>
 </li>
 <li>
-<p>Budget is sufficient for Option 2 (~$758K CAPEX, ~$793K–$823K 3-year TCO); client has confirmed budget is not the primary constraint for this innovation initiative</p>
+<p>Budget is sufficient for Option 2 (~$758K CAPEX, ~$789K–$793K 3-year TCO); client has confirmed budget is not the primary constraint for this innovation initiative</p>
 </li>
 <li>
 <p>Regulatory retention of 10 years satisfies the Solvency II run-off period for the contracts in scope — to be validated with the compliance team during the Phase 1 compliance workshop</p>
 </li>
 <li>
-<p>The development team includes backend engineers with experience in a Lambda-deployable language that supports exact decimal arithmetic; specific language to be confirmed during the Investigation Period based on team capabilities</p>
+<p>The development team includes backend engineers with experience deploying to ECS Fargate with a language that supports exact decimal arithmetic; specific language to be confirmed during the Investigation Period based on team capabilities</p>
 </li>
 <li>
 <p>All Phase 1 tenants are UK/EU-based; data residency zones beyond <code>UK</code> and <code>EU</code> are not needed until counterparty expansion to APAC or Americas</p>
@@ -1980,20 +1989,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_architecture_decisions"><a class="anchor" href="#_architecture_decisions"></a>10. Architecture Decisions</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_adr_001_immutability_postgresql_hash_chain_audit_table"><a class="anchor" href="#_adr_001_immutability_postgresql_hash_chain_audit_table"></a>10.1. ADR-001: Immutability — PostgreSQL Hash-Chain Audit Table</h3>
+<h3 id="_adr_001_immutability_dual_layer_audit_s3_object_lock_postgresql_hash_chain"><a class="anchor" href="#_adr_001_immutability_dual_layer_audit_s3_object_lock_postgresql_hash_chain"></a>10.1. ADR-001: Immutability — Dual-Layer Audit (S3 Object Lock + PostgreSQL Hash Chain)</h3>
 <div class="paragraph">
-<p><strong>Context:</strong> The platform must provide tamper-evident records that satisfy FCA and Solvency II audit requirements. Options evaluated: blockchain, AWS QLDB, immuDB (Go-based), PostgreSQL with append-only pattern and hash chain, and full event sourcing.</p>
+<p><strong>Context:</strong> The platform must provide tamper-evident records that satisfy FCA and Solvency II audit requirements. Options evaluated: blockchain, AWS QLDB, immuDB (Go-based), PostgreSQL with append-only pattern and hash chain, S3 Object Lock, and full event sourcing.</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> PostgreSQL append-only audit schema with SHA-256 hash chain.</p>
+<p><strong>Decision:</strong> Dual-layer audit. S3 Object Lock Compliance Mode = immutability guarantee (primary, tamper-impossible). PostgreSQL hash-chain = query index (secondary, rebuildable from S3).</p>
+</div>
+<div class="paragraph">
+<p><strong>Write semantics:</strong> S3 write must succeed before the PostgreSQL audit row is committed. The S3 object key and ETag are stored on the audit row. PostgreSQL index failure is non-fatal — a background reconciliation job rebuilds missing rows from S3. S3 write failure causes the enclosing transaction to roll back. S3 is the system of record; PostgreSQL is the query layer.</p>
 </div>
 <div class="paragraph">
 <p><strong>Rationale:</strong>
+* <strong>Why S3 Object Lock in addition to the hash-chain:</strong> The hash-chain detects tampering within 7 days. S3 Object Lock in Compliance Mode makes tampering physically impossible — no IAM principal including account root can delete or overwrite a locked object within the retention period. For Solvency II Art. 259, "tamper-impossible" is a materially stronger answer than "tamper-detectable."
 * <strong>Blockchain</strong> rejected — the reinsurer is the sole custodian of this platform; blockchain&#8217;s value is distributed consensus between mutually distrusting parties. A single custodian gains nothing from consensus overhead and inherits all of the governance and key-management complexity.
 * <strong>AWS QLDB</strong> rejected — discontinued by AWS in 2025; long-term viability cannot be assured. The underlying cryptographic model (hash chain over a Merkle tree) is sound, but the same model can be implemented directly in PostgreSQL without vendor lock-in.
 * <strong>immuDB</strong> rejected — despite sound architecture, consistency and transaction management issues emerged in a prior production project integrating from a non-Go application layer; migrating away required significant rework. The risk of opaque internals in a trust-critical system is not acceptable.
 * <strong>Full event sourcing</strong> deferred — architecturally superior for auditability but adds projection rebuild complexity and requires specialist knowledge the initial team does not have. Deferred to Option 3 migration when counterparty volume justifies it.
-* <strong>PostgreSQL hash chain</strong> chosen — regulators can query it with standard SQL; SHA-256 verification is transparent and reproducible by any auditor; the team already operates PostgreSQL; <code>pgaudit</code> adds DB-level statement logging as defence-in-depth. The chain is partitioned per tenant to eliminate write serialization at month-end; a KMS-signed genesis anchor prevents undetected chain reconstruction.</p>
+* <strong>PostgreSQL hash chain</strong> retained as the query layer — regulators can query it with standard SQL; SHA-256 verification is transparent and reproducible by any auditor; the team already operates PostgreSQL; <code>pgaudit</code> adds DB-level statement logging as defence-in-depth. The chain is partitioned per tenant to eliminate write serialization at month-end; a KMS-signed genesis anchor prevents undetected chain reconstruction.</p>
 </div>
 </div>
 <div class="sect2">
@@ -2012,18 +2025,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="_adr_003_approval_workflow_aws_step_functions_standard_workflows"><a class="anchor" href="#_adr_003_approval_workflow_aws_step_functions_standard_workflows"></a>10.3. ADR-003: Approval Workflow — AWS Step Functions Standard Workflows</h3>
+<h3 id="_adr_003_approval_workflow_application_layer_state_machine"><a class="anchor" href="#_adr_003_approval_workflow_application_layer_state_machine"></a>10.3. ADR-003: Approval Workflow — Application-Layer State Machine</h3>
 <div class="paragraph">
 <p><strong>Context:</strong> The multi-level approval chain (propose → L1 reinsurer review → L2 senior review → adjustment rounds → counterparty counter-proposal or revised file → counter-sign) needs durable state management with human-approval steps that can pause for hours or days. The workflow must support a chain of 2–4+ approvers per cycle and allow the counterparty to re-submit revised data files at any point before seal.</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> AWS Step Functions Standard Workflows with wait-for-callback task tokens. Each approval level (L1, L2) is implemented as a sub-workflow so the number of levels is configurable per contract tier without changing the Step Functions definition.</p>
+<p><strong>Decision:</strong> Application-layer state machine implemented within the Approval Workflow module. The <code>reconciliation_cycles</code> table has a <code>workflow_state</code> column tracking states: <code>AWAITING_FILES → AWAITING_ELIGIBILITY → AWAITING_L1 → AWAITING_L2 → AWAITING_COUNTERPARTY → COMPLETED / DISPUTED / ELIGIBILITY_FAILED</code>. A background job runner (running inside the ECS Fargate service) handles the 72-hour escalation timer. Other modules call <code>ApprovalWorkflow.transition(cycleId, event)</code> — a clean interface that allows extraction to Step Functions later if the workflow grows beyond ~5 concurrent workflow types or multi-week execution lifetimes.</p>
 </div>
 <div class="paragraph">
-<p><strong>Rationale:</strong> The wait-for-callback pattern allows a workflow to pause for a human action indefinitely (up to 1 year) without polling loops. A custom in-app state machine would require maintaining durable execution state manually and building equivalent history and retry logic from scratch. Sub-workflows for approval levels allow a new tier to be added per contract without modifying the parent workflow.</p>
-</div>
-<div class="paragraph">
-<p>Step Functions is the <strong>workflow engine</strong>; the hash-chain audit ledger is the <strong>sole compliance archive</strong>. Step Functions execution history is an operational debugging aid only — it is not a regulatory record. Workflow executions are guarded by an idempotency key to prevent duplicate audit events for the same reconciliation cycle.</p>
+<p><strong>Rationale:</strong>
+* <strong>Step Functions</strong> was designed to orchestrate Lambda functions across service boundaries. With a modular monolith, those boundaries no longer exist.
+* At 15–20 counterparties × 12 cycles/year = 180–240 workflows/year, an application state machine with a <code>workflow_state</code> column eliminates Step Functions IAM complexity, task token management, and callback patterns at no functional cost.
+* Durable execution state is already provided by the PostgreSQL <code>reconciliation_cycles</code> row — no external workflow engine is needed to persist state between human actions.
+* The clean <code>ApprovalWorkflow.transition(cycleId, event)</code> interface makes future extraction to Step Functions an additive change, not a rework.
+* The hash-chain audit ledger remains the <strong>sole compliance archive</strong>; workflow state transitions are application events written to the ledger, not execution history in an external service.</p>
 </div>
 </div>
 <div class="sect2">
@@ -2039,24 +2054,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="_adr_005_authentication_cognito_with_saml_federation"><a class="anchor" href="#_adr_005_authentication_cognito_with_saml_federation"></a>10.5. ADR-005: Authentication — Cognito with SAML Federation</h3>
+<h3 id="_adr_005_authentication_cognito_user_pools_with_mfa_saml_deferred"><a class="anchor" href="#_adr_005_authentication_cognito_user_pools_with_mfa_saml_deferred"></a>10.5. ADR-005: Authentication — Cognito User Pools with MFA; SAML Deferred</h3>
 <div class="paragraph">
-<p><strong>Context:</strong> The platform serves two user populations: internal reinsurer staff (who have a corporate identity provider) and external counterparty administrators (who do not have a shared IdP).</p>
+<p><strong>Context:</strong> The platform serves two user populations: internal reinsurer staff (who may have a corporate identity provider) and external counterparty administrators (who do not have a shared IdP).</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> A single AWS Cognito User Pool with two identity providers: Cognito-native (email/password + MFA) for external counterparty users, and SAML 2.0 federation from the corporate IdP for internal reinsurer users. Both paths issue JWTs from one issuer; a <code>custom:user_type</code> claim (<code>INTERNAL</code> or <code>COUNTERPARTY</code>) drives RBAC in the API service.</p>
+<p><strong>Decision:</strong> Cognito User Pools with email + MFA for Phase 1. SAML 2.0 federation is available as a Phase 2 addition when a specific counterparty IT team requires enterprise IdP integration. The Cognito User Pool is configured with an IdP placeholder to make this addition a configuration change, not a code change. Both paths issue JWTs from one issuer; a <code>custom:user_type</code> claim (<code>INTERNAL</code> or <code>COUNTERPARTY</code>) drives RBAC in the API service.</p>
 </div>
 <div class="paragraph">
-<p><strong>Rationale:</strong> Two separate User Pools would mean two JWT issuers, two sets of token validation logic, two audit surfaces, and double the Cognito configuration to maintain — with no architectural benefit. A single pool with two identity providers achieves the same authentication model at half the operational complexity. Cognito MFA is enforced for all users. SAML federation removes the need to manage internal user credentials separately from the corporate directory.</p>
+<p><strong>Rationale:</strong> SAML federation setup requires metadata exchange with the corporate IT team, which is a coordination dependency the platform build should not block on. Cognito User Pools with MFA is sufficient for all Phase 1 users — internal staff included. The IdP placeholder means the federation is a one-day configuration task whenever a specific counterparty requires it. Cognito MFA is enforced for all users regardless of the authentication path.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_adr_006_compute_aws_lambda_aurora_serverless_v2"><a class="anchor" href="#_adr_006_compute_aws_lambda_aurora_serverless_v2"></a>10.6. ADR-006: Compute — AWS Lambda + Aurora Serverless v2</h3>
+<h3 id="_adr_006_compute_ecs_fargate_modular_monolith_aurora_serverless_v2"><a class="anchor" href="#_adr_006_compute_ecs_fargate_modular_monolith_aurora_serverless_v2"></a>10.6. ADR-006: Compute — ECS Fargate Modular Monolith + Aurora Serverless v2</h3>
 <div class="paragraph">
-<p><strong>Context:</strong> The workload is monthly peaks with near-zero baseline between reconciliation cycles (a few portal logins per week). Options: ECS Fargate (always-running containers), Lambda + API Gateway (pay-per-invocation), EKS (Kubernetes).</p>
+<p><strong>Context:</strong> The workload is monthly peaks with near-zero baseline between reconciliation cycles (a few portal logins per week). The architecture is a modular monolith. Options: ECS Fargate (container tasks behind ALB), Lambda + API Gateway (pay-per-invocation), EKS (Kubernetes).</p>
 </div>
 <div class="paragraph">
-<p><strong>Decision:</strong> AWS Lambda + API Gateway for all compute; Aurora Serverless v2 for the database.</p>
+<p><strong>Decision:</strong> Single ECS Fargate service hosting the entire modular monolith (API + eligibility engine + background jobs), fronted by an Application Load Balancer. Aurora Serverless v2 for the database.</p>
 </div>
 <div class="paragraph">
 <p><strong>Rationale:</strong></p>
@@ -2064,18 +2079,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p><strong>ECS Fargate</strong> rejected — cost is dominated by idle time between month-end peaks. Always-running containers (2+ tasks) cost ~$380/month even when serving near-zero traffic. Lambda charges only for invocations, reducing API compute to ~$40/month at this request volume.</p>
+<p><strong>Lambda</strong> rejected — the modular monolith architecture eliminates the need for function-level granularity. The original Fargate rejection (~$380/month idle cost) was based on a multi-service microservices model. A single Fargate task (0.5 vCPU / 1 GB) costs ~$18/month; two tasks for HA ~$35/month; month-end scaled to 4 tasks ~$52/month. Connection pooling to Aurora is deterministic (bounded task count × pool size). No Lambda VPC ENI exhaustion at month-end. No 15-minute execution limit. Single container image, single deployment pipeline, consistent local dev environment.</p>
 </li>
 <li>
 <p><strong>Aurora Serverless v2</strong> chosen over RDS fixed-instance — scales to near-zero ACUs (0.5 ACU minimum ≈ 1 GB RAM) between peaks. At month-end, it scales automatically to handle concurrent eligibility computations without any capacity planning. RLS, pgaudit, and the hash-chain audit ledger work identically on Aurora PostgreSQL-compatible. Monthly cost: ~$200 vs ~$480 for RDS db.r6g.large.</p>
 </li>
 <li>
-<p><strong>Lambda 15-minute limit</strong> mitigated — eligibility computation for typical counterparty files (10K–100K individuals) completes within minutes. For very large files (&gt;500K), the engine splits input into batches and Step Functions fans out parallel Lambda invocations. At initial scale, a single invocation suffices.</p>
-</li>
-<li>
 <p><strong>EKS</strong> rejected — operational overhead of managing a Kubernetes cluster is not justified for a 6-person team with a monthly-peak workload.</p>
 </li>
 </ul>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+RDS Proxy is not used in this deployment (see ADR-010). At 2–4 Fargate tasks, the connection count is bounded and predictable. Revisit if task count exceeds 10.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
@@ -2146,6 +2170,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>Rationale:</strong> Both parties' expectations for a cycle are set when the cycle opens. Applying a mid-cycle rule change would invalidate work already reviewed by the counterparty and create a dispute trigger. The locked version is recorded in the audit ledger alongside every <code>ELIGIBILITY_COMPUTED</code> event, ensuring reproducibility. If a rule correction is genuinely needed for the current cycle, the existing flow supports it: close the current cycle as voided, open a new cycle with the corrected contract version, and re-upload files — all captured in the audit trail.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_adr_010_rds_proxy_deferred"><a class="anchor" href="#_adr_010_rds_proxy_deferred"></a>10.10. ADR-010: RDS Proxy — Deferred</h3>
+<div class="paragraph">
+<p><strong>Context:</strong> RDS Proxy is a standard mitigation for database connection exhaustion when a large number of compute functions compete for a limited connection pool. It is commonly paired with Lambda deployments and with RLS to manage <code>SET LOCAL</code> session variable scoping.</p>
+</div>
+<div class="paragraph">
+<p><strong>Decision:</strong> RDS Proxy is not used in the initial deployment.</p>
+</div>
+<div class="paragraph">
+<p><strong>Rationale:</strong>
+* At 15–20 counterparties with a bounded ECS Fargate task count (2–4 tasks), the maximum concurrent database connections is predictable and well within Aurora Serverless v2 limits.
+* RDS Proxy is the standard mitigation for Lambda connection exhaustion — that problem no longer applies with Fargate.
+* RDS Proxy with RLS requires transaction-pinning mode (to prevent <code>SET LOCAL</code> session variable leakage across multiplexed connections), which adds configuration complexity with no benefit at this connection volume.
+* Revisit when Fargate task count exceeds 10 or counterparty count exceeds 50.</p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -2155,7 +2195,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h3 id="_aws_architecture_eu_west_2_london"><a class="anchor" href="#_aws_architecture_eu_west_2_london"></a>11.1. AWS Architecture (eu-west-2 — London)</h3>
 <div class="imageblock kroki">
 <div class="content">
-<img src="diagrams/case03-infra-86a68d3d88c0e3bbad2b1173f0d9034bb0d0f662.svg" alt="Infrastructure Topology — AWS eu-west-2">
+<img src="diagrams/case03-infra-7596fae84ca711db243261cfea5d68613c4e29be.svg" alt="Infrastructure Topology — AWS eu-west-2">
 </div>
 <div class="title">Figure 11. Infrastructure Topology — AWS eu-west-2</div>
 </div>
@@ -2181,19 +2221,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Development</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Feature development and unit testing</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Serverless v2 (min ACU); Lambda functions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aurora Serverless v2 (min ACU); ECS Fargate (1 task)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Synthetic contract and file data; no PII</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Staging</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Pre-production validation; counterparty UAT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Production-like; Aurora Serverless v2 Multi-AZ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Production-like; Aurora Serverless v2 Multi-AZ; ECS Fargate (2 tasks)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Anonymised sample data per contract; counterparty UAT with synthetic data</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Production</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Live reconciliation platform</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Full Multi-AZ Aurora Serverless v2; Lambda with provisioned concurrency for API</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full Multi-AZ Aurora Serverless v2; ECS Fargate (2 tasks base, scales to 4 at month-end)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Real contract and counterparty data; encrypted at rest; RLS enforced</p></td>
 </tr>
 </tbody>
@@ -2215,23 +2255,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Authentication</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Single Cognito User Pool; SAML 2.0 federation for internal users, Cognito-native (email/password) for external; MFA enforced for all users</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Single Cognito User Pool; Cognito-native (email/password + MFA) for Phase 1 all users; SAML 2.0 federation available as Phase 2 addition via pre-configured IdP placeholder; MFA enforced for all users</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Authorisation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Role-based access control (RBAC) with five roles spanning reinsurer, counterparty, compliance, and platform administration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Role-based access control (RBAC) with five roles spanning reinsurer, counterparty, compliance, and platform administration. Every approval action (L1 approve, L2 approve, counter-proposal, final sign-off) enforces three checks in the application layer: (1) re-validate the caller&#8217;s Cognito JWT, (2) confirm the approver&#8217;s role matches the required approval level for this action, (3) confirm the target cycle belongs to the caller&#8217;s tenant. Authentication alone (valid JWT) is not sufficient — all three checks must pass before any state transition is executed.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data isolation</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">PostgreSQL RLS at DB layer; transaction-scoped tenant context to prevent connection-pool bleed; WAF rate limiting</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PostgreSQL RLS at DB layer; transaction-scoped tenant context to prevent connection-pool bleed; WAF rate limiting attached to ALB</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Encryption</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 at rest (KMS-managed); TLS 1.2+ in transit; dedicated KMS CMK for audit-critical data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AES-256 at rest (KMS-managed); TLS 1.2+ in transit; dedicated KMS CMK for audit-critical data; S3 audit bucket uses SSE-KMS with the audit CMK</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Network security</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lambda in private subnets; Aurora not publicly accessible; WAF with OWASP managed rule group</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ECS Fargate tasks in private subnets; Aurora not publicly accessible; WAF (ALB-attached) with OWASP managed rule group</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 audit bucket controls</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket policy includes explicit Deny on <code>s3:DeleteObject</code> and <code>s3:PutObject</code> without Object Lock headers — prevents any principal (including account root) from bypassing Object Lock. S3 raw file bucket uses Object Lock Governance Mode (allows operator override with justification; enables non-repudiation if a counterparty disputes that the system altered their file).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Audit logging</p></td>
@@ -2249,7 +2293,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Strategy:</strong> Active-passive; primary in eu-west-2 (London); DR in eu-west-1 (Ireland)</p>
+<p><strong>Strategy:</strong> Primary in eu-west-2 (London); DR via automated daily snapshots to eu-west-1 (Ireland) via AWS Backup and S3 Cross-Region Replication. No active standby is maintained in eu-west-1.</p>
 </li>
 <li>
 <p><strong>Aurora Serverless v2:</strong> Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)</p>
@@ -2258,15 +2302,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>S3:</strong> Cross-Region Replication to eu-west-1 with 15-minute SLA; versioning enabled in both regions</p>
 </li>
 <li>
-<p><strong>Audit Ledger:</strong> Aurora Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure)</p>
+<p><strong>Audit Ledger:</strong> Aurora Multi-AZ replication ensures audit events are synchronously replicated (RPO = 0 for AZ failure); S3 Object Lock audit objects are replicated via S3 CRR</p>
 </li>
 <li>
-<p><strong>Lambda:</strong> Stateless — no DR concern for compute; function deployment is region-scoped; DR region can be provisioned from the same CI/CD pipeline</p>
+<p><strong>ECS Fargate:</strong> Stateless compute — no DR concern; the same container image and Terraform module are used to provision the DR region when a full-region restore is required</p>
 </li>
 <li>
-<p><strong>RTO target:</strong> &lt; 1 hour for full region failover; documented DR runbook tested quarterly</p>
+<p><strong>RTO target:</strong> &lt; 4 hours (snapshot restore) for full region failure; documented and tested DR restore runbook; maintenance windows scheduled outside month-end submission periods</p>
 </li>
 </ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Target 99.9% monthly uptime. Expected availability based on component SLA product (Aurora Multi-AZ × ECS Fargate × ALB) is ~99.85%. The gap between target and expected is addressed by scheduling maintenance windows outside month-end submission periods.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -2302,9 +2358,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tier 1 — Federated</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Large insurer with corporate SSO</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SAML 2.0 federation from counterparty IdP into the platform Cognito User Pool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tier 1 — Federated</strong> (Phase 2)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Large insurer with corporate SSO requiring enterprise IdP integration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SAML 2.0 federation from counterparty IdP into the platform Cognito User Pool (Phase 2 addition via pre-configured IdP placeholder; configuration change only)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Web portal upload via S3 pre-signed URLs</p></td>
 </tr>
 <tr>
@@ -2358,7 +2414,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>On every sealed-cycle read:</strong> hash chain recomputed for that tenant&#8217;s cycle events at query time; any discrepancy returns an error before the data is returned</p>
 </li>
 <li>
-<p><strong>Weekly full-chain sweep:</strong> Lambda job (<code>audit-verify</code>) recomputes all events per tenant for the rolling 7-day window; alerts compliance team via SNS on any discrepancy</p>
+<p><strong>Weekly full-chain sweep:</strong> scheduled verification job running inside the application service (same background job runner as escalation timers) recomputes all events per tenant for the rolling 7-day window; alerts compliance team via SNS on any discrepancy. The verification job must use the stored KMS key version ARN (from the genesis event row) when calling <code>kms:Verify</code> — not the current default key version. Without this, the first CMK rotation after go-live causes false-positive <code>CHAIN_VIOLATION_DETECTED</code> alerts for all tenants provisioned before the rotation.</p>
 </li>
 <li>
 <p><strong>Monthly full-chain verification</strong> for regulatory assurance; output archived as compliance evidence</p>
@@ -2485,10 +2541,7 @@ Three design disciplines preserve optionality at zero additional cost: no client
 <p>Procure AWS accounts (separate accounts for dev/staging/production recommended); set up AWS Organizations and Control Tower baseline</p>
 </li>
 <li>
-<p>Evaluate backend language options during the Investigation Period — confirm a Lambda-deployable language with native exact decimal arithmetic support based on team capabilities; finalise the choice before Phase 1 sprint planning</p>
-</li>
-<li>
-<p>Obtain SAML metadata from the reinsurer&#8217;s identity provider (Azure AD or equivalent) for Cognito federation setup</p>
+<p>Evaluate backend language options during the Investigation Period — confirm a language with native exact decimal arithmetic support deployable to ECS Fargate; finalise the choice before Phase 1 sprint planning</p>
 </li>
 <li>
 <p>Review and sign Data Processing Agreements (DPAs) with each counterparty before their data is processed on the platform (GDPR requirement for EU-based counterparties)</p>
@@ -2508,7 +2561,7 @@ Three design disciplines preserve optionality at zero additional cost: no client
 <div id="footer">
 <div id="footer-text">
 Version 1.0<br>
-Last updated 2026-04-17 12:15:54 +0200
+Last updated 2026-04-26 22:23:54 +0200
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

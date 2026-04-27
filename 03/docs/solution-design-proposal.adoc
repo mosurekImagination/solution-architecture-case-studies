@@ -119,12 +119,7 @@ contract type is introduced, the platform adapts without code changes. This
 eliminates the dependency on individual reconciliation managers holding formula
 knowledge in private Excel files.
 
-The platform is designed as a custodial model: the reinsurer hosts and operates the
-platform as the trusted party, while counterparties interact through a secure
-portal with strict data isolation. This achieves the same trust guarantees as
-distributed approaches (such as blockchain) without the associated operational
-overhead — because the reinsurer is already the single custodian of the
-reconciliation process.
+The reinsurer hosts and operates the platform as the trusted party. Counterparties interact through a secure portal with strict data isolation — each counterparty sees only their own contracts and cycles.
 
 This engagement does not include: payment service provider integration (B2B money
 settlement is handled outside the platform), blockchain infrastructure, historical
@@ -166,15 +161,7 @@ target -right-> outcome : Efficiency\n+ compliance
 @enduml
 ----
 
-=== What Changes: Excel Formulas → Structured Rules
-
-The following simplified example illustrates the core transformation. Today, a
-reconciliation manager maintains an Excel workbook per counterparty. The business
-logic — eligibility conditions, compensation rates, adjustment factors — is
-embedded in cell formulas that are undocumented, unversioned, and
-person-dependent.
-
-*Current state — an Excel workbook for a longevity swap contract:*
+Today, every counterparty has a separate Excel workbook. The business logic — eligibility conditions, compensation rates, adjustment factors — is embedded in cell formulas that are undocumented, unversioned, and understood only by the person who wrote them:
 
 [cols="1,1,1,1,2,2", options="header"]
 |===
@@ -192,89 +179,12 @@ person-dependent.
 |22/01/2026
 |£34,100
 |`=IF(NOT(C3=""), "Deceased","No")`
-|`=D3*$K$2* DAYS(C3,B3)/365.25`
+|`=D3*$K$2*DAYS(C3,B3)/365.25`
 
-|LM-10044
-|19/07/1962
-|
-|£22,750
-|`=IF(AND(C4="", DATEDIF(B4,TODAY(),"Y")>=65), "Yes","No")`
-|`=IF(E4="Yes", D4*0.0325*$K$1, 0)`
-
-6+|_Hidden references: `$K$1` = adjustment factor (1.0), `$K$2` = mortality rate (0.0410). These values live in a named range on a hidden sheet that only the original author understands. The formula in column F differs by contract type — copied and modified by hand for each counterparty workbook._
+6+|_`$K$1` and `$K$2` are hidden named ranges on a separate sheet — adjustment factor and mortality rate. Only the original author knows they exist. When a reconciliation manager leaves, this knowledge leaves with them._
 |===
 
-When a reconciliation manager leaves, the knowledge embedded in `$K$1`, `$K$2`,
-and the conditional logic in columns E–F leaves with them. When the contract terms
-change, every affected cell formula must be found and updated manually — across
-every counterparty workbook that uses that contract type.
-
-'''
-
-*Target state — the same contract rules as structured metadata:*
-
-[source,json]
-----
-{
-  "contract_type": "longevity_swap",
-  "counterparty": "Eurolife Reinsurance SE",
-  "effective_date": "2026-01-01",
-  "version": "3.1",
-
-  "eligibility_rules": [
-    { "field": "date_of_death", "operator": "is_null",
-      "label": "Member is alive" },
-    { "field": "age_at_cycle_date", "operator": ">=", "value": 65,
-      "label": "Retirement age reached" }
-  ],
-
-  "compensation_formulas": {
-    "alive": "annual_pension × base_rate × adjustment_factor",
-    "deceased": "annual_pension × mortality_rate × (days_survived / 365.25)"
-  },
-
-  "parameters": {
-    "base_rate": 0.0325,
-    "adjustment_factor": 1.00,
-    "mortality_rate": 0.0410
-  }
-}
-----
-
-The same business logic — readable, version-controlled, and auditable. When a
-contract term changes, a single parameter update propagates to every affected
-calculation automatically. When a new contract type is introduced, it is a new
-metadata entry — not a new Excel workbook with manually crafted formulas.
-
-The platform's *eligibility engine* reads these rules and evaluates them against
-the uploaded data files — producing the same results the Excel formulas produce
-today, but without manual intervention, without hidden cell references, and with a
-complete audit trail of every calculation.
-
-[plantuml, case03-proposal-engine-flow, svg]
-----
-@startuml
-skinparam defaultFontSize 15
-skinparam defaultFontName Arial
-skinparam ArrowColor #555555
-skinparam ArrowFontSize 13
-skinparam RoundCorner 8
-skinparam ActivityBackgroundColor #E8F4FD
-skinparam ActivityBorderColor #90CAF9
-
-start
-:Counterparty uploads\nmonthly data file;
-:Platform validates file\nformat & completeness;
-:Engine loads contract\nrules (metadata);
-:Eligibility evaluated\nfor every member;
-:Compensation calculated\nper eligible member;
-:Results presented\nfor counterparty review;
-:Multi-level\nsign-off workflow;
-:Audit ledger records\nevery step;
-stop
-
-@enduml
-----
+The platform replaces these hidden formulas with readable, versioned contract definitions. When a contract term changes, a single update applies across every affected calculation automatically. When a new contract type is introduced, it is a configuration change — not a new workbook built by hand.
 
 == Expected Business Outcomes
 
@@ -455,6 +365,9 @@ the first week after signing and carries no separate cost.
 
 |**Risk identification and mitigation planning**
 |We surface and assess risks specific to the environment — counterparty technical readiness, data residency obligations, contract complexity outliers — and prepare mitigation options for each. A risk register and validated Phase 1 plan are delivered, not a generic estimate.
+
+|**Data Protection Impact Assessment (DPIA) scoping**
+|We identify all personal data fields in counterparty files (individual names, dates of birth, alive/dead status), confirm the legal basis under UK GDPR Art. 6 and Art. 9, and establish the resolution of the Art. 17 right to erasure vs the Solvency II 10-year retention obligation. This conflict must be resolved before platform build begins — the audit ledger design depends on the outcome.
 |===
 
 The investigation concludes with a written report: a validated Phase 1 plan (with
@@ -543,6 +456,9 @@ point.
 
 |**Data residency obligations for international counterparties**
 |Phase 1 assumes all tenants are UK/EU-based. If a non-UK/EU jurisdiction is required before go-live, the infrastructure design supports regional deployment — scope and timeline impact are assessed when the requirement is confirmed.
+
+|**GDPR/Solvency II data retention conflict** — Counterparty files contain insured individual PII (alive/dead status, date of birth) subject to GDPR Art. 17 erasure rights, which conflicts with the 10-year Solvency II actuarial retention requirement
+|DPIA completed during the Investigation Period; legal counsel confirms the applicable legal basis per field before platform build begins. Likelihood: Medium. Impact: High.
 |===
 
 == Why Work With Us

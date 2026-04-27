@@ -449,11 +449,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#_executive_summary">1. Executive Summary</a></li>
 <li><a href="#_business_challenge">2. Business Challenge</a></li>
-<li><a href="#_our_recommendation">3. Our Recommendation</a>
-<ul class="sectlevel2">
-<li><a href="#_what_changes_excel_formulas_structured_rules">3.1. What Changes: Excel Formulas → Structured Rules</a></li>
-</ul>
-</li>
+<li><a href="#_our_recommendation">3. Our Recommendation</a></li>
 <li><a href="#_expected_business_outcomes">4. Expected Business Outcomes</a>
 <ul class="sectlevel2">
 <li><a href="#_paths_to_the_24_headcount_reduction">4.1. Paths to the 2–4× Headcount Reduction</a></li>
@@ -603,17 +599,8 @@ functionality, or changes to the counterparties' internal systems.</p>
 <img src="diagrams/case03-proposal-value-chain-dec5006a9331f3738560848fd3b29df9807286b5.svg" alt="case03-proposal-value-chain">
 </div>
 </div>
-<div class="sect2">
-<h3 id="_what_changes_excel_formulas_structured_rules"><a class="anchor" href="#_what_changes_excel_formulas_structured_rules"></a>3.1. What Changes: Excel Formulas → Structured Rules</h3>
 <div class="paragraph">
-<p>The following simplified example illustrates the core transformation. Today, a
-reconciliation manager maintains an Excel workbook per counterparty. The business
-logic — eligibility conditions, compensation rates, adjustment factors — is
-embedded in cell formulas that are undocumented, unversioned, and
-person-dependent.</p>
-</div>
-<div class="paragraph">
-<p><strong>Current state — an Excel workbook for a longevity swap contract:</strong></p>
+<p>Today, every counterparty has a separate Excel workbook. The business logic — eligibility conditions, compensation rates, adjustment factors — is embedded in cell formulas that are undocumented, unversioned, and understood only by the person who wrote them:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -649,76 +636,15 @@ person-dependent.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">22/01/2026</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">£34,100</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>=IF(NOT(C3=""), "Deceased","No")</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>=D3*$K$2* DAYS(C3,B3)/365.25</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>=D3*$K$2*DAYS(C3,B3)/365.25</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">LM-10044</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">19/07/1962</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">£22,750</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>=IF(AND(C4="", DATEDIF(B4,TODAY(),"Y")&gt;=65), "Yes","No")</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>=IF(E4="Yes", D4*0.0325*$K$1, 0)</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="6"><p class="tableblock"><em>Hidden references: <code>$K$1</code> = adjustment factor (1.0), <code>$K$2</code> = mortality rate (0.0410). These values live in a named range on a hidden sheet that only the original author understands. The formula in column F differs by contract type — copied and modified by hand for each counterparty workbook.</em></p></td>
+<td class="tableblock halign-left valign-top" colspan="6"><p class="tableblock"><em>`$K$1` and <code>$K$2</code> are hidden named ranges on a separate sheet — adjustment factor and mortality rate. Only the original author knows they exist. When a reconciliation manager leaves, this knowledge leaves with them.</em></p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>When a reconciliation manager leaves, the knowledge embedded in <code>$K$1</code>, <code>$K$2</code>,
-and the conditional logic in columns E–F leaves with them. When the contract terms
-change, every affected cell formula must be found and updated manually — across
-every counterparty workbook that uses that contract type.</p>
-</div>
-<hr>
-<div class="paragraph">
-<p><strong>Target state — the same contract rules as structured metadata:</strong></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "contract_type": "longevity_swap",
-  "counterparty": "Eurolife Reinsurance SE",
-  "effective_date": "2026-01-01",
-  "version": "3.1",
-
-  "eligibility_rules": [
-    { "field": "date_of_death", "operator": "is_null",
-      "label": "Member is alive" },
-    { "field": "age_at_cycle_date", "operator": "&gt;=", "value": 65,
-      "label": "Retirement age reached" }
-  ],
-
-  "compensation_formulas": {
-    "alive": "annual_pension × base_rate × adjustment_factor",
-    "deceased": "annual_pension × mortality_rate × (days_survived / 365.25)"
-  },
-
-  "parameters": {
-    "base_rate": 0.0325,
-    "adjustment_factor": 1.00,
-    "mortality_rate": 0.0410
-  }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The same business logic — readable, version-controlled, and auditable. When a
-contract term changes, a single parameter update propagates to every affected
-calculation automatically. When a new contract type is introduced, it is a new
-metadata entry — not a new Excel workbook with manually crafted formulas.</p>
-</div>
-<div class="paragraph">
-<p>The platform&#8217;s <strong>eligibility engine</strong> reads these rules and evaluates them against
-the uploaded data files — producing the same results the Excel formulas produce
-today, but without manual intervention, without hidden cell references, and with a
-complete audit trail of every calculation.</p>
-</div>
-<div class="imageblock kroki">
-<div class="content">
-<img src="diagrams/case03-proposal-engine-flow-01f0bcffbaf43556289faef8e00356b342cd1c85.svg" alt="case03-proposal-engine-flow">
-</div>
-</div>
+<p>The platform replaces these hidden formulas with readable, versioned contract definitions. When a contract term changes, a single update applies across every affected calculation automatically. When a new contract type is introduced, it is a configuration change — not a new workbook built by hand.</p>
 </div>
 </div>
 </div>
@@ -997,6 +923,10 @@ the first week after signing and carries no separate cost.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Risk identification and mitigation planning</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">We surface and assess risks specific to the environment — counterparty technical readiness, data residency obligations, contract complexity outliers — and prepare mitigation options for each. A risk register and validated Phase 1 plan are delivered, not a generic estimate.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data Protection Impact Assessment (DPIA) scoping</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">We identify all personal data fields in counterparty files (individual names, dates of birth, alive/dead status), confirm the legal basis under UK GDPR Art. 6 and Art. 9, and establish the resolution of the Art. 17 right to erasure vs the Solvency II 10-year retention obligation. This conflict must be resolved before platform build begins — the audit ledger design depends on the outcome.</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1030,11 +960,11 @@ point.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Monthly infrastructure cost (OPEX)</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">$985–$1,800/month (cloud infrastructure; higher end includes disaster recovery replication)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">$867–$987/month (cloud infrastructure; higher end includes disaster recovery replication)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>3-year total cost of ownership</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">~$793K–$823K (CAPEX ~$758K + 3 years OPEX at $985–$1,800/month)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">~$789K–$793K (CAPEX ~$758K + 3 years OPEX at $867–$987/month)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>First counterparty live</strong></p></td>
@@ -1136,6 +1066,10 @@ expansion at 1–2 per month, quarterly compliance review with the internal team
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Data residency obligations for international counterparties</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 assumes all tenants are UK/EU-based. If a non-UK/EU jurisdiction is required before go-live, the infrastructure design supports regional deployment — scope and timeline impact are assessed when the requirement is confirmed.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>GDPR/Solvency II data retention conflict</strong> — Counterparty files contain insured individual PII (alive/dead status, date of birth) subject to GDPR Art. 17 erasure rights, which conflicts with the 10-year Solvency II actuarial retention requirement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DPIA completed during the Investigation Period; legal counsel confirms the applicable legal basis per field before platform build begins. Likelihood: Medium. Impact: High.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1243,7 +1177,7 @@ confirmed inputs as of the date of this document.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-17 12:15:34 +0200
+Last updated 2026-04-26 22:34:27 +0200
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

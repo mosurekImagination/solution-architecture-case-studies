@@ -16,6 +16,7 @@ import math
 import sys
 import io
 from dataclasses import dataclass
+from typing import Union
 
 # Ensure UTF-8 output on Windows
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -28,7 +29,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 @dataclass
 class Role:
     title: str
-    count: int | float
+    count: Union[int, float]
     rate_mo: int
     months: float
     deliverables: str
@@ -98,18 +99,29 @@ NUM_PHASES = len(phases)
 # ── OPEX: Monthly costs (base) ────────────────────────────────────────────────
 opex_base = {
     "Aurora Serverless v2 (0.5-8 ACU)":       200,
-    "Lambda + API Gateway":                     45,
+    # ECS Fargate compute: 2 tasks x 0.5 vCPU / 1 GB = ~$35/month base;
+    # scales to 4 tasks at month-end peak = ~$52/month.
+    # Base figure used here; peak is noted in solution design.
+    "ECS Fargate (modular monolith, 2 tasks)":  35,
     "S3 (file storage + audit backups ~500GB)": 80,
-    "Step Functions (Standard Workflows)":      40,
+    # S3 Object Lock audit bucket: nominal at current event volume;
+    # grows linearly with counterparty count (~$1-2/month per tenant).
+    "S3 Object Lock (audit store)":              2,
+    # Step Functions removed — application state machine used instead.
+    # "Step Functions (Standard Workflows)":    0,
     "Cognito (up to 1,000 MAU)":                55,
     "SES (email notifications)":                15,
-    "CloudFront + WAF (OWASP rules)":          120,
+    # CloudFront CDN removed — WAF attaches directly to ALB.
+    # "CloudFront CDN":                          0,
+    "WAF (ALB-attached, OWASP rules)":          50,
     "CloudWatch (logs, metrics, alarms)":       80,
     "AWS Backup + S3 Glacier (10yr retention)": 150,
     "AWS Transfer Family SFTP (opt-in)":       200,
 }
 
-DR_OVERHEAD_PER_MONTH = 815  # cross-region DR replication (eu-west-1)
+# DR: automated daily snapshots via AWS Backup to eu-west-1 + S3 CRR.
+# Active-passive standby removed; snapshot restore RTO is 2-4 hours.
+DR_OVERHEAD_PER_MONTH = 120  # AWS Backup cross-region snapshot transfer + S3 CRR
 
 # ── TCO ────────────────────────────────────────────────────────────────────────
 TCO_YEARS = 3
@@ -262,12 +274,12 @@ def write_adoc_attrs():
 
         # ── OPEX ─────────────────────────────────────────────────────────
         "opex-aurora":          f"~${opex_items[0][1]:,}",
-        "opex-lambda-apigw":    f"~${opex_items[1][1]:,}",
+        "opex-fargate":         f"~${opex_items[1][1]:,} (base, 2 tasks); ~$52 at month-end peak (4 tasks)",
         "opex-s3":              f"~${opex_items[2][1]:,}",
-        "opex-step-functions":  f"~${opex_items[3][1]:,}",
+        "opex-s3-object-lock":  f"~${opex_items[3][1]:,}",
         "opex-cognito":         f"~${opex_items[4][1]:,}",
         "opex-ses":             f"~${opex_items[5][1]:,}",
-        "opex-cloudfront-waf":  f"~${opex_items[6][1]:,}",
+        "opex-waf":             f"~${opex_items[6][1]:,}",
         "opex-cloudwatch":      f"~${opex_items[7][1]:,}",
         "opex-backup-glacier":  f"~${opex_items[8][1]:,}",
         "opex-sftp":            f"~${opex_items[9][1]:,}",
