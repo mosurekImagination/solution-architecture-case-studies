@@ -98,25 +98,29 @@ NUM_PHASES = len(phases)
 
 # ── OPEX: Monthly costs (base) ────────────────────────────────────────────────
 opex_base = {
-    "Aurora Serverless v2 (0.5-8 ACU)":       200,
+    "RDS PostgreSQL (db.t4g.medium, Multi-AZ, eu-west-2)": 200,
     # ECS Fargate compute: 2 tasks x 0.5 vCPU / 1 GB = ~$35/month base;
     # scales to 4 tasks at month-end peak = ~$52/month.
     # Base figure used here; peak is noted in solution design.
-    "ECS Fargate (modular monolith, 2 tasks)":  35,
-    "S3 (file storage + audit backups ~500GB)": 80,
-    # S3 Object Lock audit bucket: nominal at current event volume;
-    # grows linearly with counterparty count (~$1-2/month per tenant).
-    "S3 Object Lock (audit store)":              2,
+    # Includes Debezium CDC sidecar (~0.25 vCPU / 512 MB = ~$10/month marginal).
+    "ECS Fargate (modular monolith + Debezium CDC, 2 tasks)": 45,
+    # S3: counterparty files + CDC audit archive (S3 Glacier for 10yr retention).
+    # No separate Object Lock bucket — CDC stream is the immutable audit archive.
+    "S3 (file storage + CDC audit archive ~500GB)": 80,
     # Step Functions removed — application state machine used instead.
     # "Step Functions (Standard Workflows)":    0,
+    # S3 Object Lock audit bucket removed — replaced by Debezium CDC to S3 Glacier.
+    # "S3 Object Lock (audit store)":           0,
     "Cognito (up to 1,000 MAU)":                55,
-    "SES (email notifications)":                15,
+    "SES (email notifications + signed cycle receipts)": 15,
     # CloudFront CDN removed — WAF attaches directly to ALB.
     # "CloudFront CDN":                          0,
     "WAF (ALB-attached, OWASP rules)":          50,
     "CloudWatch (logs, metrics, alarms)":       80,
     "AWS Backup + S3 Glacier (10yr retention)": 150,
-    "AWS Transfer Family SFTP (opt-in)":       200,
+    # AWS Transfer Family SFTP removed from baseline — provisioned on-demand
+    # only when a specific counterparty with legacy SFTP automation is onboarded.
+    # "AWS Transfer Family SFTP (opt-in)":      0,
 }
 
 # DR: automated daily snapshots via AWS Backup to eu-west-1 + S3 CRR.
@@ -273,16 +277,14 @@ def write_adoc_attrs():
         "phase-4-cost-approx":  f"~${phase_costs[3] / 1000:.0f}K",
 
         # ── OPEX ─────────────────────────────────────────────────────────
-        "opex-aurora":          f"~${opex_items[0][1]:,}",
-        "opex-fargate":         f"~${opex_items[1][1]:,} (base, 2 tasks); ~$52 at month-end peak (4 tasks)",
-        "opex-s3":              f"~${opex_items[2][1]:,}",
-        "opex-s3-object-lock":  f"~${opex_items[3][1]:,}",
-        "opex-cognito":         f"~${opex_items[4][1]:,}",
-        "opex-ses":             f"~${opex_items[5][1]:,}",
-        "opex-waf":             f"~${opex_items[6][1]:,}",
-        "opex-cloudwatch":      f"~${opex_items[7][1]:,}",
-        "opex-backup-glacier":  f"~${opex_items[8][1]:,}",
-        "opex-sftp":            f"~${opex_items[9][1]:,}",
+        "opex-aurora":          f"~${opex_base['RDS PostgreSQL (db.t4g.medium, Multi-AZ, eu-west-2)']:,}",
+        "opex-fargate":         f"~${opex_base['ECS Fargate (modular monolith + Debezium CDC, 2 tasks)']:,} (base, 2 tasks); ~$62 at month-end peak (4 tasks)",
+        "opex-s3":              f"~${opex_base['S3 (file storage + CDC audit archive ~500GB)']:,}",
+        "opex-cognito":         f"~${opex_base['Cognito (up to 1,000 MAU)']:,}",
+        "opex-ses":             f"~${opex_base['SES (email notifications + signed cycle receipts)']:,}",
+        "opex-waf":             f"~${opex_base['WAF (ALB-attached, OWASP rules)']:,}",
+        "opex-cloudwatch":      f"~${opex_base['CloudWatch (logs, metrics, alarms)']:,}",
+        "opex-backup-glacier":  f"~${opex_base['AWS Backup + S3 Glacier (10yr retention)']:,}",
         "opex-base":            f"~${opex_base_total:,}/month",
         "opex-dr":              f"~${opex_dr_total:,}/month",
         "opex-range":           f"${opex_base_total:,}\u2013${opex_dr_total:,}/month",

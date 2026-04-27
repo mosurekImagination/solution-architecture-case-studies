@@ -31,22 +31,20 @@
 :phase-3-cost-approx: ~$180K
 :phase-4-cost-approx: ~$144K
 :opex-aurora: ~$200
-:opex-fargate: ~$35 (base, 2 tasks); ~$52 at month-end peak (4 tasks)
+:opex-fargate: ~$45 (base, 2 tasks); ~$62 at month-end peak (4 tasks)
 :opex-s3: ~$80
-:opex-s3-object-lock: ~$2
 :opex-cognito: ~$55
 :opex-ses: ~$15
 :opex-waf: ~$50
 :opex-cloudwatch: ~$80
 :opex-backup-glacier: ~$150
-:opex-sftp: ~$200
-:opex-base: ~$867/month
-:opex-dr: ~$987/month
-:opex-range: $867–$987/month
+:opex-base: ~$675/month
+:opex-dr: ~$795/month
+:opex-range: $675–$795/month
 :dr-overhead: $120
-:year1-opex-approx: ~$10K–$11K
+:year1-opex-approx: ~$8K–$9K
 :tco-years: 3
-:tco-range-approx: ~$789K–$793K
+:tco-range-approx: ~$782K–$786K
 :timeline-months: 9.5
 :num-phases: 4
 :milestone-phase-1: 2.5
