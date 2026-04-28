@@ -1,177 +1,184 @@
-# Architecture Challenge — Case 03: Reinsurance Reconciliation Platform
+# Architecture Challenge — Reinsurance Reconciliation Platform
 
-**Type:** AI-assisted architecture review  
-**Author:** Tomasz Mosur  
-**Date:** 2026-04-27  
-**Subject:** Senior consultant challenge of the Option 2 solution design
-
----
-
-## Challenge Summary
-
-The solution design recommends **Option 2** — a full platform with an application-layer state machine and a dual-layer audit ledger (S3 Object Lock + PostgreSQL hash-chain). The recommendation is broadly sound: the problem domain is well understood, the technology choices are proven, and the phased delivery plan is realistic.
-
-However, several design decisions warrant challenge. Some introduce hidden complexity; one leaves the core trust requirement only half-solved. A targeted set of changes — outlined below — would produce a simpler, more trustworthy, and more commercially resilient architecture without changing scope or budget materially.
+**Type:** AI-assisted architecture challenge
+**Author:** Tomasz Mosur
+**Date:** 2026-04-28
+**Source document:** `03/docs/solution-design.adoc` (rev 1.0, 2026-04-16)
 
 ---
 
-## What the Design Gets Right
+## Executive Summary
 
-Before challenging, it is worth anchoring what is already correct:
-
-- **Contract rules as expression trees** is the right abstraction for avoiding hardcoded logic. The approach is extensible and can be validated at upload time.
-- **Row-Level Security at the database layer** is the correct place to enforce tenant isolation — not just at the API layer.
-- **Application-layer state machine over AWS Step Functions** is the right call for a domain where the state transition logic is deeply coupled to business rules that will change during Phase 1.
-- **Decimal strings in JSON rather than IEEE 754 floats** for financial amounts is a critical correctness decision often missed at design time.
-- **The phased gate structure** (Excel regression before eligibility engine, first counterparty UAT before full go-live) reflects mature delivery thinking.
-- **The Investigation Period** as the first post-signing phase is correct; committing to architecture before extracting three real contracts from Excel is a significant risk.
-- **10-year audit retention** for Solvency II and the data residency model (eu-west-2 primary, eu-west-1 DR) are correctly specified.
+- The core trust architecture — selective event sourcing on the cycle aggregate, RLS-enforced `cycle_events`, and KMS-signed receipts at `CycleSealed` — is the right answer for this problem. The blockchain rejection is correct. The design is not overengineered.
+- **Debezium CDC as the compliance archive is the highest-risk operational decision in the document.** A crashed replication slot fills PostgreSQL WAL storage and can bring down the primary database. The design mentions lag monitoring but does not address slot accumulation — the scenario that causes actual outages.
+- **The expression tree evaluator is a bet on a discovery that hasn't happened yet.** UK longevity reinsurance contracts use age/gender-banded mortality tables and present-value annuity calculations — the initial node set (AND/OR/range/tiered/flat) is almost certainly insufficient. The fallback "constrained formula DSL" is referenced but not designed.
+- The `DISPUTED` state is a dead end in the state machine with real compliance implications: a cycle that never reaches `CycleSealed` has no signed receipt, no sealed audit record, and no Solvency II-compliant closure.
+- Two targeted changes — replacing Debezium with a simpler archive write and hardening the expression tree gate to 100% coverage before Phase 2 starts — would materially reduce delivery risk with negligible architectural downside.
 
 ---
 
-## Eight Challenges
+## Critical Issues
 
-### Challenge 1 — The Trust Gap: Counterparties Cannot Independently Verify
+### 1. Debezium CDC sidecar: WAL slot accumulation risk is unaddressed
 
-**Observation.** The design's core premise is replacing "trust via humans" with a cryptographic audit trail. Yet the reinsurer controls 100% of the infrastructure. S3 Object Lock prevents *deletion* but does not prevent the platform owner from writing a new version of an object before locking it. The PostgreSQL hash-chain is verified weekly — by a job running inside the reinsurer's own infrastructure. The counterparty has no mechanism to verify that what was sealed matches what they submitted.
+The design runs Debezium as a sidecar in the ECS Fargate task and monitors CDC lag with a 5-minute alert. The problem is not lag — it is replication slot stale accumulation.
 
-**Risk.** A sophisticated counterparty's legal team will identify this gap during onboarding. The "tamper-evident audit" claim does not hold against an adversarial reinsurer. This undermines the platform's core value proposition in any dispute.
+PostgreSQL holds WAL segments for every registered replication slot until that slot confirms consumption. If the Debezium sidecar crashes (container restart, deployment, network partition), the slot accumulates unconsumed WAL. On a `db.t4g.medium` with typical storage allocation, a stalled slot can fill the disk and crash the primary database within hours. This is a well-documented failure mode for Debezium in production.
 
-**Recommendation.** At cycle seal, generate a signed receipt: a KMS-signed JSON document containing the cycle ID, tenant ID, sealed-at timestamp, file SHA-256 hashes, and the hash of the audit ledger entry. Deliver this receipt to the counterparty (via email + portal download) at the moment of sealing. The counterparty stores it independently. If a dispute arises, both parties can compare receipts. This costs nothing architecturally and fully closes the trust gap — which is what the requirements document describes as "verifiable, tamper-evident digital trust layer."
+The design does not describe:
+- How the replication slot is monitored for slot lag (distinct from CDC processing lag)
+- What happens during a zero-downtime deployment when the sidecar is briefly stopped
+- How Debezium handles schema changes in `cycle_events` (column additions require Debezium schema registry or manual connector reconfiguration)
+- The recovery procedure when the slot falls far behind
 
----
+A 5-minute lag alert detects slow processing. It does not detect a stalled slot before storage fills.
 
-### Challenge 2 — Dual-Layer Audit Adds Operational Complexity Without Full Coherence
+**Simpler alternative within Option 2:** In the same transaction as the `cycle_events` INSERT, write to a `cycle_events_export` staging table. A scheduled job (cron, every 15 minutes) bulk-exports new rows to S3 Glacier as Parquet and deletes them from the staging table. No WAL slot. No Debezium connector. The compliance archive is 15 minutes behind the live event log — acceptable for a 10-year Solvency II archive.
 
-**Observation.** The design proposes dual-write: write to S3 Object Lock first (system of record), then write to PostgreSQL hash-chain (query layer). If the S3 write succeeds but the PostgreSQL write fails, the two layers diverge. The design does not describe a compensation or reconciliation mechanism for this failure mode.
+### 2. Expression tree evaluator: gate condition is wrong and fallback is undefined
 
-**Risk.** Under the dual-write model, the weekly verification job could detect chain gaps caused by transient infrastructure failures rather than actual tampering — creating false-positive audit alerts. Operationally, investigating whether a gap is a bug or a breach is expensive and stressful during a regulatory audit.
+The Phase 1→2 gate says: if more than 20% of extracted contract types require node types beyond the initial set, escalate to a "constrained formula DSL."
 
-**Recommendation.** Invert the architecture: make PostgreSQL the authoritative system of record (append-only `audit.events` table with hash-chain, backed by RLS so no application user can UPDATE or DELETE). Use S3 with Object Lock as the cold archive and backup target, written asynchronously. A single PostgreSQL hash-chain is simpler to audit (one chain, one verification tool, one source of truth), and the asynchronous S3 copy removes the dual-write atomicity problem entirely. Combined with CloudTrail logging of all DML, this exceeds the tamper-evidence requirement.
+This is the wrong gate in two ways.
 
----
+First, the threshold is wrong. A 20% failure rate means Phase 2 is built with an engine that cannot handle one-in-five contracts. Those contracts need a second code path with divergent auditing, different testing, and separate contract-version semantics. The gate should be: all identified contract types are fully expressible in the initial node set, or Phase 2 does not start.
 
-### Challenge 3 — Option 3 (Event Sourcing) Was Not Dismissed on the Right Grounds
+Second, the fallback is undefined. "Constrained formula DSL" is named but not designed. If the gate fails, the team must design a DSL from scratch mid-project, which adds months of scope and invalidates the Phase 2 timeline. The fallback needs to be designed in Phase 1, Week 1 — not after the gate result is known.
 
-**Observation.** The design dismisses Option 3 as "highest complexity and cost." This is true if event sourcing is implemented as full CQRS with separate read models and an event store framework. But it misses a simpler framing: reconciliation *is naturally event-based*. A monthly cycle produces a fixed sequence of events: `FilesReceived`, `EligibilityCompleted`, `ReviewStarted`, `AdjustmentProposed`, `CounterpartySigned`, `CycleSealed`. These events are the business record. If you store them in an append-only events table, the current state is always derivable by replaying the log — and you no longer need a *separate* audit ledger, because the event log *is* the audit trail.
+On the likelihood of gate failure: UK longevity reinsurance contracts regularly require mortality rate lookups (age × gender × health class tables), present-value annuity factor calculations, and in some cases portfolio-level aggregation across individuals. None of these fit the initial node set of AND/OR/range/tiered/flat. If the first three representative contracts are selected from the least-complex end of the book, the gate passes — but the engine fails on the first production contract that uses a mortality table.
 
-**Risk.** The current design maintains two representations of truth: the application state (in relational tables) and the audit ledger (hash-chain). Keeping them in sync is the source of several design risks the document identifies (dual-write failure, adjustment handling, snapshot vs. delta debate).
+The "complexity ceiling assessment" in Phase 1 needs to deliberately include the most complex contract types, not the most accessible ones.
 
-**Recommendation.** Do not switch to full event sourcing (the design's concern about complexity is valid if taken to the extreme). Instead, consider whether the `audit.events` table can be promoted to the primary write target, with application state derived from it rather than maintained separately. This is "event log as source of truth" without CQRS overhead. The state machine becomes a validation layer over the event log rather than an independent state store. Worthy of an ADR that explicitly compares the two models before Phase 2 begins.
+### 3. Multi-tenancy: RLS session bleed is not covered by the described tests
 
----
+The design correctly uses `SET LOCAL` for transaction-scoped tenant context and acknowledges the production failure mode where connection pool reuse exposes one tenant's data to the next request. The mitigation is an automated RLS penetration test on every deployment.
 
-### Challenge 4 — Aurora Serverless v2 Is the Wrong Choice for a Monthly-Burst Workload
+The test is not described. If it tests only the obvious scenario — authenticated user A cannot query authenticated user B's records — it misses the session bleed case entirely. Session bleed requires a test that:
 
-**Observation.** Aurora Serverless v2 scales compute up and down based on load. Monthly reconciliation means near-zero load for ~25 days, then a burst over 3–5 days when counterparties submit files and eligibility runs. The design itself acknowledges cold starts as a risk (Risk R-08). Aurora Serverless v2 does not fully cold-start (it maintains a minimum ACU floor), but scaling from minimum to processing 20 concurrent eligibility jobs takes time, and the minimum ACU floor adds cost even during idle periods.
+1. Opens a database connection from the pool
+2. Sets tenant context to Tenant A and reads data
+3. Returns the connection to the pool without committing (or after a rollback)
+4. Reacquires the same connection from the pool with no `SET LOCAL` call
+5. Confirms that Tenant A's context is not visible on the recycled connection
 
-**Risk.** For 10–30 counterparties, month-end peak load is predictable and bounded. Aurora Serverless auto-scaling brings billing unpredictability and operational uncertainty without meaningful benefit at this scale. The "right size" changes between phases as counterparty count grows, creating repeated infrastructure debates.
+Without this test, the protection depends entirely on the API framework reliably beginning an explicit transaction before every DB call — which is a framework guarantee, not an application test.
 
-**Recommendation.** Use RDS PostgreSQL (db.t4g.medium or db.r7g.large) with Multi-AZ in eu-west-2. The monthly cost is comparable to Aurora Serverless at low ACU floors, there are no cold-start surprises, and the instance can be right-sized at each phase gate based on real load data. Migrate to Aurora (provisioned or Serverless) only if the counterparty count genuinely exceeds 50 and query patterns demand it.
+There is also no mention of whether read replicas (if added for compliance query offload) enforce the same RLS policies and tenant context protocol.
 
----
+### 4. Adjustment chain: contract version applied to corrections is ambiguous
 
-### Challenge 5 — Expression Tree Phase 1 Risk Is Underestimated
+The design states: "contract version locked at cycle opening; mid-cycle changes apply to the next cycle only."
 
-**Observation.** The design correctly identifies extracting Excel formulas as a risk (Risk R-01) but rates it "Medium likelihood." The Phase 1 gate requires expressing three contract types as JSON expression trees. In practice, Excel-based actuarial rules often contain:
-- Implicit column-header logic (`IF($B$3="Type A", ...)`)
-- Circular references or iterative calculation modes
-- Embedded lookups in named ranges that reference other sheets
-- Rule exceptions added verbally by account managers, not in the formula
+This policy covers the original cycle. It does not explicitly cover adjustment cycles. An adjustment is a cross-cycle correction: month N's liability is recalculated in month N+3 because an error was found. The design says the adjustment "triggers a full eligibility recalculation" and records `prior_cycle_id` and `root_cycle_id`. But it does not state which contract version governs the recalculation.
 
-None of these translate cleanly into expression trees.
+Two defensible answers exist: use the contract version that was active when the original cycle (month N) was opened, or use the contract version active when the adjustment cycle (month N+3) is opened. Either is auditable if documented. Neither is currently documented.
 
-**Risk.** If the three pilot contracts cannot be expressed within the defined node types, the Phase 1 gate fails or is waved through with technical debt. The design notes "if >20% of contracts need new node types, escalate to DSL" — but this check happens *after* Phase 1, not before.
+This gap surfaces in the `EligibilityCompleted` event payload, which must include the contract version for Solvency II Art. 259 reproducibility. For adjustments, the payload must also record which cycle's contract version was applied, not just which contract version is current.
 
-**Recommendation.** During the Investigation Period, extract and document the three pilot contracts in a human-readable rule specification *before* designing the expression tree schema. Use that specification to define the required node types bottom-up. This inverts the risk: the schema is validated against real contracts before a line of code is written. Add this as an explicit Investigation Period deliverable.
+### 5. `DISPUTED` state is a terminal dead end with no closure path
 
----
+The state machine shows `DISPUTED` as reachable from `Reinsurer_Review`. No transitions out of `DISPUTED` are defined anywhere in the document.
 
-### Challenge 6 — AWS Transfer Family SFTP Is the Wrong Primary Integration Pattern
+A cycle in `DISPUTED` never reaches `CycleSealed`. That means:
+- No KMS-signed receipt is delivered to the counterparty
+- No `CycleSealed` event is appended to `cycle_events`
+- The Debezium CDC archive (or any archive) has no sealed record for this cycle
+- The cycle has no Solvency II-compliant closure record
 
-**Observation.** The design includes AWS Transfer Family (SFTP) in the OPEX baseline (~$216/month) and frames it as a counterparty integration path. For a 2024–2025 platform targeting reinsurance firms (primarily pension administrators and large insurers), SFTP requires counterparties to maintain SFTP client configuration, key management, and scheduled transfer scripts. This is non-trivial operational overhead on the counterparty side and creates a support burden for the platform team.
+For a reconciliation platform where compliance is the primary design requirement, an indefinitely open cycle with no defined resolution path is a material gap. Disputes in reinsurance are escalated to a legal/compliance process; the platform needs at minimum a `DisputeEscalated` event and a `DisputeResolved` transition that allows the cycle to reach a compliant terminal state (either sealed with adjustments, or formally written off with a documented reason).
 
-**Risk.** SFTP adoption friction could slow counterparty onboarding and delay the "first counterparty live" milestone — the most commercially critical gate in the delivery plan.
+### 6. Month-end eligibility concurrency: the 15-minute SLA has no mechanism
 
-**Recommendation.** The primary integration pattern should be the web portal (secure authenticated file upload via pre-signed S3 URLs — already in the design). SFTP should be a fallback for counterparties with legacy batch export infrastructure. Remove AWS Transfer Family from the OPEX baseline; provision it on-demand when the first SFTP-requiring counterparty is confirmed. This reduces OPEX, removes an operational dependency, and keeps onboarding simpler for the majority case.
+The NFR requires eligibility results within 15 minutes of file submission, with up to 20 concurrent submissions. The application runs as a modular monolith in a single ECS Fargate task. The eligibility engine runs inside the same task as the REST API.
 
----
+Under month-end load, 20 simultaneous eligibility jobs compete for CPU with API requests in the same container. The design does not describe:
+- Whether eligibility jobs run in a dedicated thread pool or process pool, isolated from API request handling
+- What the task autoscaling policy is (the OPEX table shows "2 tasks base, 4 tasks at month-end" but doesn't describe the scaling trigger or warm-up time)
+- What the maximum file size is for a counterparty submission, and whether large-file eligibility computation blocks the task indefinitely
+- Whether the 15-minute SLA is per-counterparty from that counterparty's file submission, or from the start of the month-end window (which would require knowing when all counterparties have submitted)
 
-### Challenge 7 — SAML Deferred to Phase 2 Creates Enterprise Onboarding Risk at the Worst Moment
-
-**Observation.** ADR-005 defers SAML/federated identity to Phase 2+. The design's first live counterparty (targeting Month 7.5) will therefore use Cognito username/password with MFA. For reinsurance counterparties — large pension funds, global insurers, Lloyd's syndicates — federated SSO via their corporate identity provider is standard security policy. Many will have internal IT policies *prohibiting* the creation of third-party username/password accounts for staff accessing financial platforms.
-
-**Risk.** The pilot counterparty discovers during onboarding that SAML is not available. Escalating to their CISO delays sign-off. The first-counterparty-live milestone slips, which delays the business case validation and puts the break-even timeline at risk.
-
-**Recommendation.** Bring basic SAML support (Cognito User Pools with SAML federation) into Phase 2, not deferred beyond it. Cognito's SAML integration is a configuration exercise, not a significant engineering effort. The Investigation Period should include asking the two most likely pilot counterparties whether they require federated identity — if yes, Phase 2 must deliver it before the Phase 3 go-live.
-
----
-
-### Challenge 8 — Modular Monolith Boundaries Are Underspecified
-
-**Observation.** ADR-006 selects a modular monolith on ECS Fargate and acknowledges that "module boundaries must be enforced by convention during development." The design does not define those boundaries explicitly. Without a published module inventory (e.g., `ingestion`, `eligibility`, `workflow`, `audit`, `portal`, `notifications`), developers will organise code according to their own mental models. Six months into development, the "modular monolith" will be a conventional monolith with unclear extraction paths.
-
-**Risk.** If the platform grows toward Option 3 or toward SaaS commercialisation (both mentioned in the evolution roadmap), extracting services from an ill-bounded monolith is the hardest possible migration. The design's stated future migration path depends on the boundaries being real.
-
-**Recommendation.** Add a module boundary diagram to the solution design — six to eight named modules with explicit public interfaces (what each module exports vs. what it must import). Mandate a lint rule (e.g., ArchUnit for JVM, or a custom module graph check) that fails the build if a module imports from another module's internal package. This is a one-day investment that protects the entire delivery.
+The SLA is stated as a requirement but the mechanism to satisfy it under concurrent load is not designed.
 
 ---
 
-## Alternative Architecture: Simplified Trust-First Design
+## Questionable Assumptions
 
-The challenges above point to a coherent alternative that simplifies the current design while strengthening its core trust claim.
+**1. "The reinsurer is the sole trusted custodian — counterparties accept this."**
+The KMS-signed receipt at `CycleSealed` proves the sealed state. It does not prove that intermediate states (the eligibility proposal, the adjustment amounts, the L1/L2 approval decisions) were not manipulated before sealing. A counterparty can dispute the eligibility calculation itself, not just the fact that a cycle was sealed. The inter-party trust gap is closed at the seal event but remains open throughout the negotiation phase. The design accepts this implicitly; it should be stated explicitly as a known limitation.
 
-### Core Changes
+**2. "100 reconciliation managers currently."**
+The ROI model is built on this figure. The conservative break-even assumes 50 remaining managers (2× reduction) saving £2.75M/year. If the actual headcount is 40 managers with more modest salary expectations, the break-even extends considerably. This number must be validated with the client before the proposal is presented — the document should not carry it as a given.
 
-| Current Design | Alternative |
-|---|---|
-| Dual-write: S3 Object Lock (primary) + PostgreSQL hash-chain | Single PostgreSQL append-only event log (primary) + async S3 archive |
-| State machine + separate audit ledger | Event log is both state history and audit trail |
-| Aurora Serverless v2 | RDS PostgreSQL (provisioned, right-sized per phase) |
-| AWS Transfer Family SFTP (in OPEX baseline) | Portal upload primary; SFTP provisioned on demand |
-| No counterparty receipt | KMS-signed cycle receipt issued to counterparty at seal |
-| SAML deferred past Phase 2 | SAML in Phase 2, before first counterparty live |
+**3. "The expression tree covers all contract types."**
+UK longevity reinsurance contracts are among the most formula-intensive financial instruments in the market. Assumed away as a Phase 1 gate item. This assumption carries more schedule risk than any other single technical decision in the design.
 
-### What This Eliminates
+**4. "10-30 counterparties at launch; RLS single-schema multi-tenancy is sufficient."**
+This is reasonable at 30. At 50+, schema migration complexity grows proportionally and cross-tenant platform-operator queries (for compliance reporting across all tenants) become increasingly painful in a single-schema model. The assumption is probably correct for Phase 1 but should be explicitly revisited at the Phase 4 retrospective.
 
-- Dual-write atomicity problem and its compensation complexity
-- False-positive audit alerts from infrastructure-induced chain gaps
-- Aurora Serverless cold-start risk and billing unpredictability
-- Standing SFTP infrastructure cost (~$216/month) before it is needed
-- The trust gap that leaves counterparties unable to independently verify
+**5. "Budget is not the primary constraint; ~$700K CAPEX is acceptable."**
+The document states this but does not validate it. If the expression tree gate fails and a DSL is needed, CAPEX could reach $900K–$1M before Phase 2 is complete. The innovation initiative framing suggests budget flexibility, but no upper bound is stated. A ~$300K overrun may still be acceptable; the design should say so rather than treating budget as unlimited.
 
-### What This Preserves
-
-- All eight functional epics (no scope change)
-- The expression tree eligibility engine (no change)
-- The approval workflow state machine (no change — it becomes an event-emitting layer)
-- The multi-tenant RLS model (no change)
-- The phase gate structure and delivery timeline (no material change)
-- The $757K CAPEX and OPEX estimates (minor reduction from removing Transfer Family baseline)
-
-### Trade-offs
-
-The event-log-as-source-of-truth model requires developers to think in events rather than mutable state when writing new features. This is a discipline cost. It pays off in auditability and in the eventual Option 3 migration path (the event log is already the foundation). If the team has no event-sourcing experience, the Investigation Period should include a one-week spike.
+**6. "Monthly submission cadence; load test covers the real workload."**
+The load test simulates 20 concurrent month-end file uploads. If the actual counterparty book includes annual longevity contracts that submit significantly larger files (hundreds of thousands of individuals per file rather than tens of thousands), the 15-minute eligibility SLA and the load test design may not represent the real peak.
 
 ---
 
-## Verdict
+## Alternative Designs
 
-**Option 2 is the right recommendation.** The scope, timeline, and technology choices are sound for this problem domain and scale.
+### Option A: Excel-as-a-Service + Workflow Portal (radically simpler)
 
-The design should be strengthened in three high-priority areas before Phase 1 begins:
+**What changes:** Do not build a custom expression tree evaluator. Wrap the existing Excel spreadsheet files as server-side calculation services — Python with openpyxl executes the existing Excel formulas on the server. Reconciliation managers continue to maintain contracts in Excel (version-controlled in S3). Build everything else from the current design: the portal, the workflow state machine, the audit ledger (`cycle_events` append-only), RLS multi-tenancy, Cognito authentication.
 
-1. **Add signed cycle receipts** (closes the trust gap — high value, near-zero cost)
-2. **Replace dual-layer audit with a single PostgreSQL append-only event log** (removes dual-write atomicity risk and simplifies the operational model)
-3. **Replace Aurora Serverless with provisioned RDS** (removes cold-start risk and billing unpredictability for a bounded monthly-burst workload)
+Replace the expression tree evaluator with the Excel engine in Phase 1. Migrate contracts to an expression tree one by one in Phase 2 as the business validates each formula set.
 
-Two medium-priority improvements for Phase 1:
+**CAPEX:** ~$400K | **Timeline:** 6 months | **Team:** 1 Architect + 2 Senior Devs + 1 QA
 
-4. **Add explicit module boundary diagram and enforce it at build time**
-5. **Move SAML federation into Phase 2** and confirm pilot counterparty identity requirements during the Investigation Period
+| Pros | Cons |
+|------|------|
+| No formula extraction risk; Excel correctness is assumed, not re-proven | Excel files become server-side deployment artifacts needing version control and CI/CD |
+| Phase 1→2 gate trivially passes — no new engine to validate | Excel is not designed for concurrent server execution; scaling beyond 20 concurrent calculations requires careful locking |
+| First counterparty live in 4 months instead of 7.5 | Does not achieve the "eliminate Excel dependency" goal without a later Phase 2 expression tree migration |
+| Reconciliation managers remain empowered; adoption friction reduced | Harder to audit the exact calculation steps at the formula level |
+| Eligibility output still recorded in `cycle_events` for compliance | Long-term: two calculation engines (Excel + expression tree) must be maintained in parallel during migration |
 
-One investigation-period change:
+**When to choose this:** If the formula extraction risk is assessed as high during the Phase 1 discovery (more than half of contracts have undocumented or individually held Excel formulas), Option A de-risks the platform launch and defers the harder problem. It is not a cop-out — it is a risk-sequencing decision.
 
-6. **Extract pilot contract rules first, then design the expression tree schema bottom-up** (not top-down as currently implied)
+---
 
-None of these changes affect the fundamental architecture. Option 2 remains the correct choice. These refinements close its most significant gaps.
+### Option B: Option 2 without Debezium — Direct Archive Write
+
+**What changes:** Keep Option 2 in full (portal, expression tree evaluator, RLS, state machine, KMS receipts). Replace the Debezium CDC sidecar with a simpler pattern:
+
+1. In the same transaction as every `cycle_events` INSERT, write to a `cycle_events_export` table (identical schema, staging buffer).
+2. A scheduled job (every 15 minutes) bulk-exports new rows from `cycle_events_export` to S3 Glacier as Parquet and deletes the exported rows.
+3. `cycle_events_export` is a staging buffer, not a compliance archive — the operational `cycle_events` table (RLS-enforced, Multi-AZ, RPO=0) remains the authoritative record.
+
+The compliance archive lag increases from near-real-time to 15 minutes. For a 10-year Solvency II retention archive, this is acceptable.
+
+**CAPEX:** ~$680K (saves ~$20K in CDC engineering) | **Timeline:** 9 months | **Same team**
+
+| Pros | Cons |
+|------|------|
+| Eliminates all WAL replication slot risk | Compliance archive is 15 minutes behind the live event log, not near-real-time |
+| No Debezium connector management, schema registry, or crash recovery | A system failure between events and the next export job could lose up to 15 minutes of archive entries — though `cycle_events` in RDS Multi-AZ is unaffected and remains the authoritative record |
+| Audit archive readable directly from S3 without Athena | Slightly more application-layer code (staging table + export job) vs. a sidecar |
+| Easier to explain to compliance team: "we write every event to S3 every 15 minutes" | |
+| Removes a moving part that requires specialist knowledge to operate | |
+
+**When to choose this:** Unless the compliance team or a regulator specifically requires near-real-time archive synchronisation, Option B's simplification is worth taking. The 15-minute lag has no practical impact on a 10-year compliance archive.
+
+---
+
+## Final Recommendation
+
+**Adopt Option 2 with two targeted modifications.**
+
+**Modification 1 — Replace Debezium with direct archive write.**
+The WAL replication slot failure mode is a real operational risk with no elegant recovery path. The simplification is architecturally clean: same atomicity guarantee (both `cycle_events` and the export record are committed in the same transaction), same S3 Glacier destination, simpler operational model. The 15-minute archive lag is not a compliance issue. Do this in Phase 2 when the audit ledger is built, not as a later refactor.
+
+**Modification 2 — Harden the expression tree gate to 100% coverage, with fallback defined in Phase 1.**
+Change the gate condition from "fewer than 20% of contracts need additional node types" to "all identified contract types are fully expressible in the initial node set, or the fallback approach is designed and scoped before Phase 2 budget is committed." Spend the first two weeks of Phase 1 on the most complex contracts in the book — not the most accessible ones. If mortality table lookups are needed, design the `lookup` node type in Phase 1. Do not build a 7-node evaluator and discover the gap at the gate.
+
+Everything else in Option 2 stands. The modular monolith on ECS Fargate is the right compute pattern for a monthly-burst workload with a 6-person team. RLS multi-tenancy is pragmatic for the stated counterparty scale and correctly implemented with `SET LOCAL`. The KMS-signed receipt at `CycleSealed` is an elegant and sufficient solution to the inter-party trust problem without blockchain. The `cycle_events` append-only log with RLS-enforced INSERT-only is the right audit architecture for this problem.
+
+The design is not overengineered. Two specific operational risks — Debezium and the expression tree gate — are worth fixing before Phase 1 begins. Everything else should be built as designed.

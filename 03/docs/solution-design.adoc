@@ -36,7 +36,7 @@ include::../scripts/financials-attrs.adoc[]
 |CAPEX |Capital Expenditure — one-time development and infrastructure setup costs
 |Counterparty |An independent insurance company that holds one or more reinsurance contracts with the client; a fully separate legal entity and external tenant on the platform
 |Eligibility |The determination of which individuals in a monthly data file fall within the risk coverage of a given contract, triggering a reinsurance compensation obligation
-|Hash Chain |No longer used as the primary audit mechanism; replaced by the `cycle_events` append-only log with RLS-enforced INSERT-only access and Debezium CDC archive
+|Hash Chain |A sequence of cryptographic hashes where each entry incorporates the hash of its predecessor; superseded in this design by the `cycle_events` append-only event log with RLS-enforced immutability
 |Signed Receipt |A KMS-signed JSON document delivered to a counterparty at `CycleSealed`; contains cycle ID, file SHA-256 hashes, event chain hash, and sealed timestamp; allows the counterparty to independently verify the sealed record without platform access
 |Longevity Risk |The financial risk borne by an insurer when insured individuals outlive actuarial expectations, requiring continued pension or annuity payments beyond the projected period
 |MFA |Multi-Factor Authentication — a login requirement for a second verification step (e.g. OTP) beyond a password; required for all platform users
@@ -68,7 +68,7 @@ This manual process requires a large team of reconciliation managers. Trust betw
 |Aspect |Summary
 
 |**Recommended Option**
-|Option 2 — Full Platform with Workflow Engine, Append-Only Event Log, and CDC Audit Archive
+|Option 2 — Full Platform with Automated Eligibility, Approval Workflow, and Tamper-Evident Audit
 
 |**Estimated CAPEX**
 |{capex-approx} ({timeline-months}-month delivery; includes {contingency-pct} contingency)
@@ -83,7 +83,7 @@ This manual process requires a large team of reconciliation managers. Trust betw
 |{team-size} people: {team-long}
 
 |**Key Differentiator**
-|Selective event sourcing on the reconciliation cycle aggregate (`cycle_events` append-only table, RLS-enforced INSERT-only) eliminates dual-write complexity; Debezium CDC streams the event log to S3 Glacier for 10-year compliance archive without application-layer dual-write; KMS-signed cycle receipts delivered to counterparties at seal close the inter-party trust gap; ECS Fargate modular monolith + RDS PostgreSQL avoids serverless cold-start risk on a monthly-burst workload; exact decimal arithmetic enforced as a language selection constraint
+|Append-only event log (`cycle_events`) with RLS-enforced immutability; KMS-signed receipts give counterparties independent verification; CDC archive to S3 Glacier satisfies Solvency II retention without dual-write
 |===
 
 === Scope Boundary
@@ -696,22 +696,7 @@ NOTE: *Industry precedent.* Monzo and ING Bank independently found that event so
 
 **`cycle_events` — the append-only source of truth:**
 
-[source,sql]
-----
-CREATE TABLE cycle_events (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  stream_id     uuid        NOT NULL,   -- reconciliation_cycle.id
-  tenant_id     uuid        NOT NULL,   -- RLS partition key
-  version       integer     NOT NULL,   -- optimistic concurrency; unique per stream
-  event_type    text        NOT NULL,   -- e.g. FilesSubmitted, EligibilityCompleted
-  payload       jsonb       NOT NULL,
-  actor_id      uuid        NOT NULL,
-  occurred_at   timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (stream_id, version)
-);
-----
-
-The application role has `INSERT` and `SELECT` only. RLS policies block `UPDATE` and `DELETE` unconditionally — not by convention, but at the database layer. A concurrent write to the same stream with the same `version` fails with a unique constraint violation, providing optimistic concurrency without advisory locks.
+Each row records a single state transition scoped to a reconciliation cycle (stream), carrying the event type, a versioned JSONB payload, the actor, and a timestamp. The `(stream_id, version)` unique constraint provides optimistic concurrency — a duplicate version on the same stream fails with a constraint violation. The application role holds `INSERT` and `SELECT` only; RLS policies block `UPDATE` and `DELETE` at the database layer, unconditionally.
 
 **Twelve event types** cover the full cycle lifecycle: `FilesRequested`, `FileSubmitted`, `FileRejected`, `FileNormalisationCompleted`, `EligibilityStarted`, `EligibilityCompleted`, `ReviewStarted`, `AdjustmentProposed`, `AdjustmentAccepted`, `AdjustmentRejected`, `CounterpartySigned`, `CycleSealed`. New event types are additive changes; existing types are versioned via a `schema_version` field in `payload`.
 
@@ -721,74 +706,15 @@ The application role has `INSERT` and `SELECT` only. RLS policies block `UPDATE`
 
 Debezium runs as a Fargate sidecar, reads the PostgreSQL WAL, and streams `cycle_events` inserts to S3 Glacier as Parquet files. The application writes once (INSERT); Debezium handles the archive asynchronously. There is no dual-write failure mode: the application state and the compliance archive cannot diverge because the archive is derived from the WAL, not written independently. S3 Glacier provides the 10-year Solvency II retention at near-zero cost. Compliance investigations query the archive via Athena — the operational database is never used for historical reconstruction.
 
-**KMS-signed cycle receipts — closing the counterparty trust gap:**
+**KMS-signed cycle receipts and counterparty event visibility:**
 
-At `CycleSealed`, the application generates a signed receipt and delivers it to the counterparty via SES:
-
-[source,json]
-----
-{
-  "cycle_id":         "...",
-  "tenant_id":        "...",
-  "sealed_at":        "2025-11-30T23:59:59Z",
-  "file_hashes":      { "lives_data": "sha256:...", "schedule": "sha256:..." },
-  "event_chain_hash": "sha256:...",
-  "signature":        "KMS-RSA-PSS:..."
-}
-----
-
-The receipt is signed with a KMS asymmetric key (RSA-PSS). The public key is published in the platform's trust document. The counterparty stores the receipt independently and can verify it without platform access — providing inter-party tamper evidence without blockchain overhead.
+The reinsurer controls the infrastructure, so a receipt only at `CycleSealed` proves the final state is authentic but leaves the intermediate process opaque. Two mechanisms address this. First, the counterparty portal exposes the full ordered event timeline for their cycles — every event (file submitted, eligibility completed, adjustment proposed, etc.) with actor and timestamp — so the process is transparent without requiring trust in any single party. Second, a KMS-signed receipt (RSA-PSS, cycle ID, file SHA-256 hashes, event chain hash, timestamp) is issued at two checkpoints: `EligibilityCompleted` and `CycleSealed`. Holding both receipts, the counterparty can verify that the eligibility result presented for their signature was not altered after calculation — any such change would produce a different event chain hash. The public key is published in the platform's trust document; receipts are delivered via SES and available for download from the portal.
 
 **`pgaudit`** is retained as defence-in-depth, capturing DML statement logs at the database layer independently of the application event log.
 
 === Data Model
 
-The platform's core data model comprises ten entities spanning tenant management, contract configuration, reconciliation lifecycle, and audit. Column-level schema definitions are delivered as Phase 1 migration scripts.
-
-.Data Model — Core Entities and Relationships
-[plantuml,case03-data-model,format=svg]
-....
-@startuml
-skinparam backgroundColor #fafafa
-skinparam defaultFontName Arial
-skinparam defaultFontSize 14
-skinparam classBackgroundColor #E3F2FD
-skinparam classBorderColor #1565C0
-hide members
-
-class tenants
-class users
-class contracts
-class reconciliation_cycles
-class contract_file_types
-class cycle_files
-class eligibility_results
-class approval_steps
-class adjustments
-class "audit.events" as audit_events
-
-tenants "1" --> "many" contracts
-tenants "1" --> "many" users
-contracts "1" --> "many" reconciliation_cycles
-contracts "1" --> "many" contract_file_types
-reconciliation_cycles "1" --> "many" cycle_files
-reconciliation_cycles "1" --> "1" eligibility_results
-reconciliation_cycles "1" --> "many" approval_steps
-reconciliation_cycles "1" --> "many" adjustments
-reconciliation_cycles "1" --> "many" audit_events : append-only
-@enduml
-....
-
-**Key design points:**
-
-* **tenants** — each counterparty is a tenant with a designated data residency zone; Row-Level Security isolates all downstream data
-* **contracts** — versioned contract definitions with expression tree rules stored as JSONB; `contract_file_types` defines which file types each contract requires; a trigger-based history table (via the `temporal_tables` PostgreSQL extension) with `valid_from`/`valid_to` columns enables "what were the contract terms on date X?" as a single query
-* **reconciliation_cycles** — one cycle per contract per period; records `contract_version_id` at cycle creation — eligibility is always computed against the version active at cycle open, not the current version (mid-cycle rule changes apply to the next cycle only); tracks workflow status via the `workflow_state` column (`AWAITING_FILES → AWAITING_ELIGIBILITY → AWAITING_L1 → AWAITING_L2 → AWAITING_COUNTERPARTY → COMPLETED / DISPUTED / ELIGIBILITY_FAILED`); a trigger-based history table (via the `temporal_tables` extension) preserves the full mutation history of each cycle record
-* **cycle_files** — typed file uploads (people table, money movement, etc.) with SHA-256 checksums; includes `normalisation_mapping_version` (text, not null) recording which parser/mapping version normalised the counterparty file into the canonical format — required for Solvency II Art. 259 reproducibility: without this field, a parser update makes historical eligibility calculations unreproducible; drives the cycle readiness check
-* **eligibility_results** — engine output with a generated `compensation_amount` column derived from the result JSONB; records engine version for reproducibility
-* **approval_steps** — ordered sequence of L1/L2 approvals, adjustments, and counter-proposals within a cycle
-* **adjustments** — cross-cycle correction chain; each adjustment is an `AdjustmentRecorded` event in `cycle_events`, and also triggers a full eligibility recalculation producing a self-contained result (not a delta); traceable via `prior_cycle_id`, `root_cycle_id`, and `generation`
-* **cycle_events** — append-only event log for the reconciliation cycle aggregate; INSERT-only enforced at RLS layer; `(stream_id, version)` unique constraint provides optimistic concurrency; Debezium CDC streams inserts to S3 Glacier for the 10-year compliance archive; `CycleSealed` event triggers KMS-signed receipt delivery to counterparty
+The data model spans four domain areas: **tenant management** (counterparty identity, users, data residency zone), **contract configuration** (versioned rule definitions and required file types per contract), **reconciliation lifecycle** (one cycle per contract per period, typed file uploads, eligibility results, approval history, cross-cycle adjustments), and **audit** (`cycle_events` — the append-only event log that drives the entire cycle lifecycle). Column-level schema definitions are delivered as Phase 1 migration scripts.
 
 === Functional Requirements
 
@@ -798,16 +724,16 @@ The platform's functional scope is organised into nine epics. Detailed requireme
 |===
 |Epic |Name |Scope Summary |Phase |Priority
 
-|1 |Contract Registry |Upload, version, and validate contract definitions as expression tree JSON; define required file types per contract |1 |Must
-|2 |File Ingestion |Typed file upload via S3 pre-signed URLs with SHA-256 integrity check; cycle readiness tracking; SFTP fallback for legacy counterparties; duplicate submission prevention; record count validation: after parsing, compare record count against the previous month's accepted file for the same counterparty + contract type — if the count differs by more than a configurable tolerance (default ±20%), flag the cycle for manual review before eligibility is computed (SHA-256 checksum matches a truncated file; record count comparison catches partial uploads that pass checksum validation) |1–2 |Must
-|2a |File Normalisation |Per-counterparty column/format mappings from native file format to platform canonical schema; mapping validation tool |1 |Must
-|3 |Eligibility Engine |Expression tree evaluation against all cycle files; exact decimal arithmetic; engine version recorded for reproducibility; re-computation on file revision |2 |Must
-|4 |Approval Workflow |Multi-level state machine (L1 → L2 → counterparty); adjustment rounds; counter-proposals; revised file re-trigger; 72-hour escalation |2–3 |Must
-|5 |Audit Ledger |`cycle_events` append-only event log (RLS INSERT-only); Debezium CDC streams to S3 Glacier for compliance archive; KMS-signed counterparty receipt at `CycleSealed`; on-demand regulatory export via Athena |2–3 |Must
-|6 |Multi-Tenant Portal |Separate UX for internal and external users; RLS-enforced data isolation; Cognito MFA; read-only compliance view |1–2 |Must
-|7 |Notifications |Email notifications via SES for workflow events; in-app notification feed (Phase 4 enhancement) |2–4 |Should
-|8 |Counterparty Onboarding |Platform-mediated tenant provisioning → contract upload → file config → normalisation mapping → test cycle → UAT → live; self-service onboarding in Phase 3 |1–3 |Must
-|9 |Data Residency |Per-tenant residency zone; regional stack deployment via same Terraform module; cross-cycle adjustment traceability |1–3 |Must
+|1 |Contract Registry |Upload, version, and validate contract rule definitions; configure required file types per contract |1 |Must
+|2 |File Ingestion |Typed file upload via web portal (SFTP fallback); integrity validation; cycle readiness tracking |1–2 |Must
+|2a |File Normalisation |Per-counterparty format mappings to canonical schema; applied before eligibility calculation |1 |Must
+|3 |Eligibility Engine |Expression tree evaluation with exact decimal arithmetic; engine version pinned per cycle for reproducibility |2 |Must
+|4 |Approval Workflow |Multi-level state machine (L1 → L2 → counterparty); adjustment rounds; counter-proposals; escalation timers |2–3 |Must
+|5 |Audit Ledger |Append-only cycle event log; CDC compliance archive; KMS-signed counterparty receipt at cycle seal; regulatory export |2–3 |Must
+|6 |Multi-Tenant Portal |Separate views for reinsurer staff and counterparty admins; read-only compliance access |1–2 |Must
+|7 |Notifications |Email notifications for workflow events and cycle receipts |2–4 |Should
+|8 |Counterparty Onboarding |Guided provisioning flow: contract setup → file config → test cycle → UAT → live |1–3 |Must
+|9 |Data Residency |Per-tenant residency zone; regional deployment via shared Terraform module |1–3 |Must
 |===
 
 === Non-Functional Requirements
@@ -818,7 +744,7 @@ The platform's functional scope is organised into nine epics. Detailed requireme
 
 |**Availability**
 |Platform must be accessible during month-end submission windows; downtime during this window breaches counterparty obligations
-|Target 99.9% monthly uptime. Expected availability based on component SLA product (Aurora Multi-AZ × ECS Fargate × ALB) is ~99.85%. The gap is addressed by scheduling maintenance windows outside month-end submission periods.
+|99.9% monthly uptime; maintenance windows scheduled outside month-end submission periods
 
 |**Data Durability**
 |Audit ledger must never lose a committed event
@@ -838,7 +764,7 @@ The platform's functional scope is organised into nine epics. Detailed requireme
 
 |**Audit Integrity**
 |Any tampering with the audit ledger must be detectable
-|`cycle_events` RLS INSERT-only policy verified at deployment; Debezium CDC lag monitored (alert if >5 minutes); KMS receipt delivery confirmed per sealed cycle; forensic replay via Athena on demand
+|RLS INSERT-only policy, CDC archive lag, and KMS receipt delivery verified per deployment; Athena available for forensic replay
 
 |**Response Time**
 |Portal and API interactions feel responsive to human users
@@ -850,7 +776,7 @@ The platform's functional scope is organised into nine epics. Detailed requireme
 
 |**Eligibility Reliability**
 |Eligibility computation failures must not leave cycles silently stuck
-|3 retries with exponential backoff inside the application; after exhaustion, cycle transitions to `ELIGIBILITY_FAILED` state (never left in `AWAITING_ELIGIBILITY`); a P2 CloudWatch alarm fires on any cycle remaining in `AWAITING_ELIGIBILITY` for more than 2 hours
+|`ELIGIBILITY_FAILED` state on exhausted retries; alert if any cycle remains in `AWAITING_ELIGIBILITY` for >2 hours
 
 |**Compliance Retention**
 |Reconciliation records retained for regulatory lifetime per Solvency II
@@ -859,54 +785,23 @@ The platform's functional scope is organised into nine epics. Detailed requireme
 
 === Eligibility Engine — Rule Schema
 
-Contract rules are stored as structured expression trees validated against a versioned JSON Schema. The eligibility engine evaluates `eligibility_rule` as a boolean expression tree and `compensation_rule` as a computation tree — both without any contract-specific code. New field types (mortality rate lookup, annuity factor table) are added once to the evaluator, then usable across all contracts without per-contract changes. Each rule set contains a `schema_version` field so the engine knows which interpreter to use; unknown node types are rejected at contract upload time.
-
-**Expression tree node types (initial set):**
-
-* `AND` / `OR` — logical combinators; evaluate child conditions
-* `NOT` — logical negation of a single child condition
-* `range` — field value within `[min, max]`; supports open-ended ranges
-* `in` — field value in a set of allowed values
-* `eq` — exact match on a single value
-* `tiered` — stepped rate table; selects rate based on the first matching tier
-* `flat` — fixed rate per individual (simplest case)
-
-New node types (e.g. `lookup` for mortality tables, `formula` for actuarial calculations) are added to the evaluator once and immediately usable in any contract definition without deployment changes.
-
-**Complexity ceiling gate:** If the Investigation Period finds that more than 20% of contract types require node types not in the initial set (e.g. mortality table lookups, actuarial factor calculations, multi-dimensional tiered rates), the expression tree approach is escalated to a constrained formula DSL before Phase 2 begins. The escalation decision is a Phase 1→2 gate item — it is not deferred.
-
-**Decimal precision:** All monetary values, rates, and factors in contract rule JSON are represented as strings, not JSON numbers, to prevent IEEE 754 rounding artefacts. The JSON Schema enforces a decimal string pattern; the eligibility engine parses strings into language-native exact decimal types at evaluation time.
-
-**Validation and regression:** The engine validates rule JSON against a versioned JSON Schema at upload time. During Phase 1, the engine is run against 12 months of historical Excel output for 2–3 representative contracts. A pass requires 100% agreement on eligibility flags and compensation amounts before production use.
+Contract rules are stored as structured expression trees (logical combinators, range checks, stepped rate tables) validated against a versioned JSON Schema at upload time. The engine evaluates both eligibility and compensation rules without any contract-specific code — new node types are added once to the evaluator and immediately available to all contracts. All monetary values and rates are represented as decimal strings to prevent IEEE 754 rounding artefacts. The full node type taxonomy and the Phase 1→2 complexity gate (which validates that all representative contract types are expressible before engine build begins) are defined in the Phase 1 Technical Specification.
 
 === Testing Approach
 
-* **Expression tree evaluator unit tests:** Every node type (AND, OR, range, tiered, flat, etc.) has a dedicated test suite; every contract rule has a corresponding test vector (input record → expected eligibility flag); side-by-side validation against existing Excel output used during Phase 1 workshops
-* **Decimal precision tests:** Verify compensation calculations produce exact decimal results matching Excel output to the penny; no IEEE 754 rounding artefacts
-* **Eligibility regression tests:** Engine output compared to 12 months of historical Excel results for 2–3 representative counterparties before Phase 2 go-ahead (Phase 1→2 gate)
-* **Multi-file ingestion tests:** Verify cycle readiness logic — eligibility engine only triggers when all required file types are present; partial submissions do not trigger premature calculations
-* **Multi-level approval tests:** Full cycle with L1 and L2 approvers; counter-proposal and revised file submission flows; verify all transitions produce correct audit events
-* **RLS penetration tests:** Automated suite that attempts cross-tenant data access via API and direct DB connection; runs on every deployment
-* **Event log integrity tests:** Verify RLS policy rejects UPDATE/DELETE on `cycle_events` for all application roles; verify `(stream_id, version)` unique constraint rejects concurrent writes to same stream; verify Debezium CDC lag alert fires when CDC pipeline is paused; verify KMS-signed receipt is generated and delivered at `CycleSealed`
-* **ECS deployment tests:** Verify all API endpoints respond correctly when deployed to ECS Fargate; verify ALB health checks and task startup time within acceptable limits for portal interactions
-* **Month-end load test:** Concurrent file submission simulation (20 counterparties, multiple file types each) run against staging before each Phase go-live
-* **Counterparty UAT:** First counterparty completes a full test cycle with synthetic data before live cycle approval
+A detailed test plan is a Phase 1 deliverable. Phase gate criteria (defined in the _Phase Gates_ section) serve as the acceptance baseline.
 
 == Cost Breakdown
 
 === Development Investment (CAPEX)
 
-[cols="2,1,1,1,1"]
+[cols="2,2"]
 |===
-|Role |Rate / month |Duration |Cost |Deliverables
+|Item |Value
 
-|Solution Architect |{architect-rate} |{architect-months} months |{architect-cost} |Architecture, ADRs, oversight
-|Senior Developer (×{dev-count}) |{dev-rate} |{dev-months} months |{dev-cost} |API, eligibility engine, portal, audit ledger
-|Security / Compliance Engineer |{security-rate} |{security-months} months |{security-cost} |RLS, Cognito, WAF, penetration tests
-|QA Engineer |{qa-rate} |{qa-months} months |{qa-cost} |Test suites, UAT coordination
-|**Subtotal** | | |**{subtotal}** |
-|Contingency ({contingency-pct}) | | |{contingency-amount} |Risk buffer for integration unknowns
-|**Total CAPEX** | | |**{capex-approx}** |
+|Team |{team-size} specialists over {timeline-months} months — {team-short}
+|Contingency |{contingency-pct} of labour cost
+|**Total CAPEX** |**{capex-approx}** ({capex-gbp-approx})
 |===
 
 === Operational Costs (OPEX)
@@ -944,77 +839,6 @@ _Year-1 OPEX estimate: {year1-opex-approx}. Three-year TCO (CAPEX + OPEX): {tco-
 |**Total** | |**~{timeline-months} months** | |**{capex-approx}**
 |===
 
-=== Timeline
-
-.Project Timeline — 9.5-Month Delivery
-[plantuml,case03-gantt,format=svg]
-....
-@startgantt
-skinparam backgroundColor #fafafa
-<style>
-  ganttDiagram {
-    task {
-      BackGroundColor #BBDEFB
-      LineColor #1565C0
-    }
-    milestone {
-      BackGroundColor #F44336
-      LineColor #B71C1C
-    }
-  }
-</style>
-
-Project starts 2026-05-01
-
-[Phase 1: Infrastructure & Auth] lasts 5 weeks
-[AWS VPC, RDS PostgreSQL, ECS Fargate, S3 setup] lasts 2 weeks
-[Cognito User Pool + MFA setup] lasts 2 weeks
-[Cognito User Pool + MFA setup] starts at [AWS VPC, RDS PostgreSQL, ECS Fargate, S3 setup]'s end
-[Contract Registry + File Type Configuration] lasts 2 weeks
-[Contract Registry + File Type Configuration] starts at [AWS VPC, RDS PostgreSQL, ECS Fargate, S3 setup]'s end
-[Multi-File Ingestion + S3 pre-signed URLs] lasts 2 weeks
-[Multi-File Ingestion + S3 pre-signed URLs] starts at [Contract Registry + File Type Configuration]'s end
-
-[Phase 2: Eligibility & Workflow] lasts 5 weeks
-[Phase 2: Eligibility & Workflow] starts at [Phase 1: Infrastructure & Auth]'s end
-[Eligibility Engine — expression tree evaluator] lasts 4 weeks
-[Eligibility Engine — expression tree evaluator] starts at [Phase 1: Infrastructure & Auth]'s end
-[Application state machine — multi-level approval workflow] lasts 4 weeks
-[Application state machine — multi-level approval workflow] starts at [Phase 1: Infrastructure & Auth]'s end
-[Counter-proposal and file revision flows] lasts 2 weeks
-[Counter-proposal and file revision flows] starts 3 weeks after [Phase 2: Eligibility & Workflow]'s start
-[cycle_events log + Debezium CDC + KMS receipts] lasts 2 weeks
-[cycle_events log + Debezium CDC + KMS receipts] starts at [Phase 1: Infrastructure & Auth]'s end
-
-[Phase 3: Portal & Onboarding] lasts 5 weeks
-[Phase 3: Portal & Onboarding] starts at [Phase 2: Eligibility & Workflow]'s end
-[Multi-tenant Web Portal (React)] lasts 5 weeks
-[Multi-tenant Web Portal (React)] starts at [Phase 2: Eligibility & Workflow]'s end
-[SES Email Notifications] lasts 1 week
-[SES Email Notifications] starts at [Phase 2: Eligibility & Workflow]'s end
-[First Counterparty UAT] lasts 2 weeks
-[First Counterparty UAT] starts 3 weeks after [Phase 3: Portal & Onboarding]'s start
-
-[Milestone: First Counterparty Live] happens at [Phase 3: Portal & Onboarding]'s end
-
-[Phase 4: Reporting & Go-Live] lasts 4 weeks
-[Phase 4: Reporting & Go-Live] starts at [Phase 3: Portal & Onboarding]'s end
-[Regulatory Export Service] lasts 2 weeks
-[Regulatory Export Service] starts at [Phase 3: Portal & Onboarding]'s end
-[Data Residency Zone Support] lasts 2 weeks
-[Data Residency Zone Support] starts at [Phase 3: Portal & Onboarding]'s end
-[Second Counterparty Batch Onboarding] lasts 3 weeks
-[Second Counterparty Batch Onboarding] starts at [Phase 3: Portal & Onboarding]'s end
-[Month-End Load Testing] lasts 1 week
-[Month-End Load Testing] starts 3 weeks after [Phase 4: Reporting & Go-Live]'s start
-[Debezium CDC validation + KMS receipt smoke test] lasts 1 week
-[Debezium CDC validation + KMS receipt smoke test] starts at [Phase 3: Portal & Onboarding]'s end
-
-[Milestone: Full Go-Live] happens at [Phase 4: Reporting & Go-Live]'s end
-
-@endgantt
-....
-
 === Phase Gates
 
 A phase does not begin until its entry criteria are met. Unresolved gate items are tracked as blockers, not carried forward as open risks.
@@ -1025,26 +849,21 @@ A phase does not begin until its entry criteria are met. Unresolved gate items a
 
 |**Phase 1 → Phase 2**
 a|
-* Eligibility engine reproduces 100% of historical Excel output for at least 3 representative contract types (validated side-by-side with reconciliation managers)
-* Expression tree complexity ceiling assessed: if >20% of extracted contract types require node types beyond the initial set (AND/OR/range/tiered/flat), escalation to constrained formula DSL is triggered before Phase 2 scope is finalised
-* File normalisation mappings validated for at least 3 counterparty file formats; mapping configuration tested end-to-end
-* ECS Fargate deployment validated in staging; ALB health checks passing; container startup time within acceptable limits for portal API interactions
-* Multi-file ingestion model tested: typed file uploads trigger cycle readiness check; eligibility engine only starts when all required file types are present
+* Eligibility engine reproduces 100% of historical Excel output for at least 3 representative contract types; expression tree complexity assessed against the full contract book before Phase 2 scope is finalised
 * Compliance workshop complete; Solvency II Pillar III and GDPR handling confirmed in writing by compliance lead
-* RLS policy deployed and automated isolation test suite passing in staging
+* RLS isolation tests passing in staging
 
 |**Phase 2 → Phase 3**
 a|
-* Application-layer approval state machine completes a full cycle end-to-end in staging (file upload → eligibility → L1 approval → L2 approval → counter-sign)
-* Counter-proposal and revised file flows tested: counterparty file revision re-triggers eligibility computation
-* Event log integrity verified: RLS policy confirmed to reject UPDATE/DELETE; Debezium CDC confirmed streaming to S3 Glacier; KMS-signed receipt delivered and verified against public key
-* RLS penetration test passed: no cross-tenant data visible via API or direct DB query
+* Full reconciliation cycle completed end-to-end in staging (file upload → eligibility → L1/L2 approval → counterparty counter-sign)
+* Event log integrity verified: RLS INSERT-only policy, CDC archive, and KMS-signed receipt all confirmed
+* RLS penetration test passed
 
 |**Phase 3 → Phase 4**
 a|
 * First counterparty UAT signed off by both the counterparty and reinsurer compliance lead
-* Month-end cycle completed end-to-end in staging with synthetic month-end file volume (20 concurrent uploads)
-* Audit ledger regulatory export tested and output reviewed by compliance team
+* Month-end load test with synthetic peak volume passed in staging
+* Regulatory export output reviewed and approved by compliance team
 |===
 
 == Option 3: Event-Sourced Architecture
@@ -1109,10 +928,10 @@ The recommended migration path from Option 2 to Option 3 is to introduce CQRS pr
 |Medium |High |FR-06a enforces a unique constraint on `(cycle_id, file_type)` before any S3 write or workflow start; the API returns HTTP 409 with a reference to the existing submission; prevents duplicate audit events for the same cycle
 
 |**Eligibility computation for very large counterparty files** — files with >500K individuals could cause long-running computation within the ECS task
-|Low |Low |Implement chunked processing inside the eligibility engine module: split input into batches and process sequentially or in parallel within the task; at initial scale (10–30 counterparties) a single pass suffices; ECS tasks have no 15-minute limit
+|Low |Low |ECS tasks have no execution-time ceiling; batch sizing and concurrency strategy defined in Phase 2 based on file-size profiling from Phase 1
 
 |**Debezium CDC lag** — Debezium may fall behind if PostgreSQL WAL volume spikes at month-end; monitor replication slot lag; alert if lag exceeds 5 minutes
-|Low |Low |Minimum ACU set to 0.5 (database is never fully cold); ECS Fargate tasks maintain persistent connections with bounded pool size; month-end peak is predictable — schedule a keep-warm DB query 1 hour before expected submission window
+|Low |Low |Replication slot lag monitored separately from processing lag; slot accumulation alert threshold set below storage headroom; deployment procedure ensures graceful sidecar shutdown to avoid slot stall
 
 |**Data residency enforcement** — international counterparties may require data localisation in jurisdictions not covered by eu-west-2
 |Low |Medium |`data_residency_zone` field on tenants table; Phase 1 all tenants use UK zone; when a non-UK/EU zone is needed, deploy an additional regional stack using the same Terraform module; contract and audit data stored exclusively in the tenant's zone
@@ -1159,16 +978,13 @@ The recommended migration path from Option 2 to Option 3 is to introduce CQRS pr
 
 *Rationale:*
 
-* **Selective event sourcing** chosen over full event sourcing — reconciliation cycles are the sole aggregate where immutability is the primary requirement. Applying event sourcing to contracts, counterparties, and users would add unjustified projection maintenance overhead for data that changes infrequently. Monzo (UK neobank) and ING Bank independently arrived at the same boundary: event source the financial transaction aggregate; use CRUD for configuration and identity.
-* **PostgreSQL as the event store** chosen over EventStoreDB or Kafka — no additional infrastructure dependency; optimistic concurrency enforced via a stream version check on INSERT; RLS provides tenant isolation without additional tooling. Debezium over the WAL provides the immutable archive without dual-write in application code.
-* **CDC (Debezium) as the compliance archive** — the application writes once (INSERT into `cycle_events`); Debezium reads the WAL and writes to S3 Glacier asynchronously. This eliminates the dual-write atomicity problem present in the previous design: there is no failure mode where the application state and the audit archive diverge because there is only one write target. Grab Financial and Zalando use this pattern at production scale for financial audit.
-* **KMS-signed cycle receipts** close the counterparty trust gap — at `CycleSealed`, a KMS-signed JSON receipt (containing cycle ID, file SHA-256 hashes, event chain hash, sealed timestamp) is delivered to the counterparty via SES. The counterparty stores it independently and can verify it without platform access. This is the tamper-evident inter-party trust the requirements describe, achieved without blockchain.
-* **RLS-enforced INSERT-only** (Revolut pattern) — immutability is enforced at the database layer, not application convention. Any UPDATE or DELETE attempt on `cycle_events` fails at the PostgreSQL RLS policy level regardless of which application code path issues it.
-* **Blockchain** rejected — the reinsurer is the sole custodian; blockchain's value is distributed consensus between mutually distrusting parties. A single custodian gains nothing from consensus overhead.
-* **AWS QLDB** rejected — discontinued by AWS in 2025.
-* **immuDB** rejected — consistency and transaction management issues emerged in a prior production integration; opaque internals in a trust-critical system are not acceptable.
-* **Dual-layer audit (S3 Object Lock + PostgreSQL hash-chain)** rejected — requires dual-write atomicity: if the S3 write succeeds but the PostgreSQL write fails, the two layers diverge silently. Maintaining two co-primary sources of truth introduces the compensating logic complexity it was designed to avoid. The pattern is also internally asymmetric: S3 Object Lock prevents deletion but the platform owner can still write a new object before locking it — counterparties cannot independently verify the sealed record without the signed receipt mechanism.
-* **`pgaudit`** retained as defence-in-depth — DB-level statement logging supplements the event log; does not replace it.
+* **Selective event sourcing** — applied to the reconciliation cycle aggregate only; contracts, counterparties, and users use CRUD. Monzo and ING Bank arrived at the same boundary independently: event source where immutability is the core requirement, use relational tables everywhere else.
+* **PostgreSQL as the event store** — no additional infrastructure dependency; RLS provides tenant isolation natively; Debezium over the WAL delivers the immutable archive without dual-write in application code.
+* **CDC (Debezium) as the compliance archive** — single write path (INSERT into `cycle_events`); CDC derives the S3 Glacier archive asynchronously. No divergence failure mode.
+* **KMS-signed cycle receipts** — close the inter-party trust gap at `CycleSealed` without blockchain; the counterparty can verify the receipt independently without platform access.
+* **Blockchain** rejected — the reinsurer is the sole custodian; distributed consensus adds overhead with no benefit in a single-custodian model.
+* **AWS QLDB** rejected — discontinued by AWS. **immuDB** rejected — production integration issues with consistency and transaction management. **Dual-layer audit** rejected — dual-write creates a divergence failure mode; two co-primary sources of truth add complexity without adding trust.
+* **`pgaudit`** retained as defence-in-depth alongside the application event log.
 
 === ADR-002: Multi-Tenancy — Row-Level Security
 
@@ -1186,12 +1002,7 @@ The recommended migration path from Option 2 to Option 3 is to introduce CQRS pr
 
 *Decision:* Application-layer state machine implemented within the Approval Workflow module. The `reconciliation_cycles` table has a `workflow_state` column tracking states: `AWAITING_FILES → AWAITING_ELIGIBILITY → AWAITING_L1 → AWAITING_L2 → AWAITING_COUNTERPARTY → COMPLETED / DISPUTED / ELIGIBILITY_FAILED`. A background job runner (running inside the ECS Fargate service) handles the 72-hour escalation timer. Other modules call `ApprovalWorkflow.transition(cycleId, event)` — a clean interface that allows extraction to Step Functions later if the workflow grows beyond ~5 concurrent workflow types or multi-week execution lifetimes.
 
-*Rationale:*
-* **Step Functions** was designed to orchestrate Lambda functions across service boundaries. With a modular monolith, those boundaries no longer exist.
-* At 15–20 counterparties × 12 cycles/year = 180–240 workflows/year, an application state machine with a `workflow_state` column eliminates Step Functions IAM complexity, task token management, and callback patterns at no functional cost.
-* Durable execution state is already provided by the PostgreSQL `reconciliation_cycles` row — no external workflow engine is needed to persist state between human actions.
-* The clean `ApprovalWorkflow.transition(cycleId, event)` interface makes future extraction to Step Functions an additive change, not a rework.
-* The `cycle_events` append-only log remains the *sole compliance archive*; workflow state transitions are events written to `cycle_events`, not execution history in an external service.
+*Rationale:* **Step Functions** rejected — designed to orchestrate Lambda functions across service boundaries; those boundaries don't exist in a monolith, and IAM/task-token complexity is unwarranted at 180–240 workflows/year. Durable state is already in the `reconciliation_cycles` row; no external engine is needed to persist between human actions. The `ApprovalWorkflow.transition(cycleId, event)` interface makes future extraction additive.
 
 === ADR-004: Authentication — Cognito User Pools with MFA; SAML Deferred
 
@@ -1207,11 +1018,7 @@ The recommended migration path from Option 2 to Option 3 is to introduce CQRS pr
 
 *Decision:* Single ECS Fargate service hosting the entire modular monolith (API + eligibility engine + background jobs + Debezium CDC sidecar), fronted by an Application Load Balancer. RDS PostgreSQL (db.t4g.medium, Multi-AZ) for the database.
 
-*Rationale:*
-
-* **Lambda** rejected — the modular monolith architecture eliminates function-level granularity. A single Fargate task (0.5 vCPU / 1 GB) costs ~$18/month; two tasks for HA ~$35/month. Connection pooling to RDS is deterministic (bounded task count × pool size). No 15-minute execution limit. Single container image, single deployment pipeline.
-* **RDS PostgreSQL (provisioned)** chosen over Aurora Serverless v2 — the workload is monthly burst, exactly the worst pattern for serverless auto-scaling cold starts. A provisioned db.t4g.medium (~$200/month Multi-AZ) delivers predictable latency at peak without scaling delays. Right-size at each phase gate; migrate to Aurora Provisioned if counterparty count exceeds 50. RDS Proxy is not used at 2–4 Fargate tasks — connection count is bounded and predictable; revisit if task count exceeds 10.
-* **EKS** rejected — operational overhead not justified for a {team-size}-person team with a monthly-peak workload.
+*Rationale:* **Lambda** rejected — function-level granularity doesn't exist in a monolith; Fargate gives deterministic connection pooling and no execution-time ceiling. **EKS** rejected — operational overhead not justified for a {team-size}-person team. **Aurora Serverless v2** rejected — monthly burst is the worst fit for serverless cold-start scaling; provisioned db.t4g.medium delivers predictable latency at peak.
 
 === ADR-006: Contract Rules — Structured Expression Tree
 
@@ -1331,14 +1138,7 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 === Environment Strategy
 
-[cols="1,2,1,2"]
-|===
-|Environment |Purpose |Infrastructure |Data Strategy
-
-|Development |Feature development and unit testing |RDS PostgreSQL (db.t4g.micro, single-AZ); ECS Fargate (1 task) |Synthetic contract and file data; no PII
-|Staging |Pre-production validation; counterparty UAT |Production-like; RDS PostgreSQL Multi-AZ; ECS Fargate (2 tasks) |Anonymised sample data per contract; counterparty UAT with synthetic data
-|Production |Live reconciliation platform |RDS PostgreSQL Multi-AZ (db.t4g.medium); ECS Fargate (2 tasks base, scales to 4 at month-end) |Real contract and counterparty data; encrypted at rest; RLS enforced
-|===
+Three environments (development, staging, production) are provisioned from the same Terraform module. Staging mirrors production infrastructure and is used for counterparty UAT and month-end load tests. No PII or real counterparty data enters development or staging environments.
 
 === Security Controls
 
@@ -1358,20 +1158,13 @@ aws.managed.s3data -> drRegion.s3dr: S3 CRR
 
 === Disaster Recovery
 
-* **Strategy:** Primary in eu-west-2 (London); DR via automated daily snapshots to eu-west-1 (Ireland) via AWS Backup and S3 Cross-Region Replication. No active standby is maintained in eu-west-1.
-* **RDS PostgreSQL:** Multi-AZ automatic failover within eu-west-2 (RTO ~1 min for AZ failure); AWS Backup cross-region snapshots to eu-west-1 (RPO = 24h for full region failure)
-* **S3 / Glacier:** Cross-Region Replication to eu-west-1 with 15-minute SLA; CDC archive in Glacier replicated automatically via CRR
-* **cycle_events log:** RDS Multi-AZ replication ensures events are synchronously replicated (RPO = 0 for AZ failure); Debezium CDC Glacier archive provides independent durable copy
-* **ECS Fargate:** Stateless compute — no DR concern; the same container image and Terraform module are used to provision the DR region when a full-region restore is required
-* **RTO target:** < 4 hours (snapshot restore) for full region failure; documented and tested DR restore runbook; maintenance windows scheduled outside month-end submission periods
-
-NOTE: Target 99.9% monthly uptime. Expected availability based on component SLA product (Aurora Multi-AZ × ECS Fargate × ALB) is ~99.85%. The gap between target and expected is addressed by scheduling maintenance windows outside month-end submission periods.
+Primary region is eu-west-2 (London). RDS Multi-AZ provides automatic AZ failover (RTO ~1 min, RPO = 0). Daily cross-region snapshots to eu-west-1 via AWS Backup and S3 Cross-Region Replication provide full-region DR (RPO = 24h, RTO < 4 hours). No active standby is maintained in eu-west-1 — the same Terraform module provisions a recovery stack on demand. Maintenance windows are scheduled outside month-end submission periods.
 
 == Post-Launch Plan
 
 === Hypercare (Weeks 1–4 after First Counterparty Go-Live)
 
-The first four weeks after go-live include daily stand-ups with the reinsurer IT and reconciliation ops team, a 24/7 on-call rota for the first month-end submission window, a dedicated channel with the first counterparty’s technical contact, and side-by-side eligibility result validation against a parallel Excel run for the first two cycles.
+The first month-end submission window runs with heightened support: eligibility results validated side-by-side against a parallel Excel run for the first two cycles before the Excel process is decommissioned.
 
 === Counterparty Integration Tiers
 
@@ -1397,35 +1190,7 @@ Counterparties vary in technical capability. The platform supports three integra
 |AWS Transfer Family SFTP (provisioned on-demand for this counterparty only)
 |===
 
-=== Counterparty Onboarding Runbook
 
-1. Agree integration tier and provision IdP federation or SFTP endpoint as needed
-2. Provision tenant (ID, name, country code, data residency zone) and upload contract definition with file type configuration
-3. Configure file normalisation mapping: obtain a sample file, define column/format mappings, validate against canonical schema using the mapping validation tool
-4. Verify rule parsing, file type configuration, and expression tree validation against JSON Schema
-5. Provision counterparty user (Cognito invite + MFA setup, or SFTP service account)
-6. Run synthetic test cycle end-to-end: file upload → normalisation → cycle readiness → eligibility → approval → counter-sign; UAT sign-off by counterparty and compliance lead
-7. First live cycle in parallel with Excel for one month; decommission Excel on successful validation
-
-=== Audit Ledger Health
-
-* **Debezium CDC lag monitoring:** CloudWatch alarm fires if replication slot lag exceeds 5 minutes; Debezium offsets checked against S3 Glacier on schedule to confirm no gaps in the archive
-* **RLS policy audit:** quarterly check that the INSERT-only policy on `cycle_events` is still in effect for all application roles; any modification to the policy triggers an immediate security alert
-* **KMS receipt delivery log:** SES delivery status tracked per sealed cycle; any undelivered receipt triggers a follow-up within 24 hours
-* **Monthly event count reconciliation:** total events in `cycle_events` compared against CDC archive count in S3; discrepancy triggers compliance review
-* **Quarterly compliance report:** cycle count, event count, CDC archive integrity, any anomalies; output retained as Solvency II evidence
-
-=== Knowledge Transfer
-
-[cols="2,1,1", options="header"]
-|===
-|Topic |Audience |Timing
-
-|Platform overview and reconciliation workflow (workshop) |All reinsurer staff + first counterparty |Phase 3 go-live
-|Portal walkthrough and multi-file upload (guided demo + video) |Reconciliation Managers, Counterparty Admins |Phase 3
-|Expression tree contract rule authoring (half-day workshop) |Reconciliation Managers, Platform Admins |Phase 2
-|Compliance audit log queries and platform administration |Compliance / Audit team, Reinsurer IT |Phase 4
-|===
 
 === Platform Evolution Roadmap
 
